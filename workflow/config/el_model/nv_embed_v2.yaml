@@ -1,0 +1,9 @@
+_target_: gfmrag.kg_construction.entity_linking_model.NVEmbedV2ELModel
+model_name: nvidia/NV-Embed-v2
+root: tmp
+use_cache: True
+normalize: True
+query_instruct: "Instruct: Given a entity, retrieve entities that are semantically equivalent to the given entity\nQuery: "
+passage_instruct: null
+model_kwargs:
+  torch_dtype: bfloat16

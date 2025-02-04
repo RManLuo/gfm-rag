@@ -1,0 +1,7 @@
+_target_: gfmrag.text_emb_models.BaseTextEmbModel
+text_emb_model_name: BAAI/bge-large-en
+normalize: True
+batch_size: 32
+query_instruct: "Represent this sentence for searching relevant passages: "
+passage_instruct: null
+model_kwargs: null

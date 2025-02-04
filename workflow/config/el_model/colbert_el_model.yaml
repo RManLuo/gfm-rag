@@ -1,0 +1,5 @@
+_target_: gfmrag.kg_construction.entity_linking_model.ColbertELModel
+checkpint_path: tmp/colbertv2.0
+root: tmp
+doc_index_name: nbits_2
+phrase_index_name: nbits_2

@@ -1,0 +1,7 @@
+_target_: gfmrag.text_emb_models.BaseTextEmbModel
+text_emb_model_name: Alibaba-NLP/gte-large-en-v1.5
+normalize: False
+batch_size: 32
+query_instruct: null
+passage_instruct: null
+model_kwargs: null

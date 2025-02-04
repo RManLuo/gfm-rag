@@ -1,0 +1,33 @@
+hydra:
+  run:
+    dir: outputs/qa_inference/${dataset.data_name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+defaults:
+  - _self_
+  - doc_ranker: idf_topk_ranker
+  - qa_prompt: hotpotqa
+  - qa_evaluator: hotpotqa
+
+seed: 1024
+
+dataset:
+  root: ./data
+  data_name: hotpotqa_test
+
+llm:
+  _target_: gfmrag.llms.ChatGPT
+  model_name_or_path: gpt-3.5-turbo
+  retry: 5
+
+graph_retriever:
+  model_path: rmanluo/GFM-RAG-8M
+
+test:
+  retrieval_batch_size: 8
+  top_k: 5
+  save_retrieval: False
+  save_top_k_entity: 10
+  n_threads: 5
+  retrieved_result_path: null
+  prediction_result_path: null
+  init_entities_weight: True

@@ -1,0 +1,7 @@
+_target_: gfmrag.text_emb_models.BaseTextEmbModel
+text_emb_model_name: sentence-transformers/all-mpnet-base-v2
+normalize: False
+batch_size: 32
+query_instruct: null
+passage_instruct: null
+model_kwargs: null
