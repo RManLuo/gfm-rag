@@ -564,6 +564,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stuck-when-compiling-rspmm-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stuck when compiling rspmm kernel
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -838,6 +847,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stuck-when-compiling-rspmm-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stuck when compiling rspmm kernel
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -936,6 +954,8 @@ Install relevant packages, please make sure to install the correct version of to
 <div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1"></a><a href="#__codelineno-8-1"><span class="linenos" data-linenos="1 "></span></a><span class="nb">export</span><span class="w"> </span><span class="nv">CUDA_HOME</span><span class="o">=</span>/usr/local/cuda-12.4
 </code></pre></div>
 <p>Usually, if your install CUDA toolkit via conda, the CUDA_HOME variable is set automatically.</p>
+<h3 id="stuck-when-compiling-rspmm-kernel">Stuck when compiling <code>rspmm</code> kernel<a class="headerlink" href="#stuck-when-compiling-rspmm-kernel" title="Permanent link">&para;</a></h3>
+<p>Sometimes the compilation of the <code>rspmm</code> kernel may get stuck. If you encounter this issue, try to manually remove the compilation cache under <code>~/.cache/torch_extensions/</code> and recompile the kernel.</p>
 <p>For more help, please check our <a href="https://github.com/RManLuo/gfm-rag/issues">GitHub issues</a> or create a new one.</p>
 
 
