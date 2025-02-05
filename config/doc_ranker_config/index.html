@@ -8,26 +8,28 @@
       
       
       
-        <link rel="canonical" href="https://rmanluo.github.io/gfm-rag/">
+        <link rel="canonical" href="https://rmanluo.github.io/gfm-rag/config/doc_ranker_config/">
       
       
+        <link rel="prev" href="../openie_model_config/">
       
-        <link rel="next" href="DEVELOPING/">
+      
+        <link rel="next" href="../text_embedding_config/">
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
     
     
       
-        <title>Wellcome - GFM-RAG</title>
+        <title>Document Ranker Config - GFM-RAG</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.a40c8224.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a40c8224.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -46,9 +48,9 @@
       
     
     
-      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -74,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gfm-rag-documentation" class="md-skip">
+        <a href="#simple-ranker" class="md-skip">
           Skip to content
         </a>
       
@@ -90,7 +92,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="GFM-RAG" class="md-header__button md-logo" aria-label="GFM-RAG" data-md-component="logo">
+    <a href="../.." title="GFM-RAG" class="md-header__button md-logo" aria-label="GFM-RAG" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
@@ -110,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Wellcome
+              Document Ranker Config
             
           </span>
         </div>
@@ -226,13 +228,11 @@
         
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="." class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
           
   
   Home
@@ -248,7 +248,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="install/" class="md-tabs__link">
+      <a href="../../install/" class="md-tabs__link">
         
   
     
@@ -267,7 +267,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="workflow/data_preparation/" class="md-tabs__link">
+        <a href="../../workflow/data_preparation/" class="md-tabs__link">
           
   
   Getting Started
@@ -281,11 +281,13 @@
         
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="config/kg_index_config/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../kg_index_config/" class="md-tabs__link">
           
   
   Config
@@ -303,7 +305,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="api/kg_indexer/" class="md-tabs__link">
+        <a href="../../api/kg_indexer/" class="md-tabs__link">
           
   
   API Reference
@@ -342,7 +344,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="GFM-RAG" class="md-nav__button md-logo" aria-label="GFM-RAG" data-md-component="logo">
+    <a href="../.." title="GFM-RAG" class="md-nav__button md-logo" aria-label="GFM-RAG" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
@@ -369,172 +371,41 @@
       
   
   
-    
   
   
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
   
-    
-    
-    
+  
+    <a href="../.." class="md-nav__link">
       
-        
-        
-      
-      
-        
-      
-    
-    
-      
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
-            
   
   <span class="md-ellipsis">
     Home
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_1">
-            <span class="md-nav__icon md-icon"></span>
-            Home
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
       
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+        <span class="md-nav__icon md-icon"></span>
       
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Wellcome
-  </span>
+    </a>
   
 
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
-        
-  
-  <span class="md-ellipsis">
-    Wellcome
-  </span>
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      Overview
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
-    <span class="md-ellipsis">
-      Features
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="DEVELOPING/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Development
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="CHANGELOG/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Changelog
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
       
     </li>
   
@@ -547,7 +418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="install/" class="md-nav__link">
+      <a href="../../install/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -585,7 +456,7 @@
         
   
   
-    <a href="workflow/data_preparation/" class="md-nav__link">
+    <a href="../../workflow/data_preparation/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -608,11 +479,16 @@
       
   
   
+    
   
   
+  
     
     
     
+      
+        
+        
       
       
         
@@ -620,29 +496,295 @@
     
     
       
-        
-        
-      
     
-    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
-  
-  
-    <a href="config/kg_index_config/" class="md-nav__link">
-      
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
   
   <span class="md-ellipsis">
     Config
   </span>
   
 
-      
-        <span class="md-nav__icon md-icon"></span>
-      
-    </a>
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Config
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kg_index_config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    KG-index Config
+  </span>
   
 
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gfmrag_retriever_config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GFM-RAG Config
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gfmrag_pretrain_config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GFM-RAG Pre-training Config
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gfmrag_finetune_config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GFM-RAG Fine-tuning Config
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ner_model_config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NER Model Config
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../el_model_config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Entity Linking Model Config
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../openie_model_config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenIE Model Config
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Document Ranker Config
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Document Ranker Config
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#simple-ranker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Simple Ranker
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#idf-ranker" class="md-nav__link">
+    <span class="md-ellipsis">
+      IDF Ranker
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#top-k-ranker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Top-k Ranker
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#idf-top-k-ranker" class="md-nav__link">
+    <span class="md-ellipsis">
+      IDF Top-k Ranker
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../text_embedding_config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Text Embedding Config
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -673,7 +815,7 @@
         
   
   
-    <a href="api/kg_indexer/" class="md-nav__link">
+    <a href="../../api/kg_indexer/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -709,8 +851,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -719,18 +859,36 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#simple-ranker" class="md-nav__link">
     <span class="md-ellipsis">
-      Overview
+      Simple Ranker
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
+  <a href="#idf-ranker" class="md-nav__link">
     <span class="md-ellipsis">
-      Features
+      IDF Ranker
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#top-k-ranker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Top-k Ranker
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#idf-top-k-ranker" class="md-nav__link">
+    <span class="md-ellipsis">
+      IDF Top-k Ranker
     </span>
   </a>
   
@@ -754,11 +912,108 @@
   
 
 
-<h1 id="gfm-rag-documentation">GFM-RAG Documentation<a class="headerlink" href="#gfm-rag-documentation" title="Permanent link">&para;</a></h1>
-<p>Welcome to the documentation for GFM-RAG project.</p>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>GFM-RAG is a project that introduce the graph foundation model for retrieval-augmented generation in large language models.</p>
-<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
+  <h1>Document Ranker Config</h1>
+
+<h2 id="simple-ranker">Simple Ranker<a class="headerlink" href="#simple-ranker" title="Permanent link">&para;</a></h2>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="language-yaml highlight"><span class="filename">gfmrag/workflow/config/doc_ranker/simple_ranker.yaml</span><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><a href="#__codelineno-0-1"><span class="linenos" data-linenos="1 "></span></a><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gfmrag.doc_rankers.SimpleRanker</span>
+</code></pre></div>
+</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Options</th>
+<th style="text-align: center;">Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>_target_</code></td>
+<td style="text-align: center;"><code>gfmrag.doc_rankers.SimpleRanker</code></td>
+<td style="text-align: center;">The class name of <a class="autorefs autorefs-internal" href="../../api/doc_ranker/#gfmrag.doc_rankers.SimpleRanker">SimpleRanker</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="idf-ranker">IDF Ranker<a class="headerlink" href="#idf-ranker" title="Permanent link">&para;</a></h2>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="language-yaml highlight"><span class="filename">gfmrag/workflow/config/doc_ranker/idf_ranker.yaml</span><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><a href="#__codelineno-1-1"><span class="linenos" data-linenos="1 "></span></a><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gfmrag.doc_rankers.IDFWeightedRanker</span>
+</code></pre></div>
+</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Options</th>
+<th style="text-align: center;">Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>_target_</code></td>
+<td style="text-align: center;"><code>gfmrag.doc_rankers.IDFWeightedRanker</code></td>
+<td style="text-align: center;">The class name of <a class="autorefs autorefs-internal" href="../../api/doc_ranker/#gfmrag.doc_rankers.IDFWeightedRanker">IDFWeightedRanker </a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="top-k-ranker">Top-k Ranker<a class="headerlink" href="#top-k-ranker" title="Permanent link">&para;</a></h2>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="language-yaml highlight"><span class="filename">gfmrag/workflow/config/doc_ranker/topk_ranker.yaml</span><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><a href="#__codelineno-2-1"><span class="linenos" data-linenos="1 "></span></a><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gfmrag.doc_rankers.TopKRanker</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2"></a><a href="#__codelineno-2-2"><span class="linenos" data-linenos="2 "></span></a><span class="nt">top_k</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+</code></pre></div>
+</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Options</th>
+<th style="text-align: center;">Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>_target_</code></td>
+<td style="text-align: center;"><code>gfmrag.doc_rankers.TopKRanker</code></td>
+<td style="text-align: center;">The class name of <a class="autorefs autorefs-internal" href="../../api/doc_ranker/#gfmrag.doc_rankers.TopKRanker">TopKRanker</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>top_k</code></td>
+<td style="text-align: center;">Integer</td>
+<td style="text-align: center;">The top-k entities used for document retrieval</td>
+</tr>
+</tbody>
+</table>
+<h2 id="idf-top-k-ranker">IDF Top-k Ranker<a class="headerlink" href="#idf-top-k-ranker" title="Permanent link">&para;</a></h2>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="language-yaml highlight"><span class="filename">gfmrag/workflow/config/doc_ranker/idf_topk_ranker.yaml</span><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><a href="#__codelineno-3-1"><span class="linenos" data-linenos="1 "></span></a><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gfmrag.doc_rankers.IDFWeightedTopKRanker</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2"></a><a href="#__codelineno-3-2"><span class="linenos" data-linenos="2 "></span></a><span class="nt">top_k</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+</code></pre></div>
+</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Options</th>
+<th style="text-align: center;">Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>_target_</code></td>
+<td style="text-align: center;"><code>gfmrag.doc_rankers.IDFWeightedTopKRanker</code></td>
+<td style="text-align: center;">The class name of <a class="autorefs autorefs-internal" href="../../api/doc_ranker/#gfmrag.doc_rankers.IDFWeightedTopKRanker">IDFWeightedTopKRanker</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>top_k</code></td>
+<td style="text-align: center;">Integer</td>
+<td style="text-align: center;">The top-k entities used for document retrieval</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -793,15 +1048,31 @@
       
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
+          
+          <a href="../openie_model_config/" class="md-footer__link md-footer__link--prev" aria-label="Previous: OpenIE Model Config">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                OpenIE Model Config
+              </div>
+            </div>
+          </a>
+        
         
           
-          <a href="DEVELOPING/" class="md-footer__link md-footer__link--next" aria-label="Next: Development">
+          <a href="../text_embedding_config/" class="md-footer__link md-footer__link--next" aria-label="Next: Text Embedding Config">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Development
+                Text Embedding Config
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -835,12 +1106,12 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.instant", "navigation.tabs", "navigation.tracking", "navigation.sections", "navigation.expand", "navigation.prune", "navigation.path", "navigation.tabs.sticky", "toc.follow", "navigation.top", "search.suggest", "search.highlight", "search.share", "navigation.footer", "content.code.copy"], "search": "assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tabs", "navigation.tracking", "navigation.sections", "navigation.expand", "navigation.prune", "navigation.path", "navigation.tabs.sticky", "toc.follow", "navigation.top", "search.suggest", "search.highlight", "search.share", "navigation.footer", "content.code.copy"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.60a45f97.min.js"></script>
+      <script src="../../assets/javascripts/bundle.60a45f97.min.js"></script>
       
-        <script src="javascripts/mathjax.js"></script>
+        <script src="../../javascripts/mathjax.js"></script>
       
         <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
