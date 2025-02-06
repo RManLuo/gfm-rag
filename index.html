@@ -474,6 +474,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#news" class="md-nav__link">
+    <span class="md-ellipsis">
+      🎉 News
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       Features
@@ -728,6 +737,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#news" class="md-nav__link">
+    <span class="md-ellipsis">
+      🎉 News
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       Features
@@ -757,8 +775,24 @@
 <h1 id="gfm-rag-documentation">GFM-RAG Documentation<a class="headerlink" href="#gfm-rag-documentation" title="Permanent link">&para;</a></h1>
 <p>Welcome to the documentation for GFM-RAG project.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>GFM-RAG is a project that introduce the graph foundation model for retrieval-augmented generation in large language models.</p>
+<p>The GFM-RAG is the first graph foundation powered RAG pipeline that combines the power of graph neural networks to reason over knowledge graphs and retrieve relevant documents for question answering.</p>
+<p><img alt="" src="images/intro.png" /></p>
+<p>We first build a knowledge graph index (KG-index) from the documents to capture the relationships between knowledge. Then, we feed the query and constructed KG-index into the pre-trained graph foundation model (GFM) retriever to obtain relevant documents for LLM generation. The GFM retriever experiences large-scale training and can be directly applied to unseen datasets without fine-tuning.</p>
+<p>For more details, please refer to our <a href="https://www.arxiv.org/abs/2502.01113">paper</a>.</p>
+<h2 id="news">🎉 News<a class="headerlink" href="#news" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>[2022-02-06]</strong> We have released the GFM-RAG codebase and 8M pre-trained models. 🚀</li>
+</ul>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Graph Foundation Model (GFM)</strong>: A graph neural network-based retriever that can reason over the KG-index.</li>
+<li><strong>Knowledge Graph Index</strong>: A knowledge graph index that captures the relationships between knowledge.</li>
+<li><strong>Efficiency</strong>: The GFM-RAG pipeline is efficient in conduct multi-hop reasoning with single step retrieval.</li>
+<li><strong>Generalizability</strong>: The GFM-RAG can be directly applied to unseen datasets without fine-tuning.</li>
+<li><strong>Transferability</strong>: The GFM-RAG can be fine-tuned on your own dataset to improve performance on specific domains.</li>
+<li><strong>Compatibility</strong>: The GFM-RAG is compatible with arbitrary agent-based framework to conduct multi-step reasoning.</li>
+<li><strong>Interpretability</strong>: The GFM-RAG can illustrate the captured reasoning paths for better understanding.</li>
+</ul>
 
 
 
