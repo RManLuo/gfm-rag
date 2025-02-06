@@ -22,9 +22,3 @@ torchrun --nproc-per-node=${N_GPU} -m gfmrag.workflow.stage2_kg_pretrain \
     train.num_epoch=${N_EPOCH} \
     train.batch_per_epoch=${BATCH_PER_EPOCH} \
     train.batch_size=${BATCH_SIZE}
-
-torchrun --nproc_per_node=4 -m gfmrag.workflow.stage2_kg_pretrain \
-    train.num_epoch=1 \
-    train.fast_test=300 \
-    train.batch_per_epoch=300\
-    train.batch_size=1

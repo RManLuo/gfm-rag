@@ -31,6 +31,10 @@ class ColbertELModel(BaseELModel):
         FileNotFoundError: If the checkpoint file is not found at the specified path.
         AttributeError: If entity linking is attempted before indexing.
 
+    Notes:
+        You need to download the checkpoint by running the following command:
+        `wget -O https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz && tar -zxvf tmp/colbertv2.0.tar.gz -C tmp/`
+
     Examples:
         >>> model = ColbertELModel("path/to/checkpoint")
         >>> model.index(["entity1", "entity2", "entity3"])
@@ -69,7 +73,7 @@ class ColbertELModel(BaseELModel):
 
         if not os.path.exists(checkpint_path):
             raise FileNotFoundError(
-                "Checkpoint not found, download the checkpoint with: 'wget https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz'"
+                "Checkpoint not found, download the checkpoint with: 'wget -O https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz && tar -zxvf tmp/colbertv2.0.tar.gz -C tmp/'"
             )
         self.checkpoint_path = checkpint_path
         self.root = root

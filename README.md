@@ -290,87 +290,151 @@ torchrun --nproc_per_node=4 gfmrag.workflow.stage2_qa_finetune
 torchrun --nproc_per_node=4 --nnodes=2 gfmrag.workflow.stage2_qa_finetune
 ```
 
-## Workflow
+## Reproduce Results reported in the paper
 
-### Stage1: Index Dataset
-1. Create KG index for corpus.
-2. Prepare QA dataset for training and evaluation (Optional)
+### Download datasets
+
+We are working on releasing the full training datasets. We have provided the testing split and an example of the training data in the `data` directory.
+
+Download the datasets with `git lfs`:
+
+Install `git lfs`:
 
 ```bash
-python workflow/stage1_index_dataset.py
+git lfs install
+```
+
+Download the datasets:
+
+```bash
+git lfs pull
 ```
 
 
-### Stage2: Deep GraphRAG Training
+### Index Dataset
+
+We have provided the indexed test datasets in the `data` directory. You can build the index for the testing dataset with the following command:
+
+```bash
+# Build the index for testing dataset
+N_GPU=1
+DATA_ROOT="data"
+DATA_NAME_LIST="hotpotqa_test 2wikimultihopqa_test musique_test"
+for DATA_NAME in ${DATA_NAME_LIST}; do
+   python -m gfmrag.workflow.stage1_index_dataset \
+   dataset.root=${DATA_ROOT} \
+   dataset.data_name=${DATA_NAME}
+done
+```
+
+Full script is available at [scripts/stage1_data_index.sh](scripts/stage1_data_index.sh).
+
+### GFM Training
 
 Unsupervised training on the constructed KG.
 
 ```bash
-python workflow/stage2_kg_pretrain.py
+python -m gfmrag.workflow.stage2_kg_pretrain
 # Multi-GPU training
-torchrun --nproc_per_node=4 workflow/stage2_kg_pretrain.py
+torchrun --nproc_per_node=4 gfmrag.workflow.stage2_kg_pretrain
 ```
+
+Full script is available at [scripts/stage2_pretrain.sh](scripts/stage2_pretrain.sh).
 
 Supervised training on the QA dataset.
 
 ```bash
-python workflow/stage2_qa_finetune.py
+python -m gfmrag.workflow.stage2_qa_finetune
 # Multi-GPU training
-torchrun --nproc_per_node=4 workflow/stage2_qa_finetune.py
+torchrun --nproc_per_node=4 gfmrag.workflow.stage2_qa_finetune
 ```
 
-Evaluate retrieval performance of the trained model on QA dataset.
+Full script is available at [scripts/stage2_finetune.sh](scripts/stage2_finetune.sh).
+
+### Retrieval Evaluation
 
 ```bash
-python workflow/stage2_qa_finetune.py train.num_epoch=0 datasets.train_names=[] checkpoint=save_models/qa_ultra_512_train_60000_w_pre-train/model.pth
-# Multi-GPU evaluation
-torchrun --nproc_per_node=4 workflow/stage2_qa_finetune.py train.num_epoch=0 datasets.train_names=[] checkpoint=save_models/qa_ultra_512_train_60000_w_pre-train/model.pth
+N_GPU=4
+DATA_ROOT="data"
+checkpoints=rmanluo/GFM-RAG-8M # Or the path to your checkpoints
+torchrun --nproc_per_node=${N_GPU} -m gfmrag.workflow.stage2_qa_finetune \
+    train.checkpoint=${checkpoints} \
+    datasets.cfgs.root=${DATA_ROOT} \
+    datasets.train_names=[] \
+    train.num_epoch=0
 ```
 
-### Stage3: QA Reasoning
+### QA Reasoning
 
 #### Single Step QA Reasoning
 ```bash
-python workflow/stage3_qa_inference.py
-# Multi-GPU retrieval
-torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py
+# Batch inference for QA on the test set.
+N_GPU=4
+DATA_ROOT="data"
+DATA_NAME="hotpotqa" # hotpotqa musique 2wikimultihopqa
+LLM="gpt-4o-mini"
+DOC_TOP_K=5
+N_THREAD=10
+torchrun --nproc_per_node=${N_GPU} -m gfmrag.workflow.stage3_qa_inference \
+    dataset.root=${DATA_ROOT} \
+    qa_prompt=${DATA_NAME} \
+    qa_evaluator=${DATA_NAME} \
+    llm.model_name_or_path=${LLM} \
+    test.n_threads=${N_THREAD} \
+    test.top_k=${DOC_TOP_K} \
+    dataset.data_name=${DATA_NAME}_test
 ```
 
 hotpotqa
 ```bash
-torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=hotpotqa_test qa_prompt=hotpotqa qa_evaluator=hotpotqa
+torchrun --nproc_per_node=4 -m gfmrag.workflow.stage3_qa_inference dataset.data_name=hotpotqa_test qa_prompt=hotpotqa qa_evaluator=hotpotqa
 ```
 
 musique
 ```bash
-torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=musique_test qa_prompt=musique qa_evaluator=musique
+torchrun --nproc_per_node=4 -m gfmrag.workflow.stage3_qa_inference dataset.data_name=musique_test qa_prompt=musique qa_evaluator=musique
 ```
 
 2Wikimultihopqa
 ```bash
-torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=2wikimultihopqa_test qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa
+torchrun --nproc_per_node=4 -m gfmrag.workflow.stage3_qa_inference dataset.data_name=2wikimultihopqa_test qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa
 ```
 #### Multi Step IRCOT QA Reasoning
 ```bash
-python workflow/stage3_qa_ircot_inference.py
+# IRCoT + GFM-RAG inference on QA tasks
+N_GPU=1
+DATA_ROOT="data"
+DATA_NAME="hotpotqa" # hotpotqa musique 2wikimultihopqa
+LLM="gpt-4o-mini"
+MAX_STEPS=3
+MAX_SAMPLE=10
+python -m gfmrag.workflow.stage3_qa_ircot_inference \
+    dataset.root=${DATA_ROOT} \
+    llm.model_name_or_path=${LLM} \
+    qa_prompt=${DATA_NAME} \
+    qa_evaluator=${DATA_NAME} \
+    agent_prompt=${DATA_NAME}_ircot \
+    test.max_steps=${MAX_STEPS} \
+    test.max_test_samples=${MAX_SAMPLE} \
+    dataset.data_name=${DATA_NAME}_test
 ```
 
 hotpotqa
 ```bash
-python workflow/stage3_qa_ircot_inference.py qa_prompt=hotpotqa qa_evaluator=hotpotqa agent_prompt=hotpotqa_ircot dataset.data_name=hotpotqa_test test.max_steps=2
+python -m gfmrag.workflow.stage3_qa_ircot_inference qa_prompt=hotpotqa qa_evaluator=hotpotqa agent_prompt=hotpotqa_ircot dataset.data_name=hotpotqa_test test.max_steps=2
 ```
 
 musique
 ```bash
-python workflow/stage3_qa_ircot_inference.py qa_prompt=musique qa_evaluator=musique agent_prompt=musique_ircot dataset.data_name=musique_test test.max_steps=4
+python -m gfmrag.workflow.stage3_qa_ircot_inference qa_prompt=musique qa_evaluator=musique agent_prompt=musique_ircot dataset.data_name=musique_test test.max_steps=4
 ```
 
 2Wikimultihopqa
 ```bash
-python workflow/stage3_qa_ircot_inference.py qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa agent_prompt=2wikimultihopqa_ircot dataset.data_name=2wikimultihopqa_test test.max_steps=2
+python -m gfmrag.workflow.stage3_qa_ircot_inference qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa agent_prompt=2wikimultihopqa_ircot dataset.data_name=2wikimultihopqa_test test.max_steps=2
 ```
 
 ### Visualize Paths
 ```bash
-python workflow/experiments/visualize_path.py dataset.data_name=hotpotqa_test
+python -m gfmrag.workflow.experiments.visualize_path dataset.data_name=hotpotqa_test
 ```
