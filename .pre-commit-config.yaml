@@ -11,6 +11,7 @@ repos:
     -   id: check-case-conflict
     -   id: check-executables-have-shebangs
     -   id: check-json
+        exclude: '^data/'
     -   id: check-yaml
         args: [--unsafe]
     -   id: debug-statements
