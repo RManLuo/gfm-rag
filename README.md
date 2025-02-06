@@ -438,3 +438,24 @@ python -m gfmrag.workflow.stage3_qa_ircot_inference qa_prompt=2wikimultihopqa qa
 ```bash
 python -m gfmrag.workflow.experiments.visualize_path dataset.data_name=hotpotqa_test
 ```
+
+## Acknowledgements
+
+We greatly appreciate the following repositories for their help to this project:
+
+* [DeepGraphLearning/ULTRA](https://github.com/DeepGraphLearning/ULTRA): The ULTRA model is used as the base GNN model for the GFM retriever.
+* [OSU-NLP-Group/HippoRAG](https://github.com/OSU-NLP-Group/HippoRAG): We get great inspiration from the KG construction process of HippoRAG.
+* [microsoft/graphrag](https://github.com/microsoft/graphrag): We get great inspiration from the project design of GraphRAG.
+
+## Citation
+
+If you find this repository helpful, please consider citing our paper:
+
+```bibtex
+@article{luo2025gfmrag,
+  title={GFM-RAG: Graph Foundation Model for Retrieval Augmented Generation},
+  author={Luo, Linhao and Zhao, Zicheng and Haffari, Gholamreza and Phung, Dinh and Gong, Chen and Pan, Shirui},
+  journal={arXiv preprint arXiv:2502.01113},
+  year={2025}
+}
+```
