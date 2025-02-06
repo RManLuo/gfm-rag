@@ -20,7 +20,7 @@ torchrun --nproc_per_node=${N_GPU} -m gfmrag.workflow.stage2_qa_finetune \
 
 # Retrieval evaluation
 N_GPU=4
-DATA_ROOT="/home/lluo/projects/deep_graphrag/data"
+DATA_ROOT="data"
 checkpoints=rmanluo/GFM-RAG-8M # Or the path to your checkpoints
 torchrun --nproc_per_node=${N_GPU} -m gfmrag.workflow.stage2_qa_finetune \
     train.checkpoint=${checkpoints} \

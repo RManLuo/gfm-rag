@@ -15,7 +15,7 @@ datasets:
     force_rebuild: False # Whether to force rebuild the dataset
     text_emb_model_cfgs: ${text_emb_model} # The text embedding model configuration
   train_names: # List of training dataset names
-    - hotpotqa
+    - hotpotqa_train_example
   valid_names: []
 
 # GFM model configuration
@@ -36,9 +36,10 @@ task:
   strict_negative: yes
   adversarial_temperature: 1
   metric: [mr, mrr, hits@1, hits@3, hits@10]
-  optimizer:
-    _target_: torch.optim.AdamW
-    lr: 5.0e-4
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 5.0e-4
 
 # Training configuration
 train:

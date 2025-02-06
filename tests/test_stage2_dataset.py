@@ -38,7 +38,7 @@ def test_qa_dataset() -> None:
     )
     dataset = QADataset(
         root="data",
-        data_name="hotpotqa",
+        data_name="hotpotqa_train_example",
         text_emb_model_cfgs=text_emb_cfgs,
     )
     train_data, test_data = dataset._data

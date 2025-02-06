@@ -16,7 +16,7 @@ datasets:
     force_rebuild: False # Whether to force rebuild the dataset
     text_emb_model_cfgs: ${text_emb_model} # The text embedding model configuration
   train_names: # List of training dataset names
-    - hotpotqa
+    - hotpotqa_train_example
   valid_names: # List of validation dataset names
     - hotpotqa_test
     - musique_test

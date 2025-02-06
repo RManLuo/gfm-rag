@@ -53,9 +53,14 @@ An example configuration file for GFM pre-training is shown below:
 |     `strict_negative`     |  None   |    whether to use strict negative sampling    |
 | `adversarial_temperature` |  None   | adversarial temperature for negative sampling |
 |         `metric`          |  `[]`   |       evaluation metrics for the model        |
-|   `optimizer._target_`    |  None   |         torch optimizer for the model         |
-|      `optimizer.lr`       |  None   |        learning rate for the optimizer        |
 
+
+## Optimizer configuration
+
+|   Parameter   | Options |                        Note                        |
+| :-----------: | :-----: | :------------------------------------------------: |
+| `optimizer._target_` |  None   |         torch optimizer for the model         |
+| `optimizer.lr` |  None   |        learning rate for the optimizer        |
 
 ## Training configuration
 
