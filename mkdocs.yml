@@ -99,7 +99,7 @@ site_name: GFM-RAG
 site_url: https://rmanluo.github.io/gfm-rag/
 nav:
   - Home:
-    - Wellcome: index.md
+    - Welcome: index.md
     - Development: DEVELOPING.md
     - Changelog: CHANGELOG.md
   - Installation: install.md

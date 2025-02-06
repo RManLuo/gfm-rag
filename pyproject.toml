@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gfmrag"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = [
     "Linhao Luo <linhao.luo@monash.edu>",
