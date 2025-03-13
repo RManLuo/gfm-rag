@@ -900,23 +900,17 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2"></a><a href="#__codelineno-0-2"><span class="linenos" data-linenos="2 "></span></a>conda<span class="w"> </span>activate<span class="w"> </span>gfmrag
 <a id="__codelineno-0-3" name="__codelineno-0-3"></a><a href="#__codelineno-0-3"><span class="linenos" data-linenos="3 "></span></a>conda<span class="w"> </span>install<span class="w"> </span>cuda-toolkit<span class="w"> </span>-c<span class="w"> </span>nvidia/label/cuda-12.4.1<span class="w"> </span><span class="c1"># Replace with your desired CUDA version</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4"></a><a href="#__codelineno-0-4"><span class="linenos" data-linenos="4 "></span></a>pip<span class="w"> </span>install<span class="w"> </span>gfmrag
-<a id="__codelineno-0-5" name="__codelineno-0-5"></a><a href="#__codelineno-0-5"><span class="linenos" data-linenos="5 "></span></a><span class="nv">TORCH</span><span class="o">=</span><span class="k">$(</span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import torch; print(torch.__version__)&quot;</span><span class="k">)</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6"></a><a href="#__codelineno-0-6"><span class="linenos" data-linenos="6 "></span></a>pip<span class="w"> </span>install<span class="w"> </span>torch_scatter<span class="w"> </span>torch_sparse<span class="w"> </span>-f<span class="w"> </span>https://data.pyg.org/whl/torch-<span class="si">${</span><span class="nv">TORCH</span><span class="si">}</span>.html
 </code></pre></div>
 <h3 id="install-via-pip">Install via Pip<a class="headerlink" href="#install-via-pip" title="Permanent link">&para;</a></h3>
-<p><div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><a href="#__codelineno-1-1"><span class="linenos" data-linenos="1 "></span></a>pip<span class="w"> </span>install<span class="w"> </span>gfmrag
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><a href="#__codelineno-1-1"><span class="linenos" data-linenos="1 "></span></a>pip<span class="w"> </span>install<span class="w"> </span>gfmrag
 </code></pre></div>
-Install relevant packages, please make sure to install the correct version of torch_scatter and torch_sparse based on your PyTorch and CUDA versions:
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><a href="#__codelineno-2-1"><span class="linenos" data-linenos="1 "></span></a><span class="nv">TORCH</span><span class="o">=</span><span class="k">$(</span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import torch; print(torch.__version__)&quot;</span><span class="k">)</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2"></a><a href="#__codelineno-2-2"><span class="linenos" data-linenos="2 "></span></a>pip<span class="w"> </span>install<span class="w"> </span>torch_scatter<span class="w"> </span>torch_sparse<span class="w"> </span>-f<span class="w"> </span>https://data.pyg.org/whl/torch-<span class="si">${</span><span class="nv">TORCH</span><span class="si">}</span>.html
-</code></pre></div></p>
 <h3 id="install-from-source">Install from Source<a class="headerlink" href="#install-from-source" title="Permanent link">&para;</a></h3>
 <p>For contributors or those who want to install from source, follow these steps:</p>
 <ol>
 <li>
 <p>Clone the repository:
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><a href="#__codelineno-3-1"><span class="linenos" data-linenos="1 "></span></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/RManLuo/gfm-rag.git
-<a id="__codelineno-3-2" name="__codelineno-3-2"></a><a href="#__codelineno-3-2"><span class="linenos" data-linenos="2 "></span></a><span class="nb">cd</span><span class="w"> </span>gfm-rag
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><a href="#__codelineno-2-1"><span class="linenos" data-linenos="1 "></span></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/RManLuo/gfm-rag.git
+<a id="__codelineno-2-2" name="__codelineno-2-2"></a><a href="#__codelineno-2-2"><span class="linenos" data-linenos="2 "></span></a><span class="nb">cd</span><span class="w"> </span>gfm-rag
 </code></pre></div></p>
 </li>
 <li>
@@ -924,16 +918,14 @@ Install relevant packages, please make sure to install the correct version of to
 </li>
 <li>
 <p>Create and activate a conda environment:
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a><a href="#__codelineno-4-1"><span class="linenos" data-linenos="1 "></span></a>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>gfmrag<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.12
-<a id="__codelineno-4-2" name="__codelineno-4-2"></a><a href="#__codelineno-4-2"><span class="linenos" data-linenos="2 "></span></a>conda<span class="w"> </span>activate<span class="w"> </span>gfmrag
-<a id="__codelineno-4-3" name="__codelineno-4-3"></a><a href="#__codelineno-4-3"><span class="linenos" data-linenos="3 "></span></a>conda<span class="w"> </span>install<span class="w"> </span>cuda-toolkit<span class="w"> </span>-c<span class="w"> </span>nvidia/label/cuda-12.4.1<span class="w"> </span><span class="c1"># Replace with your desired CUDA version</span>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><a href="#__codelineno-3-1"><span class="linenos" data-linenos="1 "></span></a>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>gfmrag<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.12
+<a id="__codelineno-3-2" name="__codelineno-3-2"></a><a href="#__codelineno-3-2"><span class="linenos" data-linenos="2 "></span></a>conda<span class="w"> </span>activate<span class="w"> </span>gfmrag
+<a id="__codelineno-3-3" name="__codelineno-3-3"></a><a href="#__codelineno-3-3"><span class="linenos" data-linenos="3 "></span></a>conda<span class="w"> </span>install<span class="w"> </span>cuda-toolkit<span class="w"> </span>-c<span class="w"> </span>nvidia/label/cuda-12.4.1<span class="w"> </span><span class="c1"># Replace with your desired CUDA version</span>
 </code></pre></div></p>
 </li>
 <li>
 <p>Install project dependencies:
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1"></a><a href="#__codelineno-5-1"><span class="linenos" data-linenos="1 "></span></a>poetry<span class="w"> </span>install
-<a id="__codelineno-5-2" name="__codelineno-5-2"></a><a href="#__codelineno-5-2"><span class="linenos" data-linenos="2 "></span></a><span class="nv">TORCH</span><span class="o">=</span><span class="k">$(</span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import torch; print(torch.__version__)&quot;</span><span class="k">)</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3"></a><a href="#__codelineno-5-3"><span class="linenos" data-linenos="3 "></span></a>pip<span class="w"> </span>install<span class="w"> </span>torch_scatter<span class="w"> </span>torch_sparse<span class="w"> </span>-f<span class="w"> </span>https://data.pyg.org/whl/torch-<span class="si">${</span><span class="nv">TORCH</span><span class="si">}</span>.html
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a><a href="#__codelineno-4-1"><span class="linenos" data-linenos="1 "></span></a>poetry<span class="w"> </span>install
 </code></pre></div></p>
 </li>
 </ol>
@@ -941,7 +933,7 @@ Install relevant packages, please make sure to install the correct version of to
 <h3 id="llamacpp-integration">Llama.cpp Integration<a class="headerlink" href="#llamacpp-integration" title="Permanent link">&para;</a></h3>
 <p>If you plan to use locally host LLMs via Llama.cpp:</p>
 <p>Install llama-cpp-python:
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1"></a><a href="#__codelineno-6-1"><span class="linenos" data-linenos="1 "></span></a>pip<span class="w"> </span>install<span class="w"> </span>llama-cpp-python
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1"></a><a href="#__codelineno-5-1"><span class="linenos" data-linenos="1 "></span></a>pip<span class="w"> </span>install<span class="w"> </span>llama-cpp-python
 </code></pre></div></p>
 <p>For more information, visit the following resources:
 - <a href="https://python.langchain.com/docs/integrations/chat/llamacpp/">LangChain Llama.cpp</a>
@@ -949,15 +941,15 @@ Install relevant packages, please make sure to install the correct version of to
 <h3 id="ollama-integration">Ollama Integration<a class="headerlink" href="#ollama-integration" title="Permanent link">&para;</a></h3>
 <p>If you plan to use Ollama for hosting LLMs:</p>
 <p>Install Ollama:
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1"></a><a href="#__codelineno-7-1"><span class="linenos" data-linenos="1 "></span></a>pip<span class="w"> </span>install<span class="w"> </span>langchain-ollama
-<a id="__codelineno-7-2" name="__codelineno-7-2"></a><a href="#__codelineno-7-2"><span class="linenos" data-linenos="2 "></span></a>pip<span class="w"> </span>install<span class="w"> </span>ollama
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1"></a><a href="#__codelineno-6-1"><span class="linenos" data-linenos="1 "></span></a>pip<span class="w"> </span>install<span class="w"> </span>langchain-ollama
+<a id="__codelineno-6-2" name="__codelineno-6-2"></a><a href="#__codelineno-6-2"><span class="linenos" data-linenos="2 "></span></a>pip<span class="w"> </span>install<span class="w"> </span>ollama
 </code></pre></div></p>
 <p>For more information, visit the following resources:
 - <a href="https://python.langchain.com/docs/integrations/chat/ollama/">LangChain Ollama</a></p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="cuda-errors-when-compiling-rspmm-kernel">CUDA errors when compiling <code>rspmm</code> kernel<a class="headerlink" href="#cuda-errors-when-compiling-rspmm-kernel" title="Permanent link">&para;</a></h3>
 <p>GFM-RAG requires the <code>nvcc</code> compiler to compile the <code>rspmm</code> kernel. If you encounter errors related to CUDA, make sure you have the CUDA toolkit installed and the <code>nvcc</code> compiler is in your PATH. Meanwhile, make sure your CUDA_HOME variable is set properly to avoid potential compilation errors, eg</p>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1"></a><a href="#__codelineno-8-1"><span class="linenos" data-linenos="1 "></span></a><span class="nb">export</span><span class="w"> </span><span class="nv">CUDA_HOME</span><span class="o">=</span>/usr/local/cuda-12.4
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1"></a><a href="#__codelineno-7-1"><span class="linenos" data-linenos="1 "></span></a><span class="nb">export</span><span class="w"> </span><span class="nv">CUDA_HOME</span><span class="o">=</span>/usr/local/cuda-12.4
 </code></pre></div>
 <p>Usually, if you install CUDA toolkit via conda, the CUDA_HOME variable is set automatically.</p>
 <h3 id="stuck-when-compiling-rspmm-kernel">Stuck when compiling <code>rspmm</code> kernel<a class="headerlink" href="#stuck-when-compiling-rspmm-kernel" title="Permanent link">&para;</a></h3>
