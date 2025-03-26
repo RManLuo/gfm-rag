@@ -112,55 +112,56 @@ class GeneralizedRelationalConv(MessagePassing):
         )
 
         return output
+    # Comment out to use separate message and aggregate functions
 
-    def propagate(self, edge_index, size=None, **kwargs):
-        if kwargs["edge_weight"].requires_grad or self.message_func == "rotate":
-            # the rspmm cuda kernel only works for TransE and DistMult message functions
-            # otherwise we invoke separate message & aggregate functions
-            return super().propagate(edge_index, size, **kwargs)
+    # def propagate(self, edge_index, size=None, **kwargs):
+    #     if kwargs["edge_weight"].requires_grad or self.message_func == "rotate":
+    #         # the rspmm cuda kernel only works for TransE and DistMult message functions
+    #         # otherwise we invoke separate message & aggregate functions
+    #         return super().propagate(edge_index, size, **kwargs)
 
-        for hook in self._propagate_forward_pre_hooks.values():
-            res = hook(self, (edge_index, size, kwargs))
-            if res is not None:
-                edge_index, size, kwargs = res
+    #     for hook in self._propagate_forward_pre_hooks.values():
+    #         res = hook(self, (edge_index, size, kwargs))
+    #         if res is not None:
+    #             edge_index, size, kwargs = res
 
-        # in newer PyG,
-        # __check_input__ -> _check_input()
-        # __collect__ -> _collect()
-        # __fused_user_args__ -> _fuser_user_args
-        size = self._check_input(edge_index, size)
-        coll_dict = self._collect(self._fused_user_args, edge_index, size, kwargs)
+    #     # in newer PyG,
+    #     # __check_input__ -> _check_input()
+    #     # __collect__ -> _collect()
+    #     # __fused_user_args__ -> _fuser_user_args
+    #     size = self._check_input(edge_index, size)
+    #     coll_dict = self._collect(self._fused_user_args, edge_index, size, kwargs)
 
-        # TODO: use from packaging.version import parse as parse_version as by default 2.4 > 2.14 which is wrong
-        # Let's collectively hope there will be PyG 3.0 after 2.9 and not 2.10
-        pyg_version = [int(i) for i in torch_geometric.__version__.split(".")]
-        col_fn = (
-            self.inspector.distribute
-            if pyg_version[1] <= 4
-            else self.inspector.collect_param_data
-        )
+    #     # TODO: use from packaging.version import parse as parse_version as by default 2.4 > 2.14 which is wrong
+    #     # Let's collectively hope there will be PyG 3.0 after 2.9 and not 2.10
+    #     pyg_version = [int(i) for i in torch_geometric.__version__.split(".")]
+    #     col_fn = (
+    #         self.inspector.distribute
+    #         if pyg_version[1] <= 4
+    #         else self.inspector.collect_param_data
+    #     )
 
-        msg_aggr_kwargs = col_fn("message_and_aggregate", coll_dict)
-        for hook in self._message_and_aggregate_forward_pre_hooks.values():
-            res = hook(self, (edge_index, msg_aggr_kwargs))
-            if res is not None:
-                edge_index, msg_aggr_kwargs = res
-        out = self.message_and_aggregate(edge_index, **msg_aggr_kwargs)
-        for hook in self._message_and_aggregate_forward_hooks.values():
-            res = hook(self, (edge_index, msg_aggr_kwargs), out)
-            if res is not None:
-                out = res
+    #     msg_aggr_kwargs = col_fn("message_and_aggregate", coll_dict)
+    #     for hook in self._message_and_aggregate_forward_pre_hooks.values():
+    #         res = hook(self, (edge_index, msg_aggr_kwargs))
+    #         if res is not None:
+    #             edge_index, msg_aggr_kwargs = res
+    #     out = self.message_and_aggregate(edge_index, **msg_aggr_kwargs)
+    #     for hook in self._message_and_aggregate_forward_hooks.values():
+    #         res = hook(self, (edge_index, msg_aggr_kwargs), out)
+    #         if res is not None:
+    #             out = res
 
-        # PyG 2.5 + distribute -> collect_param_data
-        update_kwargs = col_fn("update", coll_dict)
-        out = self.update(out, **update_kwargs)
+    #     # PyG 2.5 + distribute -> collect_param_data
+    #     update_kwargs = col_fn("update", coll_dict)
+    #     out = self.update(out, **update_kwargs)
 
-        for hook in self._propagate_forward_hooks.values():
-            res = hook(self, (edge_index, size, kwargs), out)
-            if res is not None:
-                out = res
+    #     for hook in self._propagate_forward_hooks.values():
+    #         res = hook(self, (edge_index, size, kwargs), out)
+    #         if res is not None:
+    #             out = res
 
-        return out
+    #     return out
 
     def message(self, input_j, relation, boundary, edge_type):
         relation_j = relation.index_select(self.node_dim, edge_type)
