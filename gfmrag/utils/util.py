@@ -40,21 +40,39 @@ def load_model_from_pretrained(path: str) -> tuple[torch.nn.Module, dict]:
     return model, config
 
 
-def get_multi_dataset(cfg: DictConfig) -> dict:
+def init_multi_dataset(cfg: DictConfig, world_size: int, rank: int) -> list:
     """
-    Return the joint KG datasets
+    Pre-rocess the dataset in each rank
+    Args:
+        cfg (DictConfig): The config file
+        world_size (int): The number of GPUs
+        rank (int): The rank of the current GPU
+    Returns:
+        list: The list of feat_dim in each dataset
     """
     data_name_list = []
     # Remove duplicates in the list
     for data_name in cfg.datasets.train_names + cfg.datasets.valid_names:
         if data_name not in data_name_list:
             data_name_list.append(data_name)
+
     dataset_cls = get_class(cfg.datasets._target_)
-    dataset_list = {}
-    for data_name in data_name_list:
-        kg_data = dataset_cls(**cfg.datasets.cfgs, data_name=data_name)
-        dataset_list[data_name] = kg_data
-    return dataset_list
+    # Make sure there is no overlap datasets between different ranks
+    feat_dim_list = []
+    for i, data_name in enumerate(data_name_list):
+        if i % world_size == rank:
+            dataset = dataset_cls(**cfg.datasets.cfgs, data_name=data_name)
+            feat_dim_list.append(dataset.feat_dim)
+    # Gather the feat_dim from all processes
+    if world_size > 1:
+        gathered_lists: list[list[int]] = [[] for _ in range(world_size)]
+        torch.distributed.all_gather_object(gathered_lists, feat_dim_list)
+        # Flatten the list of lists
+        all_feat_dim_list = [item for sublist in gathered_lists for item in sublist]
+    else:
+        all_feat_dim_list = feat_dim_list
+
+    return all_feat_dim_list
 
 
 def get_entities_weight(ent2docs: torch.Tensor) -> torch.Tensor:

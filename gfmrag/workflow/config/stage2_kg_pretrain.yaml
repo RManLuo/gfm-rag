@@ -17,6 +17,8 @@ datasets:
   train_names: # List of training dataset names
     - hotpotqa_train_example
   valid_names: []
+  max_datasets_in_memory: 10 # Number of datasets to load into memory at once
+  data_loading_workers: 4 # Number of workers for data loading
 
 # GFM model configuration
 model:

@@ -21,6 +21,8 @@ datasets:
     - hotpotqa_test
     - musique_test
     - 2wikimultihopqa_test
+  max_datasets_in_memory: 10 # Number of datasets to load into memory at once
+  data_loading_workers: 4 # Number of workers for data loading
 
 # GFM model configuration
 model:

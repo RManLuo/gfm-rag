@@ -72,6 +72,8 @@ def init_distributed_mode(timeout: None = None) -> None:
         torch.cuda.set_device(get_local_rank())
         if timeout is not None:
             timeout = datetime.timedelta(minutes=timeout)
-        dist.init_process_group("nccl", init_method="env://", timeout=timeout)
+        dist.init_process_group(
+            "nccl", init_method="env://", timeout=timeout, device_id=get_device()
+        )
         synchronize()
         setup_for_distributed(get_rank() == 0)

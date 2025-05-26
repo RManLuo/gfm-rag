@@ -1,8 +1,6 @@
-import copy
 import logging
 import math
 import os
-from functools import partial
 from itertools import islice
 
 import hydra
@@ -18,7 +16,9 @@ from torch_geometric.data import Data
 from tqdm import tqdm
 
 from gfmrag import utils
+from gfmrag.datasets import KGDataset
 from gfmrag.ultra import tasks
+from gfmrag.utils import GraphDatasetLoader
 
 # A logger for this file
 logger = logging.getLogger(__name__)
@@ -27,32 +27,63 @@ separator = ">" * 30
 line = "-" * 30
 
 
-def multigraph_collator(batch: list, train_graphs: list) -> tuple[Data, torch.Tensor]:
-    probs = torch.tensor([graph.edge_index.shape[1] for graph in train_graphs]).float()
-    probs /= probs.sum()
-    graph_id = torch.multinomial(probs, 1, replacement=False).item()
+def create_kgc_dataset(
+    dataset: dict[str, KGDataset],
+    batch_size: int,
+    world_size: int,
+    rank: int,
+    is_train: bool = True,
+    shuffle: bool = True,
+    fast_test: None | int = None,
+) -> dict:
+    data_name = dataset["data_name"]
+    graph = dataset["data"][0]
 
-    graph = train_graphs[graph_id]
-    bs = len(batch)
-    edge_mask = torch.randperm(graph.target_edge_index.shape[1])[:bs]
+    # The original triples is used for ranking evaluation
+    val_filtered_data = Data(
+        edge_index=graph.target_edge_index,
+        edge_type=graph.target_edge_type,
+        num_nodes=graph.num_nodes,
+    )
 
-    colleted_batch = torch.cat(
-        [
-            graph.target_edge_index[:, edge_mask],
-            graph.target_edge_type[edge_mask].unsqueeze(0),
-        ]
-    ).t()
-    return graph, colleted_batch
+    # Create a DataLoader for triples
+    if not is_train and fast_test is not None:
+        mask = torch.randperm(graph.target_edge_index.shape[1])[:fast_test]
+        sampled_target_edge_index = graph.target_edge_index[:, mask]
+        sampled_target_edge_type = graph.target_edge_type[mask]
+        triples = torch.cat(
+            [sampled_target_edge_index, sampled_target_edge_type.unsqueeze(0)]
+        ).t()
+    else:
+        triples = torch.cat(
+            [graph.target_edge_index, graph.target_edge_type.unsqueeze(0)]
+        ).t()
+    sampler = torch_data.DistributedSampler(triples, world_size, rank, shuffle=shuffle)
+    data_loader = torch_data.DataLoader(
+        triples,
+        batch_size,
+        sampler=sampler,
+    )
+    val_filtered_data = Data(
+        edge_index=graph.target_edge_index,
+        edge_type=graph.target_edge_type,
+        num_nodes=graph.num_nodes,
+    )
+
+    return {
+        "data_name": data_name,
+        "graph": graph,
+        "val_filtered_data": val_filtered_data,
+        "data_loader": data_loader,
+    }
 
 
 def train_and_validate(
     cfg: DictConfig,
     output_dir: str,
     model: nn.Module,
-    kg_data_list: list[Data],
-    valid_data_list: dict[str, Data],
+    dataset_loader: GraphDatasetLoader,
     device: torch.device,
-    filtered_data_list: list[Data],
     batch_per_epoch: int | None = None,
 ) -> None:
     if cfg.train.num_epoch == 0:
@@ -61,31 +92,7 @@ def train_and_validate(
     world_size = utils.get_world_size()
     rank = utils.get_rank()
 
-    train_triplets = torch.cat(
-        [
-            torch.cat([g.target_edge_index, g.target_edge_type.unsqueeze(0)]).t()
-            for g in kg_data_list
-        ]
-    )
-    if utils.is_main_process():
-        logger.info(
-            f"Number of training KGs: {len(kg_data_list)} Number of training triplets: {train_triplets.shape[0]}"
-        )
-    sampler = torch_data.DistributedSampler(train_triplets, world_size, rank)
-    train_loader = torch_data.DataLoader(
-        train_triplets,
-        cfg.train.batch_size,
-        sampler=sampler,
-        collate_fn=partial(multigraph_collator, train_graphs=kg_data_list),
-    )
-
-    batch_per_epoch = batch_per_epoch or len(train_loader)
-
     optimizer = instantiate(cfg.optimizer, model.parameters())
-
-    num_params = sum(p.numel() for p in model.parameters())
-    logger.warning(line)
-    logger.warning(f"Number of parameters: {num_params}")
 
     if world_size > 1:
         parallel_model = nn.parallel.DistributedDataParallel(model, device_ids=[device])
@@ -101,88 +108,104 @@ def train_and_validate(
         parallel_model.train()
 
         if utils.get_rank() == 0:
-            logger.warning(separator)
-            logger.warning(f"Epoch {epoch} begin")
+            logger.info(separator)
+            logger.info(f"Epoch {epoch} begin")
 
         losses = []
-        sampler.set_epoch(epoch)
-        for batch in tqdm(
-            islice(train_loader, batch_per_epoch),
-            desc=f"Training Batches: {epoch}",
-            total=batch_per_epoch,
-        ):
-            train_graph, batch = batch
-            batch = tasks.negative_sampling(
-                train_graph,
-                batch,
-                cfg.task.num_negative,
-                strict=cfg.task.strict_negative,
+        dataset_loader.set_epoch(
+            epoch
+        )  # Make sure the datasets order is the same across all processes
+        for train_dataset in dataset_loader:
+            train_dataset = create_kgc_dataset(
+                train_dataset,
+                cfg.train.batch_size,
+                world_size,
+                rank,
+                is_train=True,
+                shuffle=True,
             )
-            pred = parallel_model(train_graph, batch)
-            target = torch.zeros_like(pred)
-            target[:, 0] = 1
-            loss = F.binary_cross_entropy_with_logits(pred, target, reduction="none")
-            neg_weight = torch.ones_like(pred)
-            if cfg.task.adversarial_temperature > 0:
-                with torch.no_grad():
-                    neg_weight[:, 1:] = F.softmax(
-                        pred[:, 1:] / cfg.task.adversarial_temperature, dim=-1
-                    )
-            else:
-                neg_weight[:, 1:] = 1 / cfg.task.num_negative
-            loss = (loss * neg_weight).sum(dim=-1) / neg_weight.sum(dim=-1)
-            loss = loss.mean()
+            data_name = train_dataset["data_name"]
+            train_loader = train_dataset["data_loader"]
+            train_loader.sampler.set_epoch(epoch)
+            train_graph = train_dataset["graph"].to(device)
+            for batch in tqdm(
+                islice(train_loader, batch_per_epoch),
+                desc=f"Training Batches: {data_name}: {epoch}",
+                total=batch_per_epoch,
+            ):
+                batch = batch.to(device)
+                batch = tasks.negative_sampling(
+                    train_graph,
+                    batch,
+                    cfg.task.num_negative,
+                    strict=cfg.task.strict_negative,
+                )
+                pred = parallel_model(train_graph, batch)
+                target = torch.zeros_like(pred)
+                target[:, 0] = 1
+                loss = F.binary_cross_entropy_with_logits(
+                    pred, target, reduction="none"
+                )
+                neg_weight = torch.ones_like(pred)
+                if cfg.task.adversarial_temperature > 0:
+                    with torch.no_grad():
+                        neg_weight[:, 1:] = F.softmax(
+                            pred[:, 1:] / cfg.task.adversarial_temperature, dim=-1
+                        )
+                else:
+                    neg_weight[:, 1:] = 1 / cfg.task.num_negative
+                loss = (loss * neg_weight).sum(dim=-1) / neg_weight.sum(dim=-1)
+                loss = loss.mean()
 
-            loss.backward()
-            optimizer.step()
-            optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
 
-            if utils.get_rank() == 0 and batch_id % cfg.train.log_interval == 0:
-                logger.warning(separator)
-                logger.warning(f"binary cross entropy: {loss:g}")
-            losses.append(loss.item())
-            batch_id += 1
+                if utils.get_rank() == 0 and batch_id % cfg.train.log_interval == 0:
+                    logger.info(separator)
+                    logger.info(f"binary cross entropy: {loss:g}")
+                losses.append(loss.item())
+                batch_id += 1
 
         if utils.get_rank() == 0:
             avg_loss = sum(losses) / len(losses)
-            logger.warning(separator)
-            logger.warning(f"Epoch {epoch} end")
-            logger.warning(line)
-            logger.warning(f"average binary cross entropy: {avg_loss:g}")
+            logger.info(separator)
+            logger.info(f"Epoch {epoch} end")
+            logger.info(line)
+            logger.info(f"average binary cross entropy: {avg_loss:g}")
 
         utils.synchronize()
         if rank == 0:
-            logger.warning(separator)
-            logger.warning("Evaluate on valid")
+            logger.info(separator)
+            logger.info("Evaluate on valid")
 
         result = test(
             cfg,
             model,
-            valid_data_list,
-            filtered_data_list=filtered_data_list,
+            dataset_loader,
             device=device,
         )
         if rank == 0:
             if result > best_result:
                 best_result = result
                 best_epoch = epoch
-                logger.warning("Save checkpoint to model_best.pth")
+                logger.info("Save checkpoint to model_best.pth")
                 state = {
                     "model": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                 }
                 torch.save(state, os.path.join(output_dir, "model_best.pth"))
             if not cfg.train.save_best_only:
-                logger.warning(f"Save checkpoint to model_epoch_{epoch}.pth")
+                logger.info(f"Save checkpoint to model_epoch_{epoch}.pth")
                 state = {
                     "model": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                 }
                 torch.save(state, os.path.join(output_dir, f"model_epoch_{epoch}.pth"))
-            logger.warning(f"Best mrr: {best_result:g} at epoch {best_epoch}")
+            logger.info(f"Best mrr: {best_result:g} at epoch {best_epoch}")
     utils.synchronize()
     if rank == 0:
-        logger.warning("Load checkpoint from model_best.pth")
+        logger.info("Load checkpoint from model_best.pth")
     state = torch.load(
         os.path.join(output_dir, "model_best.pth"),
         map_location=device,
@@ -196,9 +219,8 @@ def train_and_validate(
 def test(
     cfg: DictConfig,
     model: nn.Module,
-    test_data_list: dict[str, Data],
+    test_dataset_loader: GraphDatasetLoader,
     device: torch.device,
-    filtered_data_list: list[Data],
     return_metrics: bool = False,
 ) -> float | dict:
     world_size = utils.get_world_size()
@@ -208,17 +230,22 @@ def test(
     # process sequentially
     all_metrics = {}
     all_mrr = []
-    for test_data_tuple, filtered_data in zip(
-        test_data_list.items(), filtered_data_list
-    ):
-        test_data_name, test_data = test_data_tuple
-        test_triplets = torch.cat(
-            [test_data.target_edge_index, test_data.target_edge_type.unsqueeze(0)]
-        ).t()
-        sampler = torch_data.DistributedSampler(test_triplets, world_size, rank)
-        test_loader = torch_data.DataLoader(
-            test_triplets, cfg.train.batch_size, sampler=sampler
+    test_dataset_loader.set_epoch(0)
+    for test_dataset in test_dataset_loader:
+        test_dataset = create_kgc_dataset(
+            test_dataset,
+            cfg.train.batch_size,
+            world_size,
+            rank,
+            is_train=False,
+            shuffle=False,
+            fast_test=cfg.train.fast_test if "fast_test" in cfg.train else None,
         )
+        test_data_name = test_dataset["data_name"]
+        test_graph = test_dataset["graph"].to(device)
+        test_loader = test_dataset["data_loader"]
+        test_loader.sampler.set_epoch(0)
+        filtered_data = test_dataset["val_filtered_data"].to(device)
 
         model.eval()
         rankings = []
@@ -228,12 +255,13 @@ def test(
             [],
         )  # for explicit tail-only evaluation needed for 5 datasets
         for batch in tqdm(test_loader):
-            t_batch, h_batch = tasks.all_negative(test_data, batch)
-            t_pred = model(test_data, t_batch)
-            h_pred = model(test_data, h_batch)
+            batch = batch.to(device)
+            t_batch, h_batch = tasks.all_negative(test_graph, batch)
+            t_pred = model(test_graph, t_batch)
+            h_pred = model(test_graph, h_batch)
 
             if filtered_data is None:
-                t_mask, h_mask = tasks.strict_negative_mask(test_data, batch)
+                t_mask, h_mask = tasks.strict_negative_mask(test_graph, batch)
             else:
                 t_mask, h_mask = tasks.strict_negative_mask(filtered_data, batch)
             pos_h_index, pos_t_index, pos_r_index = batch.t()
@@ -291,7 +319,7 @@ def test(
 
         metrics = {}
         if rank == 0:
-            logger.warning(f"{'-' * 15} Test on {test_data_name} {'-' * 15}")
+            logger.info(f"{'-' * 15} Test on {test_data_name} {'-' * 15}")
             for metric in cfg.task.metric:
                 if "-tail" in metric:
                     _metric_name, direction = metric.split("-")
@@ -331,48 +359,45 @@ def test(
                         score = score.mean()
                     else:
                         score = (_ranking <= threshold).float().mean()
-                logger.warning(f"{metric}: {score:g}")
+                logger.info(f"{metric}: {score:g}")
                 metrics[metric] = score
         mrr = (1 / all_ranking.float()).mean()
         all_mrr.append(mrr)
         all_metrics[test_data_name] = metrics
         if rank == 0:
-            logger.warning(separator)
+            logger.info(separator)
     avg_mrr = sum(all_mrr) / len(all_mrr)
     return avg_mrr if not return_metrics else all_metrics
 
 
 @hydra.main(config_path="config", config_name="stage2_kg_pretrain", version_base=None)
 def main(cfg: DictConfig) -> None:
-    output_dir = HydraConfig.get().runtime.output_dir
     utils.init_distributed_mode(cfg.train.timeout)
     torch.manual_seed(cfg.seed + utils.get_rank())
     if utils.get_rank() == 0:
+        output_dir = HydraConfig.get().runtime.output_dir
         logger.info(f"Config:\n {OmegaConf.to_yaml(cfg)}")
         logger.info(f"Current working directory: {os.getcwd()}")
         logger.info(f"Output directory: {output_dir}")
+        output_dir_list = [output_dir]
+    else:
+        output_dir_list = [None]
+    if utils.get_world_size() > 1:
+        dist.broadcast_object_list(
+            output_dir_list, src=0
+        )  # Use the output dir from rank 0
+    output_dir = output_dir_list[0]
 
-    datasets = utils.get_multi_dataset(cfg)
-    kg_datasets = {
-        k: v[0] for k, v in datasets.items()
-    }  # Only use the first element (KG) for training
-
-    if utils.is_main_process():
-        for name, g in kg_datasets.items():
-            # Show the number of entities, relations, and triples in the dataset
-            # The number of relations is divided by 2 because the dataset stores both the forward and backward relations
-            logger.info(
-                f"Dataset {name}: #Entities: {g.num_nodes}, #Relations: {g.num_relations // 2}, #Triples: {len(g.target_edge_type)}"
-            )
-
-    device = utils.get_device()
-    kg_data_list = [g.to(device) for g in kg_datasets.values()]
-
-    rel_emb_dim = {kg.rel_emb.shape[-1] for kg in kg_data_list}
+    # Initialize the datasets in the each process, make sure they are processed
+    rel_emb_dim_list = utils.init_multi_dataset(
+        cfg, utils.get_world_size(), utils.get_rank()
+    )
+    rel_emb_dim = set(rel_emb_dim_list)
     assert len(rel_emb_dim) == 1, (
         "All datasets should have the same relation embedding dimension"
     )
 
+    device = utils.get_device()
     model = instantiate(cfg.model, rel_emb_dim=rel_emb_dim.pop())
 
     if "checkpoint" in cfg.train and cfg.train.checkpoint is not None:
@@ -385,52 +410,39 @@ def main(cfg: DictConfig) -> None:
 
     model = model.to(device)
 
-    val_filtered_data = [
-        Data(
-            edge_index=g.target_edge_index,
-            edge_type=g.target_edge_type,
-            num_nodes=g.num_nodes,
-        ).to(device)
-        for g in kg_data_list
-    ]
+    if utils.get_rank() == 0:
+        num_params = sum(p.numel() for p in model.parameters())
+        logger.info(line)
+        logger.info(f"Number of parameters: {num_params}")
 
-    # By default, we use the full validation set
-    if "fast_test" in cfg.train:
-        num_val_edges = cfg.train.fast_test
-        if utils.is_main_process():
-            logger.info(f"Fast evaluation on {num_val_edges} samples in validation")
-        short_valid = {vn: copy.deepcopy(vd) for vn, vd in kg_datasets.items()}
-        for graph in short_valid.values():
-            mask = torch.randperm(graph.target_edge_index.shape[1])[:num_val_edges]
-            graph.target_edge_index = graph.target_edge_index[:, mask]
-            graph.target_edge_type = graph.target_edge_type[mask]
-
-        valid_data_list = {sn: sv.to(device) for sn, sv in short_valid.items()}
-    else:
-        valid_data_list = {vn: vd.to(device) for vn, vd in kg_datasets.items()}
+    train_dataset_loader = GraphDatasetLoader(
+        cfg.datasets,
+        cfg.datasets.train_names,
+        max_datasets_in_memory=cfg.datasets.max_datasets_in_memory,
+        data_loading_workers=cfg.datasets.data_loading_workers,
+    )
 
     train_and_validate(
         cfg,
         output_dir,
         model,
-        kg_data_list=kg_data_list,
-        valid_data_list=valid_data_list,
-        filtered_data_list=val_filtered_data,
+        dataset_loader=train_dataset_loader,
         device=device,
         batch_per_epoch=cfg.train.batch_per_epoch,
     )
 
     if utils.get_rank() == 0:
-        logger.warning(separator)
-        logger.warning("Evaluate on valid")
-    test(
-        cfg, model, valid_data_list, filtered_data_list=val_filtered_data, device=device
-    )
+        logger.info(separator)
+        logger.info("Evaluate on valid")
+    test(cfg, model, train_dataset_loader, device=device)
 
     # Save the model into the format for QA inference
     if utils.is_main_process() and cfg.train.save_pretrained:
         pre_trained_dir = os.path.join(output_dir, "pretrained")
         utils.save_model_to_pretrained(model, cfg, pre_trained_dir)
+
+    # Shutdown the dataset loaders
+    train_dataset_loader.shutdown()
 
     utils.synchronize()
     utils.cleanup()

@@ -14,8 +14,7 @@ from torch_geometric.data.dataset import _repr, files_exist
 
 from gfmrag.kg_construction.utils import KG_DELIMITER
 from gfmrag.text_emb_models import BaseTextEmbModel
-from gfmrag.ultra.tasks import build_relation_graph
-from gfmrag.utils import get_rank, is_main_process, synchronize
+from gfmrag.utils import get_rank
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +67,7 @@ class KGDataset(InMemoryDataset):
         self.text_emb_model_cfgs = text_emb_model_cfgs
         super().__init__(root, None, None)
         self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
+        self.feat_dim = self._data.rel_emb.size(1)
 
     @property
     def raw_file_names(self) -> list:
@@ -114,51 +114,45 @@ class KGDataset(InMemoryDataset):
         }
 
     def _process(self) -> None:
-        if is_main_process():
-            logger.info(f"Processing KG dataset {self.name} at rank {get_rank()}")
-            f = osp.join(self.processed_dir, "pre_transform.pt")
-            if osp.exists(f) and torch.load(f, weights_only=False) != _repr(
-                self.pre_transform
-            ):
-                warnings.warn(  # noqa:B028
-                    f"The `pre_transform` argument differs from the one used in "
-                    f"the pre-processed version of this dataset. If you want to "
-                    f"make use of another pre-processing technique, make sure to "
-                    f"delete '{self.processed_dir}' first",
-                    stacklevel=1,
-                )
-
-            f = osp.join(self.processed_dir, "pre_filter.pt")
-            if osp.exists(f) and torch.load(f, weights_only=False) != _repr(
-                self.pre_filter
-            ):
-                warnings.warn(
-                    f"The `pre_filter` argument differs from the one used in "
-                    f"the pre-processed version of this dataset. If you want to "
-                    f"make use of another pre-fitering technique, make sure to "
-                    f"delete '{self.processed_dir}' first",
-                    stacklevel=1,
-                )
-
-            if self.force_rebuild or not files_exist(self.processed_paths):
-                if self.log and "pytest" not in sys.modules:
-                    print("Processing...", file=sys.stderr)
-
-                makedirs(self.processed_dir)
-                self.process()
-
-                path = osp.join(self.processed_dir, "pre_transform.pt")
-                torch.save(_repr(self.pre_transform), path)
-                path = osp.join(self.processed_dir, "pre_filter.pt")
-                torch.save(_repr(self.pre_filter), path)
-
-                if self.log and "pytest" not in sys.modules:
-                    print("Done!", file=sys.stderr)
-        else:
-            logger.info(
-                f"Rank [{get_rank()}]: Waiting for main process to finish processing KG dataset {self.name}"
+        f = osp.join(self.processed_dir, "pre_transform.pt")
+        if osp.exists(f) and torch.load(f, weights_only=False) != _repr(
+            self.pre_transform
+        ):
+            warnings.warn(  # noqa:B028
+                f"The `pre_transform` argument differs from the one used in "
+                f"the pre-processed version of this dataset. If you want to "
+                f"make use of another pre-processing technique, make sure to "
+                f"delete '{self.processed_dir}' first",
+                stacklevel=1,
             )
-        synchronize()
+
+        f = osp.join(self.processed_dir, "pre_filter.pt")
+        if osp.exists(f) and torch.load(f, weights_only=False) != _repr(
+            self.pre_filter
+        ):
+            warnings.warn(
+                f"The `pre_filter` argument differs from the one used in "
+                f"the pre-processed version of this dataset. If you want to "
+                f"make use of another pre-fitering technique, make sure to "
+                f"delete '{self.processed_dir}' first",
+                stacklevel=1,
+            )
+
+        if self.force_rebuild or not files_exist(self.processed_paths):
+            logger.warning(f"Processing KG dataset {self.name} at rank {get_rank()}")
+            if self.log and "pytest" not in sys.modules:
+                print("Processing...", file=sys.stderr)
+
+            makedirs(self.processed_dir)
+            self.process()
+
+            path = osp.join(self.processed_dir, "pre_transform.pt")
+            torch.save(_repr(self.pre_transform), path)
+            path = osp.join(self.processed_dir, "pre_filter.pt")
+            torch.save(_repr(self.pre_filter), path)
+
+            if self.log and "pytest" not in sys.modules:
+                print("Done!", file=sys.stderr)
 
     def process(self) -> None:
         """Process the knowledge graph dataset.
@@ -237,9 +231,6 @@ class KGDataset(InMemoryDataset):
             num_relations=num_relations * 2,
             rel_emb=rel_emb,
         )
-
-        # build graphs of relations
-        kg_data = build_relation_graph(kg_data)
 
         torch.save((self.collate([kg_data])), self.processed_paths[0])
 

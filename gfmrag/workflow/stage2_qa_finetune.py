@@ -8,13 +8,16 @@ import torch
 from hydra.core.hydra_config import HydraConfig
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
+from torch import distributed as dist
 from torch import nn
 from torch.nn import functional as F  # noqa:N812
 from torch.utils import data as torch_data
 from tqdm import tqdm
 
 from gfmrag import utils
+from gfmrag.datasets import QADataset
 from gfmrag.ultra import query_utils
+from gfmrag.utils import GraphDatasetLoader
 
 # A logger for this file
 logger = logging.getLogger(__name__)
@@ -23,12 +26,49 @@ separator = ">" * 30
 line = "-" * 30
 
 
+def create_qa_dataloader(
+    dataset: dict[str, QADataset],
+    batch_size: int,
+    world_size: int,
+    rank: int,
+    is_train: bool = True,
+    shuffle: bool = True,
+) -> dict:
+    """
+    Create a dataloader for the QA dataset.
+    """
+    data_name = dataset["data_name"]
+    qa_data = dataset["data"]
+    train_data, valid_data = qa_data._data
+    data = train_data if is_train else valid_data
+
+    sampler = torch_data.DistributedSampler(
+        data,
+        num_replicas=world_size,
+        rank=rank,
+        shuffle=shuffle,
+    )
+    data_loader = torch_data.DataLoader(
+        data,
+        batch_size=batch_size,
+        sampler=sampler,
+    )
+
+    # Return data
+    return {
+        "data_name": data_name,
+        "data_loader": data_loader,
+        "graph": qa_data.kg,
+        "ent2docs": qa_data.ent2docs,
+    }
+
+
 def train_and_validate(
     cfg: DictConfig,
     output_dir: str,
     model: nn.Module,
-    train_datasets: dict,
-    valid_datasets: dict,
+    train_dataset_loader: GraphDatasetLoader,
+    valid_dataset_loader: GraphDatasetLoader,
     device: torch.device,
     batch_per_epoch: int | None = None,
 ) -> None:
@@ -38,24 +78,7 @@ def train_and_validate(
     world_size = utils.get_world_size()
     rank = utils.get_rank()
 
-    # Create dataloader for each dataset
-    train_dataloader_dict = {}
-    for data_name, dataset in train_datasets.items():
-        train_data = dataset["data"]
-        sampler = torch_data.DistributedSampler(train_data, world_size, rank)
-        train_loader = torch_data.DataLoader(
-            train_data, cfg.train.batch_size, sampler=sampler
-        )
-        train_dataloader_dict[data_name] = train_loader
-    data_name_list = list(train_dataloader_dict.keys())
-
-    batch_per_epoch = batch_per_epoch or len(train_loader)
-
     optimizer = instantiate(cfg.optimizer, model.parameters())
-
-    num_params = sum(p.numel() for p in model.parameters())
-    logger.warning(line)
-    logger.warning(f"Number of parameters: {num_params}")
 
     # Initialize Losses
     loss_fn_list = []
@@ -86,28 +109,35 @@ def train_and_validate(
         parallel_model.train()
 
         if utils.get_rank() == 0:
-            logger.warning(separator)
-            logger.warning(f"Epoch {epoch} begin")
+            logger.info(separator)
+            logger.info(f"Epoch {epoch} begin")
 
         losses: dict[str, list] = {loss_dict["name"]: [] for loss_dict in loss_fn_list}
         losses["loss"] = []
-
-        for dataloader in train_dataloader_dict.values():
-            dataloader.sampler.set_epoch(epoch)
-        # np.random.seed(epoch)  # TODO: should we use the same dataloader for all processes?
-        shuffled_data_name_list = np.random.permutation(
-            data_name_list
-        )  # Shuffle the dataloaders
-        for data_name in shuffled_data_name_list:
-            train_loader = train_dataloader_dict[data_name]
-            graph = train_datasets[data_name]["graph"]
-            ent2docs = train_datasets[data_name]["ent2docs"]
+        train_dataset_loader.set_epoch(
+            epoch
+        )  # Make sure the datasets order is the same across all processes
+        for train_dataset in train_dataset_loader:
+            train_dataset = create_qa_dataloader(
+                train_dataset,
+                cfg.train.batch_size,
+                world_size,
+                rank,
+                is_train=True,
+                shuffle=True,
+            )
+            train_loader = train_dataset["data_loader"]
+            train_loader.sampler.set_epoch(epoch)
+            data_name = train_dataset["data_name"]
+            graph = train_dataset["graph"].to(device)
+            ent2docs = train_dataset["ent2docs"].to(device)
             entities_weight = None
             if cfg.train.init_entities_weight:
                 entities_weight = utils.get_entities_weight(ent2docs)
+            batch_per_epoch = batch_per_epoch or len(train_loader)
             for batch in tqdm(
                 islice(train_loader, batch_per_epoch),
-                desc=f"Training Batches: {epoch}",
+                desc=f"Training Batches: {data_name}: {epoch}",
                 total=batch_per_epoch,
                 disable=not utils.is_main_process(),
             ):
@@ -140,17 +170,17 @@ def train_and_validate(
                     losses[loss_log].append(tmp_losses[loss_log])
 
                 if utils.get_rank() == 0 and batch_id % cfg.train.log_interval == 0:
-                    logger.warning(separator)
+                    logger.info(separator)
                     for loss_log in tmp_losses:
-                        logger.warning(f"{loss_log}: {tmp_losses[loss_log]:g}")
+                        logger.info(f"{loss_log}: {tmp_losses[loss_log]:g}")
                 batch_id += 1
 
         if utils.get_rank() == 0:
-            logger.warning(separator)
-            logger.warning(f"Epoch {epoch} end")
-            logger.warning(line)
+            logger.info(separator)
+            logger.info(f"Epoch {epoch} end")
+            logger.info(line)
             for loss_log in losses:
-                logger.warning(
+                logger.info(
                     f"Avg: {loss_log}: {sum(losses[loss_log]) / len(losses[loss_log]):g}"
                 )
 
@@ -158,9 +188,9 @@ def train_and_validate(
 
         if cfg.train.do_eval:
             if rank == 0:
-                logger.warning(separator)
-                logger.warning("Evaluate on valid")
-            result = test(cfg, model, valid_datasets, device=device)
+                logger.info(separator)
+                logger.info("Evaluate on valid")
+            result = test(cfg, model, valid_dataset_loader, device=device)
         else:
             result = float("inf")
             best_result = float("-inf")
@@ -168,37 +198,37 @@ def train_and_validate(
             if result > best_result:
                 best_result = result
                 best_epoch = epoch
-                logger.warning("Save checkpoint to model_best.pth")
+                logger.info("Save checkpoint to model_best.pth")
                 state = {
                     "model": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                 }
                 torch.save(state, os.path.join(output_dir, "model_best.pth"))
             if not cfg.train.save_best_only:
-                logger.warning(f"Save checkpoint to model_epoch_{epoch}.pth")
+                logger.info(f"Save checkpoint to model_epoch_{epoch}.pth")
                 state = {
                     "model": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                 }
                 torch.save(state, os.path.join(output_dir, f"model_epoch_{epoch}.pth"))
-            logger.warning(f"Best mrr: {best_result:g} at epoch {best_epoch}")
+            logger.info(f"Best mrr: {best_result:g} at epoch {best_epoch}")
 
     if rank == 0:
-        logger.warning("Load checkpoint from model_best.pth")
+        logger.info("Load checkpoint from model_best.pth")
+    utils.synchronize()
     state = torch.load(
         os.path.join(output_dir, "model_best.pth"),
         map_location=device,
         weights_only=False,
     )
     model.load_state_dict(state["model"])
-    utils.synchronize()
 
 
 @torch.no_grad()
 def test(
     cfg: DictConfig,
     model: nn.Module,
-    test_datasets: dict,
+    test_dataset_loader: GraphDatasetLoader,
     device: torch.device,
     return_metrics: bool = False,
 ) -> float | dict:
@@ -208,14 +238,20 @@ def test(
     # process sequentially of test datasets
     all_metrics = {}
     all_mrr = []
-    for data_name, q_data in test_datasets.items():
-        test_data = q_data["data"]
-        graph = q_data["graph"]
-        ent2docs = q_data["ent2docs"]
-        sampler = torch_data.DistributedSampler(test_data, world_size, rank)
-        test_loader = torch_data.DataLoader(
-            test_data, cfg.train.batch_size, sampler=sampler
+    for dataset in test_dataset_loader:
+        dataset = create_qa_dataloader(
+            dataset,
+            cfg.train.batch_size,
+            world_size,
+            rank,
+            is_train=False,
+            shuffle=False,
         )
+        test_loader = dataset["data_loader"]
+        test_loader.sampler.set_epoch(0)
+        data_name = dataset["data_name"]
+        graph = dataset["graph"].to(device)
+        ent2docs = dataset["ent2docs"].to(device)
 
         model.eval()
         ent_preds = []
@@ -288,7 +324,7 @@ def test(
             for key, value in doc_metrics.items():
                 metrics[f"doc_{key}"] = value
             metrics["mrr"] = ent_metrics["mrr"]
-            logger.warning(f"{'-' * 15} Test on {data_name} {'-' * 15}")
+            logger.info(f"{'-' * 15} Test on {data_name} {'-' * 15}")
             query_utils.print_metrics(metrics, logger)
         else:
             metrics["mrr"] = ent_metrics["mrr"]
@@ -301,46 +337,37 @@ def test(
 
 @hydra.main(config_path="config", config_name="stage2_qa_finetune", version_base=None)
 def main(cfg: DictConfig) -> None:
-    output_dir = HydraConfig.get().runtime.output_dir
     utils.init_distributed_mode(cfg.train.timeout)
     torch.manual_seed(cfg.seed + utils.get_rank())
     if utils.get_rank() == 0:
+        output_dir = HydraConfig.get().runtime.output_dir
         logger.info(f"Config:\n {OmegaConf.to_yaml(cfg)}")
         logger.info(f"Current working directory: {os.getcwd()}")
         logger.info(f"Output directory: {output_dir}")
+        output_dir_list = [output_dir]
+    else:
+        output_dir_list = [None]
+    if utils.get_world_size() > 1:
+        dist.broadcast_object_list(
+            output_dir_list, src=0
+        )  # Use the output dir from rank 0
+    output_dir = output_dir_list[0]
 
-    qa_datasets = utils.get_multi_dataset(cfg)
-    device = utils.get_device()
-
-    rel_emb_dim = {qa_data.rel_emb_dim for qa_data in qa_datasets.values()}
+    # Initialize the datasets in the each process, make sure they are processed
+    rel_emb_dim_list = utils.init_multi_dataset(
+        cfg, utils.get_world_size(), utils.get_rank()
+    )
+    rel_emb_dim = set(rel_emb_dim_list)
     assert len(rel_emb_dim) == 1, (
         "All datasets should have the same relation embedding dimension"
     )
+    if utils.get_rank() == 0:
+        logger.info(
+            f"Datasets {cfg.datasets.train_names} and {cfg.datasets.valid_names} initialized"
+        )
 
+    device = utils.get_device()
     model = instantiate(cfg.model, rel_emb_dim=rel_emb_dim.pop())
-
-    train_datasets = {}
-    valid_datasets = {}
-
-    for data_name, qa_data in qa_datasets.items():
-        if data_name not in cfg.datasets.train_names + cfg.datasets.valid_names:
-            raise ValueError(f"Unknown data name: {data_name}")
-
-        train_data, valid_data = qa_data._data
-        graph = qa_data.kg.to(device)
-        ent2docs = qa_data.ent2docs.to(device)
-        if data_name in cfg.datasets.train_names:
-            train_datasets[data_name] = {
-                "data": train_data,
-                "graph": graph,
-                "ent2docs": ent2docs,
-            }
-        if data_name in cfg.datasets.valid_names:
-            valid_datasets[data_name] = {
-                "data": valid_data,
-                "graph": graph,
-                "ent2docs": ent2docs,
-            }
 
     if "checkpoint" in cfg.train and cfg.train.checkpoint is not None:
         if os.path.exists(cfg.train.checkpoint):
@@ -351,21 +378,40 @@ def main(cfg: DictConfig) -> None:
             model, _ = utils.load_model_from_pretrained(cfg.train.checkpoint)
 
     model = model.to(device)
+    if utils.get_rank() == 0:
+        num_params = sum(p.numel() for p in model.parameters())
+        logger.info(line)
+        logger.info(f"Number of parameters: {num_params}")
+
+    train_dataset_loader = GraphDatasetLoader(
+        cfg.datasets,
+        cfg.datasets.train_names,
+        max_datasets_in_memory=cfg.datasets.max_datasets_in_memory,
+        data_loading_workers=cfg.datasets.data_loading_workers,
+    )
+    valid_dataset_loader = GraphDatasetLoader(
+        cfg.datasets,
+        cfg.datasets.valid_names,
+        shuffle=False,
+        max_datasets_in_memory=cfg.datasets.max_datasets_in_memory,
+        data_loading_workers=cfg.datasets.data_loading_workers,
+    )
+
     train_and_validate(
         cfg,
         output_dir,
         model,
-        train_datasets,
-        valid_datasets,
+        train_dataset_loader,
+        valid_dataset_loader,
         device=device,
         batch_per_epoch=cfg.train.batch_per_epoch,
     )
 
     if cfg.train.do_eval:
         if utils.get_rank() == 0:
-            logger.warning(separator)
-            logger.warning("Evaluate on valid")
-        test(cfg, model, valid_datasets, device=device)
+            logger.info(separator)
+            logger.info("Evaluate on valid")
+        test(cfg, model, valid_dataset_loader, device=device)
 
     # Save the model into the format for QA inference
     if (
@@ -375,6 +421,10 @@ def main(cfg: DictConfig) -> None:
     ):
         pre_trained_dir = os.path.join(output_dir, "pretrained")
         utils.save_model_to_pretrained(model, cfg, pre_trained_dir)
+
+    # Shutdown the dataset loaders
+    train_dataset_loader.shutdown()
+    valid_dataset_loader.shutdown()
 
     utils.synchronize()
     utils.cleanup()
