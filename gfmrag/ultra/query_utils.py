@@ -500,7 +500,7 @@ def cat(objs, *args, **kwargs):
 def print_metrics(metrics, logger, roundto=4):
     order = sorted(list(metrics.keys()))
     for key in order:
-        logger.warning(f"{key}: {round(metrics[key], roundto)}")
+        logger.info(f"{key}: {round(metrics[key], roundto)}")
 
 
 def print_metrics_to_file(metrics, results_file, roundto=4):
