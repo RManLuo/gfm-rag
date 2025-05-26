@@ -17,6 +17,8 @@ datasets:
   train_names: # List of training dataset names
     - hotpotqa_train_example
   valid_names: []
+  init_datasets: True # Whether to pre-process datasets at the beginning, if true, it will pre-process all datasets in the train_names and valid_names at the beginning
+  feat_dim: 768 # Feature dimension for the embeddings, must be given if init_datasets is False
   max_datasets_in_memory: 10 # Number of datasets to load into memory at once
   data_loading_workers: 4 # Number of workers for data loading
 

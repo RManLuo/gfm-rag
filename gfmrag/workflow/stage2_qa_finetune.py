@@ -354,13 +354,19 @@ def main(cfg: DictConfig) -> None:
     output_dir = output_dir_list[0]
 
     # Initialize the datasets in the each process, make sure they are processed
-    rel_emb_dim_list = utils.init_multi_dataset(
-        cfg, utils.get_world_size(), utils.get_rank()
-    )
-    rel_emb_dim = set(rel_emb_dim_list)
-    assert len(rel_emb_dim) == 1, (
-        "All datasets should have the same relation embedding dimension"
-    )
+    if cfg.datasets.init_datasets:
+        rel_emb_dim_list = utils.init_multi_dataset(
+            cfg, utils.get_world_size(), utils.get_rank()
+        )
+        rel_emb_dim = set(rel_emb_dim_list)
+        assert len(rel_emb_dim) == 1, (
+            "All datasets should have the same relation embedding dimension"
+        )
+    else:
+        assert cfg.datasets.feat_dim is not None, (
+            "If datasets.init_datasets is False, cfg.datasets.feat_dim must be set"
+        )
+        rel_emb_dim = {cfg.datasets.feat_dim}
     if utils.get_rank() == 0:
         logger.info(
             f"Datasets {cfg.datasets.train_names} and {cfg.datasets.valid_names} initialized"
