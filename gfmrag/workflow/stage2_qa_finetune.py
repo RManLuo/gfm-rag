@@ -79,6 +79,24 @@ def train_and_validate(
     rank = utils.get_rank()
 
     optimizer = instantiate(cfg.optimizer, model.parameters())
+    start_epoch = 4
+    # Load optimizer state and epoch if exists
+    if "checkpoint" in cfg.train and cfg.train.checkpoint is not None:
+        if os.path.exists(cfg.train.checkpoint):
+            state = torch.load(cfg.train.checkpoint, map_location="cpu")
+            if "optimizer" in state:
+                optimizer.load_state_dict(state["optimizer"])
+            else:
+                logger.warning(
+                    f"Optimizer state not found in {cfg.train.checkpoint}, using default optimizer."
+                )
+            if "epoch" in state:
+                start_epoch = state["epoch"]
+                logger.warning(f"Resuming training from epoch {start_epoch}.")
+        else:
+            logger.warning(
+                f"Checkpoint {cfg.train.checkpoint} does not exist, using default optimizer."
+            )
 
     # Initialize Losses
     loss_fn_list = []
@@ -104,7 +122,7 @@ def train_and_validate(
     best_epoch = -1
 
     batch_id = 0
-    for i in range(0, cfg.train.num_epoch):
+    for i in range(start_epoch, cfg.train.num_epoch):
         epoch = i + 1
         parallel_model.train()
 
@@ -200,6 +218,7 @@ def train_and_validate(
                 best_epoch = epoch
                 logger.info("Save checkpoint to model_best.pth")
                 state = {
+                    "epoch": epoch,
                     "model": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                 }
@@ -207,6 +226,7 @@ def train_and_validate(
             if not cfg.train.save_best_only:
                 logger.info(f"Save checkpoint to model_epoch_{epoch}.pth")
                 state = {
+                    "epoch": epoch,
                     "model": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                 }
