@@ -513,6 +513,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#020" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#013" class="md-nav__link">
     <span class="md-ellipsis">
       0.1.3
@@ -743,6 +752,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#020" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#013" class="md-nav__link">
     <span class="md-ellipsis">
       0.1.3
@@ -797,6 +815,55 @@
 
 
 <h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
+<h2 id="020">0.2.0<a class="headerlink" href="#020" title="Permanent link">&para;</a></h2>
+<ul>
+<li>A new version of <a href="https://huggingface.co/rmanluo/GFM-RAG-8M/commit/62cf6398c5875af1c4e04bbb35e4c3b21904d4ac">GFM-RAG (2025-06-03)</a> which is pre-trained on 286 KGs.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>HotpotQA</th>
+<th></th>
+<th>MuSiQue</th>
+<th></th>
+<th>2Wiki</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Models</td>
+<td>R@2</td>
+<td>R@5</td>
+<td>R@2</td>
+<td>R@5</td>
+<td>R@2</td>
+<td>R@5</td>
+</tr>
+<tr>
+<td>GFM-RAG (2025-02-06)</td>
+<td>78.3</td>
+<td>87.1</td>
+<td>47.8</td>
+<td>58.2</td>
+<td>89.1</td>
+<td>92.8</td>
+</tr>
+<tr>
+<td>GFM-RAG (2025-06-03)</td>
+<td><strong>81.5</strong></td>
+<td><strong>89.6</strong></td>
+<td><strong>50.0</strong></td>
+<td><strong>59.3</strong></td>
+<td><strong>90.1</strong></td>
+<td><strong>93.6</strong></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Add on-demand data loader to support training on large-scale datasets.</li>
+</ul>
 <h2 id="013">0.1.3<a class="headerlink" href="#013" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Add NVIDIA backend for LLM api</li>
