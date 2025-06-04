@@ -166,7 +166,12 @@ def train_and_validate(
                 target = batch["supporting_entities_masks"]  # supporting_entities_mask
 
                 if has_doc_loss:
-                    doc_pred = torch.sparse.mm(pred, ent2docs)
+                    # If ent2docs is a sparse inverted index, use torch.sparse.mm to get the document predictions
+                    if isinstance(ent2docs, torch.Tensor) and ent2docs.is_sparse:
+                        doc_pred = torch.sparse.mm(pred, ent2docs)
+                    # Document entity predictions
+                    else:
+                        doc_pred = pred[:, ent2docs]  # torch.sparse.mm(pred, ent2docs)
                     doc_target = batch["supporting_docs_masks"]  # supporting_docs_mask
 
                 loss = 0

@@ -109,3 +109,22 @@ class IDFWeightedTopKRanker(BaseDocRanker):
         masked_ent_pred.scatter_(1, top_k_ent_pred.indices, idf_weight)
         doc_pred = torch.sparse.mm(masked_ent_pred, self.ent2doc)
         return doc_pred
+
+
+class DocEntRanker(BaseDocRanker):
+    """
+    Documents are part of the entity prediction, and the ranker is used to rank documents based on entity prediction.
+    """
+
+    def __call__(self, ent_pred: torch.Tensor) -> torch.Tensor:
+        """
+        Rank documents based on entity prediction
+
+        Args:
+            ent_pred (torch.Tensor): Entity prediction, shape (batch_size, n_entities)
+
+        Returns:
+            torch.Tensor: Document ranks, shape (batch_size, n_docs)
+        """
+        doc_pred = ent_pred[:, self.ent2doc]
+        return doc_pred

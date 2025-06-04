@@ -1,4 +1,4 @@
-from .kg_dataset import KGDataset
-from .qa_dataset import QADataset
+from .kg_dataset import KGDataset, KGDatasetWithDocuments
+from .qa_dataset import QADataset, QADatasetWithDocuments
 
-__all__ = ["KGDataset", "QADataset"]
+__all__ = ["KGDataset", "KGDatasetWithDocuments", "QADataset", "QADatasetWithDocuments"]

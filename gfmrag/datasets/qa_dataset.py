@@ -14,7 +14,7 @@ from torch.utils import data as torch_data
 from torch_geometric.data import InMemoryDataset, makedirs
 from torch_geometric.data.dataset import _repr, files_exist
 
-from gfmrag.datasets.kg_dataset import KGDataset
+from gfmrag.datasets.kg_dataset import KGDataset, KGDatasetWithDocuments
 from gfmrag.text_emb_models import BaseTextEmbModel
 from gfmrag.utils import get_rank
 from gfmrag.utils.qa_utils import entities_to_mask
@@ -58,6 +58,8 @@ class QADataset(InMemoryDataset):
         The dataset processes raw JSON files and creates PyTorch tensors for efficient training.
     """
 
+    KG_DATASET_CLASS = KGDataset
+
     def __init__(
         self,
         root: str,
@@ -67,16 +69,18 @@ class QADataset(InMemoryDataset):
     ):
         self.name = data_name
         self.force_rebuild = force_rebuild
-        self.text_emb_model_cfgs = text_emb_model_cfgs
-        # Get fingerprint of the model configuration
+        cfgs = OmegaConf.to_container(text_emb_model_cfgs, resolve=True)
+        cfgs.pop(
+            "batch_size", None
+        )  # Remove batch_size from the config as it is not needed for the fingerprint
         self.fingerprint = hashlib.md5(
-            json.dumps(
-                OmegaConf.to_container(text_emb_model_cfgs, resolve=True)
-            ).encode()
+            (self.__class__.__name__ + json.dumps(cfgs)).encode()
         ).hexdigest()
-        kg = KGDataset(root, data_name, text_emb_model_cfgs, force_rebuild)
+        self.text_emb_model_cfgs = text_emb_model_cfgs
+        kg = self.KG_DATASET_CLASS(root, data_name, text_emb_model_cfgs, force_rebuild)
         self.kg = kg[0]  # The first element of the KGDataset is the Graph
         self.feat_dim = kg.feat_dim
+        self.kg_dir = kg.processed_dir
         super().__init__(root, None, None)
         self.data = torch.load(self.processed_paths[0], weights_only=False)
         self.load_property()
@@ -110,9 +114,9 @@ class QADataset(InMemoryDataset):
         """
         Load necessary properties from the KG dataset.
         """
-        with open(os.path.join(self.processed_dir, "ent2id.json")) as fin:
+        with open(os.path.join(self.kg_dir, "ent2id.json")) as fin:
             self.ent2id = json.load(fin)
-        with open(os.path.join(self.processed_dir, "rel2id.json")) as fin:
+        with open(os.path.join(self.kg_dir, "rel2id.json")) as fin:
             self.rel2id = json.load(fin)
         with open(
             os.path.join(str(self.root), str(self.name), "raw", "dataset_corpus.json")
@@ -208,9 +212,9 @@ class QADataset(InMemoryDataset):
         Returns:
             None
         """
-        with open(os.path.join(self.processed_dir, "ent2id.json")) as fin:
+        with open(os.path.join(self.kg_dir, "ent2id.json")) as fin:
             self.ent2id = json.load(fin)
-        with open(os.path.join(self.processed_dir, "rel2id.json")) as fin:
+        with open(os.path.join(self.kg_dir, "rel2id.json")) as fin:
             self.rel2id = json.load(fin)
         with open(os.path.join(self.raw_dir, "document2entities.json")) as fin:
             self.doc2entities = json.load(fin)
@@ -289,6 +293,185 @@ class QADataset(InMemoryDataset):
         # Generate question embeddings
         logger.info("Generating question embeddings")
         text_emb_model: BaseTextEmbModel = instantiate(self.text_emb_model_cfgs)
+        question_embeddings = text_emb_model.encode(
+            questions,
+            is_query=True,
+        ).cpu()
+        question_entities_masks = torch.stack(question_entities_masks)
+        supporting_entities_masks = torch.stack(supporting_entities_masks)
+        supporting_docs_masks = torch.stack(supporting_docs_masks)
+        sample_id = torch.tensor(sample_id, dtype=torch.long)
+
+        dataset = datasets.Dataset.from_dict(
+            {
+                "question_embeddings": question_embeddings,
+                "question_entities_masks": question_entities_masks,
+                "supporting_entities_masks": supporting_entities_masks,
+                "supporting_docs_masks": supporting_docs_masks,
+                "sample_id": sample_id,
+            }
+        ).with_format("torch")
+        offset = 0
+        splits = []
+        for num_sample in num_samples:
+            split = torch_data.Subset(dataset, range(offset, offset + num_sample))
+            splits.append(split)
+            offset += num_sample
+        torch.save(splits, self.processed_paths[0])
+
+        # Save text embeddings model configuration
+        with open(self.processed_dir + "/text_emb_model_cfgs.json", "w") as f:
+            json.dump(OmegaConf.to_container(self.text_emb_model_cfgs), f, indent=4)
+
+
+class QADatasetWithDocuments(QADataset):
+    """A dataset class for Question-Answering tasks with documents included.
+
+    This class extends QADataset to include document-level information in KGs, allowing for
+    direct retrieval of documents related to questions.
+    """
+
+    KG_DATASET_CLASS = KGDatasetWithDocuments
+
+    def load_property(self) -> None:
+        """
+        Load necessary properties from the KG dataset.
+        """
+        with open(os.path.join(self.kg_dir, "ent2id.json")) as fin:
+            self.ent2id = json.load(fin)
+        with open(os.path.join(self.kg_dir, "rel2id.json")) as fin:
+            self.rel2id = json.load(fin)
+        with open(os.path.join(self.kg_dir, "doc2id.json")) as fin:
+            doc2id = json.load(fin)
+        with open(
+            os.path.join(str(self.root), str(self.name), "raw", "dataset_corpus.json")
+        ) as fin:
+            self.doc = json.load(fin)
+
+        if os.path.exists(os.path.join(self.raw_dir, "train.json")):
+            with open(os.path.join(self.raw_dir, "train.json")) as fin:
+                self.raw_train_data = json.load(fin)
+        else:
+            self.raw_train_data = []
+        if os.path.exists(os.path.join(self.raw_dir, "test.json")):
+            with open(os.path.join(self.raw_dir, "test.json")) as fin:
+                self.raw_test_data = json.load(fin)
+        else:
+            self.raw_test_data = []
+
+        self.ent2docs = torch.LongTensor(
+            [v for v in doc2id.values()]
+        )  # Get the document entities from the whole entities list
+        doc_to_in_group_id = {doc: i for i, doc in enumerate(doc2id)}
+        self.id2doc = {v: k for k, v in doc_to_in_group_id.items()}
+
+    def process(self) -> None:
+        """Process and prepare the question-answering dataset.
+
+        This method processes raw data files to create a structured dataset for question answering
+        tasks. It performs the following main operations:
+
+        1. Loads entity and relation mappings from processed files
+        2. Creates entity-document mapping tensors
+        3. Processes question samples to generate:
+            - Question embeddings
+            - Question entity masks
+            - Supporting entity masks
+            - Supporting document masks
+
+        The processed dataset is saved as torch splits containing:
+
+        - Question embeddings
+        - Various mask tensors for entities and documents
+        - Sample IDs
+
+        Files created:
+
+        - ent2doc.pt: Sparse tensor mapping entities to documents
+        - qa_data.pt: Processed QA dataset
+        - text_emb_model_cfgs.json: Text embedding model configuration
+
+        The method also saves the text embedding model configuration.
+
+        Returns:
+            None
+        """
+        with open(os.path.join(self.kg_dir, "ent2id.json")) as fin:
+            self.ent2id = json.load(fin)
+        with open(os.path.join(self.kg_dir, "rel2id.json")) as fin:
+            self.rel2id = json.load(fin)
+        with open(os.path.join(self.kg_dir, "doc2id.json")) as fin:
+            self.doc2id = json.load(fin)
+
+        doc_to_in_group_id = {doc: i for i, doc in enumerate(self.doc2id)}
+
+        num_nodes = self.kg.num_nodes
+        n_docs = len(doc_to_in_group_id)
+
+        sample_id = []
+        questions = []
+        question_entities_masks = []  # Convert question entities to mask with number of nodes
+        supporting_entities_masks = []
+        supporting_docs_masks = []
+        num_samples = []
+
+        for path in self.raw_paths:
+            if not os.path.exists(path):
+                num_samples.append(0)
+                continue  # Skip if the file does not exist
+            num_sample = 0
+            with open(path) as fin:
+                data = json.load(fin)
+                for index, item in enumerate(data):
+                    question_entities = [
+                        self.ent2id[x]
+                        for x in item["question_entities"]
+                        if x in self.ent2id
+                    ]
+
+                    supporting_entities = [
+                        self.ent2id[x]
+                        for x in item["supporting_entities"]
+                        if x in self.ent2id
+                    ]
+
+                    supporting_docs = [
+                        doc_to_in_group_id[doc]
+                        for doc in item["supporting_facts"]
+                        if doc in doc_to_in_group_id
+                    ]
+
+                    # Skip samples if any of the entities or documens are empty
+                    if any(
+                        len(x) == 0
+                        for x in [
+                            question_entities,
+                            supporting_entities,
+                            supporting_docs,
+                        ]
+                    ):
+                        continue
+                    num_sample += 1
+                    sample_id.append(index)
+                    question = item["question"]
+                    questions.append(question)
+
+                    question_entities_masks.append(
+                        entities_to_mask(question_entities, num_nodes)
+                    )
+
+                    supporting_entities_masks.append(
+                        entities_to_mask(supporting_entities, num_nodes)
+                    )
+
+                    supporting_docs_masks.append(
+                        entities_to_mask(supporting_docs, n_docs)
+                    )
+                num_samples.append(num_sample)
+
+        text_emb_model: BaseTextEmbModel = instantiate(self.text_emb_model_cfgs)
+        # Generate question embeddings
+        logger.info("Generating question embeddings")
         question_embeddings = text_emb_model.encode(
             questions,
             is_query=True,

@@ -59,10 +59,10 @@ class KGDataset(InMemoryDataset):
         self.name = data_name
         self.force_rebuild = force_rebuild
         # Get fingerprint of the model configuration
+        cfgs = OmegaConf.to_container(text_emb_model_cfgs, resolve=True)
+        cfgs.pop("batch_size", None)  # Remove batch_size for fingerprinting
         self.fingerprint = hashlib.md5(
-            json.dumps(
-                OmegaConf.to_container(text_emb_model_cfgs, resolve=True)
-            ).encode()
+            (self.__class__.__name__ + json.dumps(cfgs)).encode()
         ).hexdigest()
         self.text_emb_model_cfgs = text_emb_model_cfgs
         super().__init__(root, None, None)
@@ -162,7 +162,7 @@ class KGDataset(InMemoryDataset):
         1. Loads the KG triplets and vocabulary
         2. Creates edge indices and types for both original and inverse relations
         3. Saves entity and relation mappings to JSON files
-        4. Generates relation embeddings using a text embedding model
+        4. Generates relation and entity embeddings using a text embedding model
         5. Builds relation graphs
         6. Saves the processed data and model configurations
 
@@ -217,10 +217,16 @@ class KGDataset(InMemoryDataset):
         with open(self.processed_dir + "/rel2id.json", "w") as f:
             json.dump(rel2id, f)
 
+        text_emb_model: BaseTextEmbModel = instantiate(self.text_emb_model_cfgs)
         # Generate relation embeddings
         logger.info("Generating relation embeddings")
-        text_emb_model: BaseTextEmbModel = instantiate(self.text_emb_model_cfgs)
         rel_emb = text_emb_model.encode(list(rel2id.keys()), is_query=False).cpu()
+
+        # Generate entity embeddings
+        logger.info("Generating entity embeddings")
+        ent_emb = text_emb_model.encode(
+            list(kg_result["inv_entity_vocab"].keys()), is_query=False
+        ).cpu()
 
         kg_data = Data(
             edge_index=train_edges,
@@ -229,6 +235,7 @@ class KGDataset(InMemoryDataset):
             target_edge_index=train_target_edges,
             target_edge_type=train_target_etypes,
             num_relations=num_relations * 2,
+            ent_emb=ent_emb,
             rel_emb=rel_emb,
         )
 
@@ -262,3 +269,154 @@ class KGDataset(InMemoryDataset):
     @property
     def processed_file_names(self) -> str:
         return "data.pt"
+
+
+class KGDatasetWithDocuments(KGDataset):
+    """A dataset class for processing and managing Knowledge Graph (KG) data with documents.
+
+    This class extends KGDataset to include document information associated with entities.
+    It processes the KG data and documents, generating embeddings for both entities and relations.
+    """
+
+    ENT_TO_DOC_REL = "is_mentioned_in"
+
+    @property
+    def raw_file_names(self) -> list:
+        return ["kg.txt", "document2entities.json"]
+
+    def load_document_file(self, doc_to_entities: str, kg_result: dict) -> dict:
+        """Load the doc_to_entities file and add them into the KG dataset.
+
+        Args:
+            doc_to_entities (str): Path to the document to entities file.
+            kg_result (dict): Knowledge graph result containing entity mappings.
+
+        Returns:
+            dict: Knowledge graph data with document entities.
+        """
+        ent2id = kg_result["inv_entity_vocab"]
+        rel2id = kg_result["inv_rel_vocab"]
+        triples = kg_result["triplets"]
+        doc2id = {}
+        with open(doc_to_entities) as fin:
+            doc2entities = json.load(fin)
+        for doc, entities in doc2entities.items():
+            entity_ids = [ent2id[ent] for ent in entities if ent in ent2id]
+            if doc not in ent2id:
+                ent2id[doc] = len(ent2id)
+                doc2id[doc] = ent2id[doc]
+            for entity_id in entity_ids:
+                triples.append((entity_id, ent2id[doc], rel2id[self.ENT_TO_DOC_REL]))
+        kg_result["doc2id"] = doc2id
+        return kg_result
+
+    def process(self) -> None:
+        """Process the knowledge graph dataset.
+
+        This method processes the raw knowledge graph file and creates the following:
+
+        1. Loads the KG triplets and vocabulary
+        2. Creates edge indices and types for both original and inverse relations
+        3. Saves entity and relation mappings to JSON files
+        4. Generates relation and entity embeddings using a text embedding model
+        5. Saves the processed data and model configurations
+
+        The processed data includes:
+
+        - Edge indices and types for both original and inverse edges
+        - Target edge indices and types (original edges only)
+        - Number of nodes and relations
+        - Relation embeddings
+        - Relation graphs
+
+        Files created:
+
+        - ent2id.json: Entity to ID mapping
+        - rel2id.json: Relation to ID mapping (including inverse relations)
+        - text_emb_model_cfgs.json: Text embedding model configuration
+        - Processed graph data file at self.processed_paths[0]
+        """
+        kg_file = self.raw_paths[0]
+        doc_to_entities = self.raw_paths[1]
+        kg_result = self.load_file(kg_file, inv_entity_vocab={}, inv_rel_vocab={})
+        # Add special relations for document-entity connections
+        kg_result["inv_rel_vocab"][self.ENT_TO_DOC_REL] = len(
+            kg_result["inv_rel_vocab"]
+        )
+        kg_result = self.load_document_file(doc_to_entities, kg_result)
+
+        num_node = len(kg_result["inv_entity_vocab"])
+        num_relations = len(kg_result["inv_rel_vocab"])
+
+        kg_triplets = kg_result["triplets"]
+
+        train_target_edges = torch.tensor(
+            [[t[0], t[1]] for t in kg_triplets], dtype=torch.long
+        ).t()
+        train_target_etypes = torch.tensor([t[2] for t in kg_triplets])
+
+        # Add inverse edges
+        train_edges = torch.cat([train_target_edges, train_target_edges.flip(0)], dim=1)
+        train_etypes = torch.cat(
+            [train_target_etypes, train_target_etypes + num_relations]
+        )
+
+        with open(self.processed_dir + "/ent2id.json", "w") as f:
+            json.dump(kg_result["inv_entity_vocab"], f)
+        with open(self.processed_dir + "/doc2id.json", "w") as f:
+            json.dump(kg_result["doc2id"], f)
+        rel2id = kg_result["inv_rel_vocab"]
+        id2rel = {v: k for k, v in rel2id.items()}
+        for etype in train_etypes:
+            if etype.item() >= num_relations:
+                raw_etype = etype - num_relations
+                raw_rel = id2rel[raw_etype.item()]
+                rel2id["inverse_" + raw_rel] = etype.item()
+        with open(self.processed_dir + "/rel2id.json", "w") as f:
+            json.dump(rel2id, f)
+
+        # Generate relation embeddings
+        logger.info("Generating relation embeddings")
+        text_emb_model: BaseTextEmbModel = instantiate(self.text_emb_model_cfgs)
+        rel_emb = text_emb_model.encode(list(rel2id.keys()), is_query=False).cpu()
+
+        # Generate entity embeddings
+        logger.info("Generating entity embeddings")
+        with open(
+            os.path.join(str(self.root), str(self.name), "raw", "dataset_corpus.json")
+        ) as fin:
+            documents = json.load(fin)  # Key: document title, Value: document text
+        # If the entity is a document, use its text content for embedding
+        replaced_ent_names = list(
+            map(
+                lambda x: documents[x] if x in documents else x,
+                kg_result["inv_entity_vocab"].keys(),
+            )
+        )
+
+        # Encode entity texts
+        ent_emb = text_emb_model.encode(replaced_ent_names, is_query=False).cpu()
+
+        # Entity types, 0: normal entity, 1: document entity
+        id2doc = {k: v for v, k in kg_result["doc2id"].items()}
+        ent_types = torch.tensor(
+            [1 if i in id2doc else 0 for i in range(num_node)], dtype=torch.long
+        )
+
+        kg_data = Data(
+            ent_type=ent_types,
+            edge_index=train_edges,
+            edge_type=train_etypes,
+            num_nodes=num_node,
+            target_edge_index=train_target_edges,
+            target_edge_type=train_target_etypes,
+            num_relations=num_relations * 2,
+            ent_emb=ent_emb,
+            rel_emb=rel_emb,
+        )
+
+        torch.save((self.collate([kg_data])), self.processed_paths[0])
+
+        # Save text embeddings model configuration
+        with open(self.processed_dir + "/text_emb_model_cfgs.json", "w") as f:
+            json.dump(OmegaConf.to_container(self.text_emb_model_cfgs), f, indent=4)
