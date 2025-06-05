@@ -12,7 +12,7 @@ def save_model_to_pretrained(
 ) -> None:
     os.makedirs(path, exist_ok=True)
     model_config = OmegaConf.to_container(cfg.model)
-    model_config["rel_emb_dim"] = model.rel_emb_dim
+    model_config["feat_dim"] = model.feat_dim
     config = {
         "text_emb_model_config": OmegaConf.to_container(
             cfg.datasets.cfgs.text_emb_model_cfgs

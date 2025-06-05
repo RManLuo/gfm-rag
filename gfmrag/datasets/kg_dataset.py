@@ -38,6 +38,7 @@ class KGDataset(InMemoryDataset):
         delimiter (str): Delimiter used in the KG text file.
         data (Data): Processed graph data object.
         slices (dict): Data slices for batching.
+        feat_dim (int): Dimension of the entity and relation embeddings.
 
     Note:
         - The class expects a 'kg.txt' file in the raw directory containing triplets.

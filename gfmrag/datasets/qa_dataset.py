@@ -37,7 +37,7 @@ class QADataset(InMemoryDataset):
     Attributes:
         name (str): Name of the dataset.
         kg (KGDataset): The underlying knowledge graph dataset.
-        rel_emb_dim (int): Dimension of relation embeddings.
+        feat_dim (int): Dimension of entity and relation embeddings.
         ent2id (dict): Mapping from entity names to IDs.
         rel2id (dict): Mapping from relation names to IDs.
         doc (dict): Corpus of documents.

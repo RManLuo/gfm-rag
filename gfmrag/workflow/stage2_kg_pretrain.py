@@ -412,21 +412,21 @@ def main(cfg: DictConfig) -> None:
 
     # Initialize the datasets in the each process, make sure they are processed
     if cfg.datasets.init_datasets:
-        rel_emb_dim_list = utils.init_multi_dataset(
+        feat_dim_list = utils.init_multi_dataset(
             cfg, utils.get_world_size(), utils.get_rank()
         )
-        rel_emb_dim = set(rel_emb_dim_list)
-        assert len(rel_emb_dim) == 1, (
-            "All datasets should have the same relation embedding dimension"
+        feat_dim = set(feat_dim_list)
+        assert len(feat_dim) == 1, (
+            "All datasets should have the same feature embedding dimension"
         )
     else:
         assert cfg.datasets.feat_dim is not None, (
             "If datasets.init_datasets is False, cfg.datasets.feat_dim must be set"
         )
-        rel_emb_dim = {cfg.datasets.feat_dim}
+        feat_dim = {cfg.datasets.feat_dim}
 
     device = utils.get_device()
-    model = instantiate(cfg.model, rel_emb_dim=rel_emb_dim.pop())
+    model = instantiate(cfg.model, feat_dim=feat_dim.pop())
 
     if "checkpoint" in cfg.train and cfg.train.checkpoint is not None:
         if os.path.exists(cfg.train.checkpoint):

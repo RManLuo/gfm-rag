@@ -15,12 +15,12 @@ class QueryGNN(nn.Module):
 
     Args:
         entity_model (EntityNBFNet): The entity-based neural network model for reasoning on graph structure.
-        rel_emb_dim (int): Dimension of the relation embeddings.
+        feat_dim (int): Dimension of the entity and relation embeddings.
         *args: Variable length argument list.
         **kwargs: Arbitrary keyword arguments.
 
     Attributes:
-        rel_emb_dim (int): Dimension of relation embeddings.
+        feat_dim (int): Dimension of entity and relation embeddings.
         entity_model (EntityNBFNet): The entity model instance.
         rel_mlp (nn.Linear): Linear transformation layer for relation embeddings.
 
@@ -38,22 +38,22 @@ class QueryGNN(nn.Module):
     """
 
     def __init__(
-        self, entity_model: EntityNBFNet, rel_emb_dim: int, *args: Any, **kwargs: Any
+        self, entity_model: EntityNBFNet, feat_dim: int, *args: Any, **kwargs: Any
     ) -> None:
         """Initialize the model.
 
         Args:
             entity_model (EntityNBFNet): The entity model component
-            rel_emb_dim (int): Dimension of relation embeddings
+            feat_dim (int): Dimension of relation embeddings
             *args (Any): Variable length argument list
             **kwargs (Any): Arbitrary keyword arguments
 
         """
 
         super().__init__()
-        self.rel_emb_dim = rel_emb_dim
+        self.feat_dim = feat_dim
         self.entity_model = entity_model
-        self.rel_mlp = nn.Linear(rel_emb_dim, self.entity_model.dims[0])
+        self.rel_mlp = nn.Linear(feat_dim, self.entity_model.dims[0])
 
     def forward(self, data: Data, batch: torch.Tensor) -> torch.Tensor:
         """
@@ -98,7 +98,7 @@ class GNNRetriever(QueryGNN):
 
     Args:
         entity_model (QueryNBFNet): The underlying query-dependent GNN for reasoning on graph.
-        rel_emb_dim (int): Dimension of relation embeddings.
+        feat_dim (int): Dimension of relation embeddings.
         *args (Any): Variable length argument list.
         **kwargs (Any): Arbitrary keyword arguments.
 
@@ -132,14 +132,14 @@ class GNNRetriever(QueryGNN):
     """Wrap the GNN model for retrieval."""
 
     def __init__(
-        self, entity_model: QueryNBFNet, rel_emb_dim: int, *args: Any, **kwargs: Any
+        self, entity_model: QueryNBFNet, feat_dim: int, *args: Any, **kwargs: Any
     ) -> None:
         """
         Initialize the RelGFM model.
 
         Args:
             entity_model (QueryNBFNet): Model for entity embedding and message passing
-            rel_emb_dim (int): Dimension of relation embeddings
+            feat_dim (int): Dimension of entity and relation embeddings
             *args: Variable length argument list
             **kwargs: Arbitrary keyword arguments
 
@@ -147,12 +147,12 @@ class GNNRetriever(QueryGNN):
             None
 
         Note:
-            This constructor initializes the base class with entity_model and rel_emb_dim,
+            This constructor initializes the base class with entity_model and feat_dim,
             and creates a linear layer to project question embeddings to entity dimension.
         """
 
-        super().__init__(entity_model, rel_emb_dim)
-        self.question_mlp = nn.Linear(self.rel_emb_dim, self.entity_model.dims[0])
+        super().__init__(entity_model, feat_dim)
+        self.question_mlp = nn.Linear(self.feat_dim, self.entity_model.dims[0])
 
     def forward(
         self,
@@ -256,13 +256,13 @@ class GNNRetriever(QueryGNN):
                 0
             )
 
-        input = torch.einsum(
+        input_emb = torch.einsum(
             "bn, bd -> bnd", question_entities_mask, question_embedding
         )
         return self.entity_model.visualize(
             graph,
             sample,
-            input,
+            input_emb,
             relation_representations,
             question_embedding,  # type: ignore
         )
