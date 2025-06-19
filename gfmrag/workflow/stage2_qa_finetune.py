@@ -238,7 +238,9 @@ def train_and_validate(
                     "optimizer": optimizer.state_dict(),
                 }
                 torch.save(state, os.path.join(output_dir, f"model_epoch_{epoch}.pth"))
-            logger.info(f"Best mrr: {best_result:g} at epoch {best_epoch}")
+            logger.info(
+                f"Best {cfg.train.watched_metric}: {best_result:g} at epoch {best_epoch}"
+            )
 
     if rank == 0:
         logger.info("Load checkpoint from model_best.pth")
@@ -263,8 +265,9 @@ def test(
     rank = utils.get_rank()
 
     # process sequentially of test datasets
+    watched_metric = cfg.train.get("watched_metric", "doc_mrr")
     all_metrics = {}
-    all_mrr = []
+    all_watched_metric = []
     for dataset in test_dataset_loader:
         dataset = create_qa_dataloader(
             dataset,
@@ -343,23 +346,22 @@ def test(
             doc_pred, doc_target, rank, world_size, device
         )
         ent_metrics = utils.evaluate(ent_pred, ent_target, cfg.task.metric)
+        doc_metrics = utils.evaluate(doc_pred, doc_target, cfg.task.metric)
         metrics = {}
+        for key, value in ent_metrics.items():
+            metrics[f"ent_{key}"] = value
+        for key, value in doc_metrics.items():
+            metrics[f"doc_{key}"] = value
+
         if rank == 0:
-            doc_metrics = utils.evaluate(doc_pred, doc_target, cfg.task.metric)
-            for key, value in ent_metrics.items():
-                metrics[f"ent_{key}"] = value
-            for key, value in doc_metrics.items():
-                metrics[f"doc_{key}"] = value
-            metrics["mrr"] = ent_metrics["mrr"]
             logger.info(f"{'-' * 15} Test on {data_name} {'-' * 15}")
             query_utils.print_metrics(metrics, logger)
-        else:
-            metrics["mrr"] = ent_metrics["mrr"]
+
         all_metrics[data_name] = metrics
-        all_mrr.append(metrics["mrr"])
+        all_watched_metric.append(metrics[watched_metric])
     utils.synchronize()
-    all_avg_mrr = np.mean(all_mrr)
-    return all_avg_mrr if not return_metrics else metrics
+    all_avg_watched_metric = np.mean(all_watched_metric)
+    return all_avg_watched_metric if not return_metrics else metrics
 
 
 @hydra.main(config_path="config", config_name="stage2_qa_finetune", version_base=None)
