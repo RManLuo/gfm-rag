@@ -103,10 +103,17 @@ def train_and_validate(
     # Initialize Losses
     loss_fn_list = []
     has_doc_loss = False
+    has_ent_distillation_loss = False
+    has_doc_distillation_loss = False
     for loss_cfg in cfg.task.losses:
         loss_fn = instantiate(loss_cfg.loss)
         if loss_cfg.cfg.is_doc_loss:
             has_doc_loss = True
+        if loss_cfg.cfg.get("is_distillation_loss", False):
+            if loss_cfg.cfg.is_doc_loss:
+                has_doc_distillation_loss = True
+            else:
+                has_ent_distillation_loss = True
         loss_fn_list.append(
             {
                 "name": loss_cfg.name,
@@ -174,15 +181,31 @@ def train_and_validate(
                         doc_pred = pred[:, ent2docs]  # torch.sparse.mm(pred, ent2docs)
                     doc_target = batch["supporting_docs_masks"]  # supporting_docs_mask
 
+                # Compute the target entity similarity with text embeddings
+                if has_ent_distillation_loss:
+                    question_emb = batch["question_embeddings"]
+                    ent_embeddings = graph.ent_emb
+                    ent_distillation_target = question_emb @ ent_embeddings.T
+                if has_doc_distillation_loss:
+                    question_emb = batch["question_embeddings"]
+                    doc_embeddings = graph.ent_emb[ent2docs]  # Get document embeddings
+                    doc_distillation_target = question_emb @ doc_embeddings.T
+
                 loss = 0
                 tmp_losses = {}
                 for loss_dict in loss_fn_list:
                     loss_fn = loss_dict["loss_fn"]
                     weight = loss_dict["weight"]
-                    if loss_dict["is_doc_loss"]:
-                        single_loss = loss_fn(doc_pred, doc_target)
+                    if loss_dict.get("is_distillation_loss", False):
+                        if loss_dict["is_doc_loss"]:
+                            single_loss = loss_fn(doc_pred, doc_distillation_target)
+                        else:
+                            single_loss = loss_fn(pred, ent_distillation_target)
                     else:
-                        single_loss = loss_fn(pred, target)
+                        if loss_dict["is_doc_loss"]:
+                            single_loss = loss_fn(doc_pred, doc_target)
+                        else:
+                            single_loss = loss_fn(pred, target)
                     tmp_losses[loss_dict["name"]] = single_loss.item()
                     loss += weight * single_loss
                 tmp_losses["loss"] = loss.item()  # type: ignore

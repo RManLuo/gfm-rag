@@ -57,6 +57,13 @@ task:
       cfg:
         weight: 0.7
         is_doc_loss: True
+    - name: doc_mse_loss
+      loss:
+        _target_: gfmrag.losses.MSELoss
+      cfg:
+        weight: 1
+        is_doc_loss: True
+        is_distillation_loss: True
 
 # Optimizer configuration
 optimizer:

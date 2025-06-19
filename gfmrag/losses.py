@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Literal
 
 import torch
 from torch.nn import functional as F  # noqa:N812
@@ -172,3 +172,110 @@ class ListCELoss(BaseLoss):
         loss = loss.sum(dim=-1) / target_sum
         loss = loss.mean()
         return loss
+
+
+class KLDivLoss(BaseLoss):
+    """Kullback-Leibler Divergence loss function.
+
+    This loss function computes the Kullback-Leibler divergence between two probability distributions.
+    It is often used in variational inference and generative models.
+
+    Args:
+        *args: Additional positional arguments (unused).
+        **kwargs: Additional keyword arguments (unused).
+
+    Returns:
+        torch.Tensor: Scalar tensor containing the mean KL divergence loss value.
+    """
+
+    def __init__(
+        self,
+        temperature: float = 1.0,
+        learnable_temperature: bool = False,
+        reduction: Literal["sum", "mean", "batchmean"] = "mean",
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        self.learnable_temperature = learnable_temperature
+        if self.learnable_temperature:
+            self.temperature = torch.nn.Parameter(torch.FloatTensor([temperature]))
+        else:
+            self.temperature = temperature
+        self.eps = 1e-7
+
+        if reduction not in ["sum", "mean", "batchmean"]:
+            raise ValueError(
+                f"Invalid reduction mode: {reduction}. Supported modes are 'sum', 'mean', and 'batchmean'."
+            )
+        self.reduction = reduction
+
+    def __call__(
+        self, pred: torch.Tensor, target: torch.Tensor, *args: Any, **kwargs: Any
+    ) -> Any:
+        """Compute the KL divergence loss.
+
+        Args:
+            pred (torch.Tensor): Predicted logits tensor.
+            target (torch.Tensor): Target logits tensor.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            torch.Tensor: Scalar loss value averaged over the batch.
+        """
+        # If the temperature is learnable, ensure it is on the same device as pred and target
+        if self.learnable_temperature:
+            self.temperature = self.temperature.to(pred.device)
+        pred_prob = F.sigmoid(pred)
+        target_prob = F.sigmoid(target / self.temperature)
+        # Ensure prob is not zero to avoid log(0)
+        student_prob = torch.clamp(pred_prob, min=self.eps, max=1 - self.eps)
+        target_prob = torch.clamp(target_prob, min=self.eps, max=1 - self.eps)
+        # Compute the KL divergence loss
+        loss = target_prob * (torch.log(target_prob) - torch.log(student_prob)) + (
+            1 - target_prob
+        ) * (torch.log(1 - target_prob) - torch.log(1 - student_prob))
+
+        if self.reduction == "mean":
+            return loss.mean()
+        elif self.reduction == "sum":
+            return loss.sum()
+        elif self.reduction == "batchmean":
+            return loss.sum() / pred.size(0)
+
+
+class MSELoss(BaseLoss):
+    """Mean Squared Error loss function.
+
+    This loss function computes the mean squared error between predicted and target values.
+    It is commonly used for regression tasks.
+
+    Args:
+        *args: Additional positional arguments (unused).
+        **kwargs: Additional keyword arguments (unused).
+
+    Returns:
+        torch.Tensor: Scalar tensor containing the mean squared error loss value.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+    def __call__(
+        self, pred: torch.Tensor, target: torch.Tensor, *args: Any, **kwargs: Any
+    ) -> Any:
+        """Compute the mean squared error loss.
+
+        Args:
+            pred (torch.Tensor): Predicted values tensor.
+            target (torch.Tensor): Target values tensor.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            torch.Tensor: Scalar loss value averaged over the batch.
+        """
+        # Normalize the pred and target to [0, 1]
+        norm_pred = F.sigmoid(pred)
+        norm_target = (target + 1) / 2
+        return F.mse_loss(norm_pred, norm_target, reduction="mean")
