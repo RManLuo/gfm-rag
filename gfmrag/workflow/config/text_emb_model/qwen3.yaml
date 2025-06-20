@@ -1,0 +1,12 @@
+_target_: gfmrag.text_emb_models.Qwen3TextEmbModel
+text_emb_model_name: Qwen/Qwen3-Embedding-8B
+normalize: True
+batch_size: 32
+query_instruct: "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
+passage_instruct: null
+truncate_dim: 512
+model_kwargs:
+  attn_implementation: flash_attention_2
+  torch_dtype: auto
+tokenizer_kwargs:
+  padding_side: left
