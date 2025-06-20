@@ -110,7 +110,7 @@ class QueryGNN(nn.Module):
 
         if self.use_ent_emb == "early-fusion":
             # if we use early-fusion, we add entity embeddings to the boundary condition
-            ent_emb = self.ent_mlp(graph.ent_emb.float())
+            ent_emb = self.ent_mlp(graph.ent_emb)
             boundary += ent_emb.unsqueeze(0).expand_as(boundary)
 
         return boundary
@@ -137,7 +137,7 @@ class QueryGNN(nn.Module):
         # relations are the same all positive and negative triples, so we can extract only one from the first triple among 1+nug_negs
         batch_size = len(batch)
         relation_representations = (
-            self.rel_mlp(graph.rel_emb.float()).unsqueeze(0).expand(batch_size, -1, -1)
+            self.rel_mlp(graph.rel_emb).unsqueeze(0).expand(batch_size, -1, -1)
         )
         h_index, t_index, r_index = batch.unbind(-1)
 
@@ -156,7 +156,7 @@ class QueryGNN(nn.Module):
         ]  # take the first relation index for all triples in the batch
 
         # Get the input embedding for the query head and relation
-        raw_rel_emb = graph.rel_emb.float().unsqueeze(0).expand(batch_size, -1, -1)
+        raw_rel_emb = graph.rel_emb.unsqueeze(0).expand(batch_size, -1, -1)
         query_relation_emb = raw_rel_emb[
             torch.arange(batch_size, device=r_index.device), query_relation
         ]
@@ -245,13 +245,13 @@ class GNNRetriever(QueryGNN):
             5. Running entity-level reasoning model
         """
 
-        question_emb = batch["question_embeddings"].float()
+        question_emb = batch["question_embeddings"]
         question_entities_mask = batch["question_entities_masks"]
 
         question_embedding = self.question_mlp(question_emb)  # shape: (bs, emb_dim)
         batch_size = question_embedding.size(0)
         relation_representations = (
-            self.rel_mlp(graph.rel_emb.float()).unsqueeze(0).expand(batch_size, -1, -1)
+            self.rel_mlp(graph.rel_emb).unsqueeze(0).expand(batch_size, -1, -1)
         )
 
         # initialize the input with the fuzzy set and question embs
@@ -268,7 +268,7 @@ class GNNRetriever(QueryGNN):
             or self.use_ent_emb == "early-late-fusion"
         ):
             # if we use early-fusion, we add entity embeddings to the input
-            ent_emb = self.ent_mlp(graph.ent_emb.float())
+            ent_emb = self.ent_mlp(graph.ent_emb)
             node_embedding += ent_emb.unsqueeze(0).expand_as(node_embedding)
             # node_embedding = self.early_fuse_mlp(
             #     torch.cat([node_embedding, ent_emb.unsqueeze(0).expand_as(node_embedding)], dim=-1)
@@ -280,9 +280,7 @@ class GNNRetriever(QueryGNN):
         )  # shape: (bs, num_nodes, emb_dim)
         if self.use_ent_emb == "late-fusion" or self.use_ent_emb == "early-late-fusion":
             ent_late_emb = (
-                self.ent_mlp(graph.ent_emb.float())
-                .unsqueeze(0)
-                .expand(batch_size, -1, -1)
+                self.ent_mlp(graph.ent_emb).unsqueeze(0).expand(batch_size, -1, -1)
             )  # shape: (bs, num_nodes, emb_dim)
             output = self.predict_mlp(
                 torch.cat([output, ent_late_emb], dim=-1)
@@ -326,7 +324,7 @@ class GNNRetriever(QueryGNN):
             AssertionError: If batch size is not 1
         """
 
-        question_emb = sample["question_embeddings"].float()
+        question_emb = sample["question_embeddings"]
         question_entities_mask = sample["question_entities_masks"]
         question_embedding = self.question_mlp(question_emb)  # shape: (bs, emb_dim)
         batch_size = question_embedding.size(0)
@@ -334,7 +332,7 @@ class GNNRetriever(QueryGNN):
         assert batch_size == 1, "Currently only supports batch size 1 for visualization"
 
         relation_representations = (
-            self.rel_mlp(graph.rel_emb.float()).unsqueeze(0).expand(batch_size, -1, -1)
+            self.rel_mlp(graph.rel_emb).unsqueeze(0).expand(batch_size, -1, -1)
         )
 
         # initialize the input with the fuzzy set and question embs
@@ -348,7 +346,7 @@ class GNNRetriever(QueryGNN):
         )
         if self.use_ent_emb == "early-fusion":
             # if we use early-fusion, we add entity embeddings to the input
-            ent_emb = self.ent_mlp(graph.ent_emb.float())
+            ent_emb = self.ent_mlp(graph.ent_emb)
             node_embedding += ent_emb.unsqueeze(0).expand_as(node_embedding)
 
         return self.entity_model.visualize(
