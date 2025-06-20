@@ -75,6 +75,16 @@ class QueryGNN(nn.Module):
         if self.use_ent_emb is not None:
             self.ent_mlp = nn.Linear(feat_dim, self.entity_model.dims[0])
 
+        if (
+            self.use_ent_emb == "early-fusion"
+            or self.use_ent_emb == "early-late-fusion"
+        ):
+            self.early_fuse_mlp = nn.Sequential(
+                nn.Linear(self.entity_model.dims[0] * 2, self.entity_model.dims[0]),
+                nn.ReLU(),
+                nn.Linear(self.entity_model.dims[0], self.entity_model.dims[0]),
+            )
+
         if self.use_ent_emb == "late-fusion" or self.use_ent_emb == "early-late-fusion":
             self.predict_mlp = nn.Sequential(
                 nn.Linear(self.entity_model.dims[0] * 3, self.entity_model.dims[0]),
@@ -269,10 +279,13 @@ class GNNRetriever(QueryGNN):
         ):
             # if we use early-fusion, we add entity embeddings to the input
             ent_emb = self.ent_mlp(graph.ent_emb)
-            node_embedding += ent_emb.unsqueeze(0).expand_as(node_embedding)
-            # node_embedding = self.early_fuse_mlp(
-            #     torch.cat([node_embedding, ent_emb.unsqueeze(0).expand_as(node_embedding)], dim=-1)
-            # )
+            # node_embedding += ent_emb.unsqueeze(0).expand_as(node_embedding)
+            node_embedding = self.early_fuse_mlp(
+                torch.cat(
+                    [node_embedding, ent_emb.unsqueeze(0).expand_as(node_embedding)],
+                    dim=-1,
+                )
+            )
 
         # GNN model: run the entity-level reasoner to get a scalar distribution over nodes
         output = self.entity_model(
