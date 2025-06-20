@@ -615,7 +615,7 @@ torch = ["torch (==1.13.1)"]
 
 [package.source]
 type = "git"
-url = "https://githum/stanford-futuredata/ColBERT.git"
+url = "https://github/stanford-futuredata/ColBERT.git"
 reference = "2b14566f8120ba57c47e879150ec73eca0286b2c"
 resolved_reference = "2b14566f8120ba57c47e879150ec73eca0286b2c"
 
@@ -5052,4 +5052,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "4ece5938a9cf642a216162cdb51b41623ea813d3f64d7ff0876d82d2512271c4"
+content-hash = "40b873909cab78d922960c5abb8464a953da1bb211f7c64ca0c36d33096c0d56"
