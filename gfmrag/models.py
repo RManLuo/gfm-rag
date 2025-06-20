@@ -1,10 +1,10 @@
-from typing import Any
+from typing import Any, Literal
 
 import torch
 from torch import nn
 from torch_geometric.data import Data
 
-from gfmrag.ultra.models import EntityNBFNet, QueryNBFNet
+from gfmrag.ultra.models import QueryNBFNet
 
 
 class QueryGNN(nn.Module):
@@ -23,6 +23,10 @@ class QueryGNN(nn.Module):
         feat_dim (int): Dimension of entity and relation embeddings.
         entity_model (EntityNBFNet): The entity model instance.
         rel_mlp (nn.Linear): Linear transformation layer for relation embeddings.
+        use_ent_emb (Literal[None, "early-fusion", "late-fusion"]): Specifies how to use entity embeddings.
+            - None: No entity embeddings used
+            - "early-fusion": Entity embeddings are fused early in the model
+            - "late-fusion": Entity embeddings are fused late in the model
 
     Methods:
         forward(data: Data, batch: torch.Tensor) -> torch.Tensor:
@@ -38,13 +42,24 @@ class QueryGNN(nn.Module):
     """
 
     def __init__(
-        self, entity_model: EntityNBFNet, feat_dim: int, *args: Any, **kwargs: Any
+        self,
+        entity_model: QueryNBFNet,
+        feat_dim: int,
+        use_ent_emb: Literal[
+            None, "early-fusion", "late-fusion", "early-late-fusion"
+        ] = None,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """Initialize the model.
 
         Args:
-            entity_model (EntityNBFNet): The entity model component
+            entity_model (QueryNBFNet): The entity model component
             feat_dim (int): Dimension of relation embeddings
+            use_ent_emb (Literal[None, "early-fusion", "late-fusion"]): Specifies how to use entity embeddings.
+                - None: No entity embeddings used
+                - "early-fusion": Entity embeddings are fused early in the model
+                - "late-fusion": Entity embeddings are fused late in the model
             *args (Any): Variable length argument list
             **kwargs (Any): Arbitrary keyword arguments
 
@@ -52,15 +67,60 @@ class QueryGNN(nn.Module):
 
         super().__init__()
         self.feat_dim = feat_dim
+        self.use_ent_emb = use_ent_emb
         self.entity_model = entity_model
         self.rel_mlp = nn.Linear(feat_dim, self.entity_model.dims[0])
+        self.question_mlp = nn.Linear(self.feat_dim, self.entity_model.dims[0])
 
-    def forward(self, data: Data, batch: torch.Tensor) -> torch.Tensor:
+        if self.use_ent_emb is not None:
+            self.ent_mlp = nn.Linear(feat_dim, self.entity_model.dims[0])
+
+        if self.use_ent_emb == "late-fusion" or self.use_ent_emb == "early-late-fusion":
+            self.predict_mlp = nn.Sequential(
+                nn.Linear(self.entity_model.dims[0] * 3, self.entity_model.dims[0]),
+                nn.ReLU(),
+                nn.Linear(self.entity_model.dims[0], 1),
+            )
+
+    def get_input_node_feature(
+        self, graph: Data, query_head: torch.Tensor, query_representation: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Get the input node features for the GNN model.
+
+        Args:
+            graph (Data): Graph data object containing entity embeddings and graph structure.
+            query_head (torch.Tensor): Tensor of head indices for the query.
+            query_representation (torch.Tensor): query relation representations.
+
+        Returns:
+            torch.Tensor: The input node features for GNN
+        """
+        batch_size = len(query_head)
+        index = query_head.unsqueeze(-1).expand_as(query_representation)
+        # initial (boundary) condition - initialize all node states as zeros
+        boundary = torch.zeros(
+            batch_size,
+            graph.num_nodes,
+            self.entity_model.dims[0],
+            device=query_head.device,
+        )
+        # by the scatter operation we put query (relation) embeddings as init features of source (index) nodes
+        boundary.scatter_add_(1, index.unsqueeze(1), query_representation.unsqueeze(1))
+
+        if self.use_ent_emb == "early-fusion":
+            # if we use early-fusion, we add entity embeddings to the boundary condition
+            ent_emb = self.ent_mlp(graph.ent_emb)
+            boundary += ent_emb.unsqueeze(0).expand_as(boundary)
+
+        return boundary
+
+    def forward(self, graph: Data, batch: torch.Tensor) -> torch.Tensor:
         """
         Forward pass of the model.
 
         Args:
-            data (Data): Graph data object containing entity embeddings and graph structure.
+            graph (Data): Graph data object containing entity embeddings and graph structure.
             batch (torch.Tensor): Batch of triple indices with shape (batch_size, 1+num_negatives, 3),
                                 where each triple contains (head_idx, tail_idx, relation_idx).
 
@@ -77,12 +137,37 @@ class QueryGNN(nn.Module):
         # relations are the same all positive and negative triples, so we can extract only one from the first triple among 1+nug_negs
         batch_size = len(batch)
         relation_representations = (
-            self.rel_mlp(data.rel_emb).unsqueeze(0).expand(batch_size, -1, -1)
+            self.rel_mlp(graph.rel_emb).unsqueeze(0).expand(batch_size, -1, -1)
         )
         h_index, t_index, r_index = batch.unbind(-1)
+
+        # Obtain entity embeddings
+        # turn all triples in a batch into a tail prediction mode
+        h_index, t_index, r_index = self.entity_model.negative_sample_to_tail(
+            h_index, t_index, r_index, num_direct_rel=graph.num_relations // 2
+        )
+        assert (h_index[:, [0]] == h_index).all()
+        assert (r_index[:, [0]] == r_index).all()
+        query_head = h_index[
+            :, 0
+        ]  # take the first head index for all triples in the batch
+        query_relation = r_index[
+            :, 0
+        ]  # take the first relation index for all triples in the batch
+
+        # Get the input embedding for the query head and relation
+        raw_rel_emb = graph.rel_emb.unsqueeze(0).expand(batch_size, -1, -1)
+        query_relation_emb = raw_rel_emb[
+            torch.arange(batch_size, device=r_index.device), query_relation
+        ]
+        query_embedding = self.question_mlp(query_relation_emb)  # shape: (bs, emb_dim)
+        node_embedding = self.get_input_node_feature(graph, query_head, query_embedding)
+
         # to make NBFNet iteration learn non-trivial paths
-        data = self.entity_model.remove_easy_edges(data, h_index, t_index, r_index)
-        score = self.entity_model(data, relation_representations, batch)
+        graph = self.entity_model.remove_easy_edges(graph, h_index, t_index, r_index)
+        score = self.entity_model(
+            graph, node_embedding, relation_representations, query_embedding
+        )
 
         return score
 
@@ -131,30 +216,7 @@ class GNNRetriever(QueryGNN):
 
     """Wrap the GNN model for retrieval."""
 
-    def __init__(
-        self, entity_model: QueryNBFNet, feat_dim: int, *args: Any, **kwargs: Any
-    ) -> None:
-        """
-        Initialize the RelGFM model.
-
-        Args:
-            entity_model (QueryNBFNet): Model for entity embedding and message passing
-            feat_dim (int): Dimension of entity and relation embeddings
-            *args: Variable length argument list
-            **kwargs: Arbitrary keyword arguments
-
-        Returns:
-            None
-
-        Note:
-            This constructor initializes the base class with entity_model and feat_dim,
-            and creates a linear layer to project question embeddings to entity dimension.
-        """
-
-        super().__init__(entity_model, feat_dim)
-        self.question_mlp = nn.Linear(self.feat_dim, self.entity_model.dims[0])
-
-    def forward(
+    def forward(  # type: ignore[override]
         self,
         graph: Data,
         batch: dict[str, torch.Tensor],
@@ -198,14 +260,37 @@ class GNNRetriever(QueryGNN):
                 0
             )
 
-        input = torch.einsum(
+        node_embedding = torch.einsum(
             "bn, bd -> bnd", question_entities_mask, question_embedding
         )
+        if (
+            self.use_ent_emb == "early-fusion"
+            or self.use_ent_emb == "early-late-fusion"
+        ):
+            # if we use early-fusion, we add entity embeddings to the input
+            ent_emb = self.ent_mlp(graph.ent_emb)
+            node_embedding += ent_emb.unsqueeze(0).expand_as(node_embedding)
+            # node_embedding = self.early_fuse_mlp(
+            #     torch.cat([node_embedding, ent_emb.unsqueeze(0).expand_as(node_embedding)], dim=-1)
+            # )
 
         # GNN model: run the entity-level reasoner to get a scalar distribution over nodes
         output = self.entity_model(
-            graph, input, relation_representations, question_embedding
-        )
+            graph, node_embedding, relation_representations, question_embedding
+        )  # shape: (bs, num_nodes, emb_dim)
+        if self.use_ent_emb == "late-fusion" or self.use_ent_emb == "early-late-fusion":
+            ent_late_emb = (
+                self.ent_mlp(graph.ent_emb).unsqueeze(0).expand(batch_size, -1, -1)
+            )  # shape: (bs, num_nodes, emb_dim)
+            output = self.predict_mlp(
+                torch.cat([output, ent_late_emb], dim=-1)
+            ).squeeze(-1)  # shape: (bs, num_nodes)
+        elif self.use_ent_emb == "early-late-fusion":
+            output = self.predict_mlp(
+                torch.cat(
+                    [output, ent_emb.unsqueeze(0).expand(batch_size, -1, -1)], dim=-1
+                )
+            ).squeeze(-1)  # shape: (bs, num_nodes)
 
         return output
 
@@ -256,13 +341,18 @@ class GNNRetriever(QueryGNN):
                 0
             )
 
-        input_emb = torch.einsum(
+        node_embedding = torch.einsum(
             "bn, bd -> bnd", question_entities_mask, question_embedding
         )
+        if self.use_ent_emb == "early-fusion":
+            # if we use early-fusion, we add entity embeddings to the input
+            ent_emb = self.ent_mlp(graph.ent_emb)
+            node_embedding += ent_emb.unsqueeze(0).expand_as(node_embedding)
+
         return self.entity_model.visualize(
             graph,
             sample,
-            input_emb,
+            node_embedding,
             relation_representations,
             question_embedding,  # type: ignore
         )

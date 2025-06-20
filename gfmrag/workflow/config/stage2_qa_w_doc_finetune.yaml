@@ -70,6 +70,7 @@ train:
   log_interval: 100
   batch_per_epoch: null
   save_best_only: yes
+  watched_metric: doc_mrr # Metric to watch for saving the best model
   save_pretrained: yes # Save the model for QA inference
   do_eval: yes
   timeout: 60 # timeout minutes for multi-gpu training

@@ -51,7 +51,7 @@ class EntityNBFNet(BaseNBFNet):
     def __init__(self, input_dim, hidden_dims, num_relation=1, **kwargs):
         # dummy num_relation = 1 as we won't use it in the NBFNet layer
         super().__init__(input_dim, hidden_dims, num_relation, **kwargs)
-
+        self.return_hidden = kwargs.get("return_hidden", False)
         self.layers = nn.ModuleList()
         for i in range(len(self.dims) - 1):
             self.layers.append(
@@ -72,13 +72,14 @@ class EntityNBFNet(BaseNBFNet):
         feature_dim = (
             sum(hidden_dims) if self.concat_hidden else hidden_dims[-1]
         ) + input_dim
-        self.mlp = nn.Sequential()
-        mlp = []
-        for i in range(self.num_mlp_layers - 1):
-            mlp.append(nn.Linear(feature_dim, feature_dim))
-            mlp.append(nn.ReLU())
-        mlp.append(nn.Linear(feature_dim, 1))
-        self.mlp = nn.Sequential(*mlp)
+        if not self.return_hidden:
+            self.mlp = nn.Sequential()
+            mlp = []
+            for i in range(self.num_mlp_layers - 1):
+                mlp.append(nn.Linear(feature_dim, feature_dim))
+                mlp.append(nn.ReLU())
+            mlp.append(nn.Linear(feature_dim, 1))
+            self.mlp = nn.Sequential(*mlp)
 
     def bellmanford(self, data, h_index, r_index, separate_grad=False):
         batch_size = len(r_index)
@@ -291,8 +292,12 @@ class QueryNBFNet(EntityNBFNet):
         output = self.bellmanford(
             data, node_features, query
         )  # (num_nodes, batch_size, feature_dim）
-        score = self.mlp(output["node_feature"]).squeeze(-1)  # (bs, num_nodes)
-        return score
+        if self.return_hidden:
+            return output["node_feature"]
+        else:
+            score = self.mlp(output["node_feature"]).squeeze(-1)  # (bs, num_nodes)
+            # return only the score
+            return score
 
     def visualize(self, data, sample, node_features, relation_representations, query):
         for layer in self.layers:
