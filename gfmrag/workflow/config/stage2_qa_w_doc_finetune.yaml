@@ -5,7 +5,7 @@ hydra:
 defaults:
   - _self_
   - doc_ranker: doc_ent_ranker # The document ranker to use
-  - text_emb_model: mpnet # The text embedding model to use
+  - text_emb_model: qwen3 # The text embedding model to use
 
 seed: 1024
 
@@ -22,21 +22,23 @@ datasets:
     - musique_test
     - 2wikimultihopqa_test
   init_datasets: True # Whether to pre-process datasets at the beginning, if true, it will pre-process all datasets in the train_names and valid_names at the beginning
-  feat_dim: 1536 # Feature dimension for the embeddings, must be given if init_datasets is False
+  feat_dim: 1024 # Feature dimension for the embeddings, must be given if init_datasets is False
   max_datasets_in_memory: 10 # Number of datasets to load into memory at once
   data_loading_workers: 4 # Number of workers for data loading
 
 # GFM model configuration
 model:
   _target_: gfmrag.models.GNNRetriever
+  use_ent_emb: early-late-fusion
   entity_model:
     _target_: gfmrag.ultra.models.QueryNBFNet
-    input_dim: 512
-    hidden_dims: [512, 512, 512, 512, 512, 512]
+    input_dim: 1024
+    hidden_dims: [1024, 1024, 1024, 1024, 1024, 1024]
     message_func: distmult
     aggregate_func: sum
     short_cut: yes
     layer_norm: yes
+    return_hidden: True # Return the hidden states of the entity model
 
 # Loss configuration
 task:
@@ -57,6 +59,13 @@ task:
       cfg:
         weight: 0.7
         is_doc_loss: True
+    - name: doc_mse_loss
+      loss:
+        _target_: gfmrag.losses.MSELoss
+      cfg:
+        weight: 1
+        is_doc_loss: True
+        is_distillation_loss: True
 
 # Optimizer configuration
 optimizer:
