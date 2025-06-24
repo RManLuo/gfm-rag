@@ -118,6 +118,7 @@ nav:
       - OpenIE Model Config: config/openie_model_config.md
       - Document Ranker Config: config/doc_ranker_config.md
       - Text Embedding Config: config/text_embedding_config.md
+      - Wandb Config: config/wandb_config.md
   - API Reference:
       - KG-index Constructor: api/kg_indexer.md
       - GFM Retriever: api/gfmrag_retriever.md

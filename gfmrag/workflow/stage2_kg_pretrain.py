@@ -19,6 +19,13 @@ from gfmrag import utils
 from gfmrag.datasets import KGDataset
 from gfmrag.ultra import tasks
 from gfmrag.utils import GraphDatasetLoader
+from gfmrag.utils.wandb_utils import (
+    finish_wandb,
+    init_wandb,
+    log_metrics,
+    log_model_checkpoint,
+    watch_model,
+)
 
 # A logger for this file
 logger = logging.getLogger(__name__)
@@ -184,6 +191,8 @@ def train_and_validate(
                 if utils.get_rank() == 0 and batch_id % cfg.train.log_interval == 0:
                     logger.info(separator)
                     logger.info(f"binary cross entropy: {loss:g}")
+                    # Log training loss to wandb
+                    log_metrics({"train/loss": loss.item()}, step=batch_id)
                 losses.append(loss.item())
                 batch_id += 1
 
@@ -193,6 +202,8 @@ def train_and_validate(
             logger.info(f"Epoch {epoch} end")
             logger.info(line)
             logger.info(f"average binary cross entropy: {avg_loss:g}")
+            # Log epoch training metrics to wandb
+            log_metrics({"train/epoch_loss": avg_loss, "train/epoch": epoch})
 
         utils.synchronize()
         if rank == 0:
@@ -215,7 +226,20 @@ def train_and_validate(
                     "model": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                 }
-                torch.save(state, os.path.join(output_dir, "model_best.pth"))
+                checkpoint_path = os.path.join(output_dir, "model_best.pth")
+                torch.save(state, checkpoint_path)
+                # Log best model to wandb
+                log_model_checkpoint(
+                    checkpoint_path,
+                    name=f"best_model_epoch_{epoch}",
+                    metadata={
+                        "epoch": epoch,
+                        "mrr": float(result)
+                        if isinstance(result, (int, float))
+                        else str(result),
+                        "best": True,
+                    },
+                )
             if not cfg.train.save_best_only:
                 logger.info(f"Save checkpoint to model_epoch_{epoch}.pth")
                 state = {
@@ -223,7 +247,19 @@ def train_and_validate(
                     "model": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                 }
-                torch.save(state, os.path.join(output_dir, f"model_epoch_{epoch}.pth"))
+                checkpoint_path = os.path.join(output_dir, f"model_epoch_{epoch}.pth")
+                torch.save(state, checkpoint_path)
+                # Log epoch model to wandb
+                log_model_checkpoint(
+                    checkpoint_path,
+                    name=f"model_epoch_{epoch}",
+                    metadata={
+                        "epoch": epoch,
+                        "mrr": float(result)
+                        if isinstance(result, (int, float))
+                        else str(result),
+                    },
+                )
             logger.info(f"Best mrr: {best_result:g} at epoch {best_epoch}")
     utils.synchronize()
     if rank == 0:
@@ -383,6 +419,12 @@ def test(
                         score = (_ranking <= threshold).float().mean()
                 logger.info(f"{metric}: {score:g}")
                 metrics[metric] = score
+            # Log evaluation metrics to wandb
+            if rank == 0:
+                eval_metrics = {
+                    f"eval/{test_data_name}/{k}": v for k, v in metrics.items()
+                }
+                log_metrics(eval_metrics)
         mrr = (1 / all_ranking.float()).mean()
         all_mrr.append(mrr)
         all_metrics[test_data_name] = metrics
@@ -427,6 +469,11 @@ def main(cfg: DictConfig) -> None:
 
     device = utils.get_device()
     model = instantiate(cfg.model, feat_dim=feat_dim.pop())
+
+    # Initialize wandb logging (only on rank 0)
+    if utils.get_rank() == 0:
+        init_wandb(cfg, project_name="gfm-rag-pretrain")
+        watch_model(model, log_freq=cfg.train.log_interval)
 
     if "checkpoint" in cfg.train and cfg.train.checkpoint is not None:
         if os.path.exists(cfg.train.checkpoint):
@@ -476,6 +523,10 @@ def main(cfg: DictConfig) -> None:
 
     utils.synchronize()
     utils.cleanup()
+
+    # Finish wandb logging
+    if utils.get_rank() == 0:
+        finish_wandb()
 
 
 if __name__ == "__main__":
