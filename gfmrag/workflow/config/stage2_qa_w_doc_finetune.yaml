@@ -6,6 +6,7 @@ defaults:
   - _self_
   - doc_ranker: doc_ent_ranker # The document ranker to use
   - text_emb_model: qwen3 # The text embedding model to use
+  - wandb: default # Weights & Biases configuration
 
 seed: 1024
 

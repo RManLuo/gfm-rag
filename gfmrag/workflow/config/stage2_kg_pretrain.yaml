@@ -5,6 +5,7 @@ hydra:
 defaults:
   - _self_
   - text_emb_model: mpnet # The text embedding model to use
+  - wandb: default # Weights & Biases configuration
 
 seed: 1024
 

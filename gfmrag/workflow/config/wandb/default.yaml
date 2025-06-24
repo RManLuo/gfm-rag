@@ -1,0 +1,18 @@
+# Weights & Biases Configuration
+
+# Basic configuration
+enabled: true # Set to false to disable wandb logging
+log_model: true # Whether to save the model to W&B
+project: "gfm-rag" # Default project name (can be overridden in specific configs)
+entity: null # W&B entity (username or team name), set to null to use default
+name: null # Run name, set to null for auto-generated name
+group: null # Group name for organizing runs
+tags: [] # Tags for the run
+notes: "" # Notes for the run
+
+# Advanced configuration (optional)
+# job_type: "train" # Job type for organizing runs
+# dir: null # Directory to save wandb files (defaults to working directory)
+# mode: "online" # Can be "online", "offline", or "disabled"
+# save_code: true # Whether to save source code
+# log_frequency: 100 # Frequency for logging gradients and parameters
