@@ -50,7 +50,7 @@ jobs:
         run: |
           mkdir -p ~/.mypy_cache
           source .venv/bin/activate
-          pre-commit run --all-files
+          pre-commit run --all-files --show-diff-on-failure
       #----------------------------------------------
       # Run unit tests
       #----------------------------------------------
