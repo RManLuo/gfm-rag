@@ -3,7 +3,6 @@ name: code-quality
 on:
   pull_request:
   push:
-    branches: [main]
 
 jobs:
   lint-and-test:
