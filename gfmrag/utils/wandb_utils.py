@@ -7,9 +7,8 @@ import os
 from typing import Any
 
 import torch
-from omegaconf import DictConfig, OmegaConf
-
 import wandb
+from omegaconf import DictConfig, OmegaConf
 
 logger = logging.getLogger(__name__)
 
