@@ -1,7 +1,7 @@
 # Weights & Biases Configuration
 
 # Basic configuration
-enabled: true # Set to false to disable wandb logging
+enabled: false # Set to false to disable wandb logging
 log_model: true # Whether to save the model to W&B
 project: "gfm-rag" # Default project name (can be overridden in specific configs)
 entity: null # W&B entity (username or team name), set to null to use default

@@ -93,4 +93,4 @@ class BaseTextEmbModel:
             prompt=self.query_instruct if is_query else self.passage_instruct,
             show_progress_bar=show_progress_bar,
             convert_to_tensor=True,
-        ).float()  # Convert to float32 for consistency training in downstream tasks
+        )
