@@ -234,7 +234,7 @@ class QueryNBFNet(EntityNBFNet):
 
     def bellmanford(self, data, node_features, query, separate_grad=False):
         size = (data.num_nodes, data.num_nodes)
-        edge_weight = torch.ones(data.num_edges, device=query.device)
+        edge_weight = torch.ones(data.num_edges, device=query.device, dtype=query.dtype)
 
         hiddens = []
         edge_weights = []

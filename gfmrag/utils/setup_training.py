@@ -1,9 +1,68 @@
 import datetime
+import logging
 import os
-from typing import Any
+from typing import Any, Tuple
 
 import torch
 from torch import distributed as dist
+from torch import nn
+
+# A logger for this file
+logger = logging.getLogger(__name__)
+
+
+def configure_model_precision(
+    model: nn.Module, device: torch.device, precision: str
+) -> Tuple[nn.Module, torch.dtype]:
+    """Configure model precision based on config setting and device capabilities.
+
+    Args:
+        model: The model to configure
+        device: The device the model is on
+        precision: Precision setting from config ('float32', 'float16', 'bfloat16', 'auto')
+
+    Returns:
+        Model with configured precision
+        Model precision (dtype)
+    """
+    final_dtype = torch.float32
+    if device.type != "cuda":
+        logger.info("CUDA not available, using float32 precision")
+        return model, final_dtype
+    if precision == "auto":
+        # Auto-detect best available precision
+        if torch.cuda.is_bf16_supported():
+            model = model.to(dtype=torch.bfloat16)
+            logger.info("Auto-detected: Using BFloat16 precision for AMP training")
+            final_dtype = torch.bfloat16
+        else:
+            model = model.to(dtype=torch.float16)
+            logger.info(
+                "Auto-detected: BFloat16 not supported, using Float16 precision for AMP training"
+            )
+            final_dtype = torch.float16
+    elif precision == "bfloat16":
+        if torch.cuda.is_bf16_supported():
+            model = model.to(dtype=torch.bfloat16)
+            logger.info("Using BFloat16 precision for AMP training")
+            final_dtype = torch.bfloat16
+        else:
+            logger.warning(
+                "BFloat16 not supported on this device, falling back to Float16"
+            )
+            model = model.to(dtype=torch.float16)
+            final_dtype = torch.float16
+    elif precision == "float16":
+        model = model.to(dtype=torch.float16)
+        logger.info("Using Float16 precision for AMP training")
+        final_dtype = torch.float16
+    elif precision == "float32":
+        logger.info("Using Float32 precision (no AMP)")
+        final_dtype = torch.float32
+    else:
+        logger.warning(f"Unknown precision '{precision}', using float32")
+
+    return model, final_dtype
 
 
 def get_rank() -> int:

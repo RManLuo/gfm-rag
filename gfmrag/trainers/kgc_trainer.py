@@ -124,7 +124,7 @@ class KGCTrainer(BaseTrainer):
         self,
         batch: Any,
         task_dataset: PretrainTaskDataset,  # type: ignore[override]
-    ) -> dict[str, float]:
+    ) -> dict[str, float | torch.Tensor]:
         """Perform a single training step for KG pretraining."""
         graph = task_dataset.graph
 
@@ -161,12 +161,7 @@ class KGCTrainer(BaseTrainer):
         loss = (loss * neg_weight).sum(dim=-1) / neg_weight.sum(dim=-1)
         loss = loss.mean()
 
-        # Backward pass
-        loss.backward()
-        self.optimizer.step()
-        self.optimizer.zero_grad()
-
-        return {"loss": loss.item()}
+        return {"loss": loss}
 
     @torch.no_grad()
     def evaluate(self) -> dict[str, float]:
