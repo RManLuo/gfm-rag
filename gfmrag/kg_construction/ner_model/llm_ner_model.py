@@ -126,7 +126,6 @@ class LLMNERModel(BaseNERModel):
         ):
             response_content = self.client.invoke(query_ner_messages.to_messages())
             response_content = extract_json_dict(response_content)
-            len(response_content.split())
         else:  # no JSON mode
             chat_completion = self.client.invoke(
                 query_ner_messages.to_messages(),

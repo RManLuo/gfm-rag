@@ -50,7 +50,7 @@ For more details, please refer to our [project page](https://rmanluo.github.io/g
 ## Dependencies
 
 - Python 3.12
-- CUDA 12 and above
+- CUDA 12 and above (CUDA 12.6.3 is recommended)
 
 ## Installation
 
@@ -60,7 +60,7 @@ Install packages
 ```bash
 conda create -n gfmrag python=3.12
 conda activate gfmrag
-conda install cuda-toolkit -c nvidia/label/cuda-12.4.1 # Replace with your desired CUDA version
+conda install cuda-toolkit -c nvidia/label/cuda-12.6.3 # Replace with your desired CUDA version
 pip install gfmrag
 ```
 
