@@ -1,6 +1,5 @@
 import torch
 from vllm import LLM, PoolingParams
-from vllm.distributed.parallel_state import destroy_model_parallel
 
 from .base_model import BaseTextEmbModel
 
@@ -70,6 +69,8 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
         self.text_emb_model = LLM(
             model=self.text_emb_model_name,
             task="embed",
+            distributed_executor_backend="external_launcher",
+            seed=1,
             hf_overrides={"is_matryoshka": True},
         )
 
@@ -131,9 +132,3 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
             [o.outputs.embedding for o in output],
             device="cuda" if torch.cuda.is_available() else "cpu",
         )
-
-    def __del__(self) -> None:
-        try:
-            destroy_model_parallel()
-        except Exception:
-            pass

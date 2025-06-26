@@ -5,8 +5,3 @@ batch_size: 32
 query_instruct: "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
 passage_instruct: null
 truncate_dim: 1024
-model_kwargs:
-  attn_implementation: flash_attention_2
-  torch_dtype: auto
-tokenizer_kwargs:
-  padding_side: left
