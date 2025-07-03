@@ -66,13 +66,22 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
         self.model_kwargs = model_kwargs
         self.tokenizer_kwargs = tokenizer_kwargs
 
-        self.text_emb_model = LLM(
-            model=self.text_emb_model_name,
-            task="embed",
-            distributed_executor_backend="external_launcher",
-            seed=1,
-            hf_overrides={"is_matryoshka": True},
-        )
+        # Use external launcher for distributed execution if initialized
+        if torch.distributed.is_initialized():
+            self.text_emb_model = LLM(
+                model=self.text_emb_model_name,
+                task="embed",
+                distributed_executor_backend="external_launcher",
+                seed=1,
+                hf_overrides={"is_matryoshka": True},
+            )
+        else:
+            self.text_emb_model = LLM(
+                model=self.text_emb_model_name,
+                task="embed",
+                seed=1,
+                hf_overrides={"is_matryoshka": True},
+            )
 
     def add_instruct(self, instruct: str | None, query: str) -> str:
         """Adds an instruction prefix to the query text if provided.
