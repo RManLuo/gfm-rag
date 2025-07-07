@@ -1,6 +1,8 @@
 import torch
 from vllm import LLM, PoolingParams
 
+from gfmrag.utils import get_world_size
+
 from .base_model import BaseTextEmbModel
 
 
@@ -66,8 +68,8 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
         self.model_kwargs = model_kwargs
         self.tokenizer_kwargs = tokenizer_kwargs
 
-        # Use external launcher for distributed execution if initialized
-        if torch.distributed.is_initialized():
+        # Use external launcher for distributed execution if we have multiple processes
+        if get_world_size() > 1:
             self.text_emb_model = LLM(
                 model=self.text_emb_model_name,
                 task="embed",
