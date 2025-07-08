@@ -149,7 +149,7 @@ def main(cfg: DictConfig) -> None:
     device = utils.get_device()
     model = model.to(device)
 
-    qa_data.kg = qa_data.kg.to(device)
+    qa_data.graph = qa_data.graph.to(device)
     qa_data.ent2docs = qa_data.ent2docs.to(device)
 
     if cfg.test.retrieved_result_path:

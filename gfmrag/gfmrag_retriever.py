@@ -55,7 +55,7 @@ class GFMRetriever:
         device: torch.device,
     ) -> None:
         self.qa_data = qa_data
-        self.graph = qa_data.kg
+        self.graph = qa_data.graph
         self.text_emb_model = text_emb_model
         self.ner_model = ner_model
         self.el_model = el_model
@@ -119,7 +119,7 @@ class GFMRetriever:
             dict: Dictionary containing processed inputs with keys:
 
                 - question_embeddings: Embedded representation of the query
-                - question_entities_masks: Binary mask tensor indicating entity nodes (shape: 1 x num_nodes)
+                - start_nodes_mask: Binary mask tensor indicating entity nodes (shape: 1 x num_nodes)
 
         Notes:
             - If no entities are detected in query, the full query is used for entity linking
@@ -136,11 +136,11 @@ class GFMRetriever:
             mentioned_entities = [query]
         linked_entities = self.el_model(mentioned_entities, topk=1)
         entity_ids = [
-            self.qa_data.ent2id[ent[0]["entity"]]
+            self.qa_data.node2id[ent[0]["entity"]]
             for ent in linked_entities.values()
-            if ent[0]["entity"] in self.qa_data.ent2id
+            if ent[0]["entity"] in self.qa_data.node2id
         ]
-        question_entities_masks = (
+        start_nodes_mask = (
             entities_to_mask(entity_ids, self.num_nodes).unsqueeze(0).to(self.device)
         )  # 1 x num_nodes
         question_embedding = self.text_emb_model.encode(
@@ -150,7 +150,7 @@ class GFMRetriever:
         )
         graph_retriever_input = {
             "question_embeddings": question_embedding,
-            "question_entities_masks": question_entities_masks,
+            "start_nodes_mask": start_nodes_mask,
         }
         return graph_retriever_input
 
@@ -193,13 +193,13 @@ class GFMRetriever:
         device = utils.get_device()
         graph_retriever = graph_retriever.to(device)
 
-        qa_data.kg = qa_data.kg.to(device)
+        qa_data.graph = qa_data.graph.to(device)
         ent2docs = qa_data.ent2docs.to(device)
 
         ner_model = instantiate(cfg.graph_retriever.ner_model)
         el_model = instantiate(cfg.graph_retriever.el_model)
 
-        el_model.index(list(qa_data.ent2id.keys()))
+        el_model.index(list(qa_data.node2id.keys()))
 
         # Create doc ranker
         doc_ranker = instantiate(cfg.graph_retriever.doc_ranker, ent2doc=ent2docs)

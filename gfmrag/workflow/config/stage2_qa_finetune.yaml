@@ -11,7 +11,7 @@ defaults:
 seed: 1024
 
 datasets:
-  _target_: gfmrag.datasets.QADataset # The QA dataset class
+  _target_: gfmrag.datasets.GraphIndexDataset # The QA dataset class
   cfgs:
     root: ./data # data root directory
     force_rebuild: False # Whether to force rebuild the dataset

@@ -16,7 +16,7 @@ from torch_geometric.data import Data
 from tqdm import tqdm
 
 from gfmrag import utils
-from gfmrag.datasets import KGDataset
+from gfmrag.datasets import GraphIndexDataset
 from gfmrag.ultra import tasks
 from gfmrag.utils import GraphDatasetLoader
 from gfmrag.utils.wandb_utils import (
@@ -35,7 +35,7 @@ line = "-" * 30
 
 
 def create_kgc_dataset(
-    dataset: dict[str, KGDataset],
+    dataset: dict[str, GraphIndexDataset],
     batch_size: int,
     world_size: int,
     rank: int,
@@ -44,7 +44,7 @@ def create_kgc_dataset(
     fast_test: None | int = None,
 ) -> dict:
     data_name = dataset["data_name"]
-    graph = dataset["data"][0]
+    graph = dataset["data"].graph
 
     # The original triples is used for ranking evaluation
     val_filtered_data = Data(

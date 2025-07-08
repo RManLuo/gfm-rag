@@ -59,8 +59,8 @@ def main(cfg: DictConfig) -> None:
     )
     device = utils.get_device()
     model = model.to(device)
-    graph = qa_data.kg.to(device)
-    ent2id = qa_data.ent2id
+    graph = qa_data.graph.to(device)
+    ent2id = qa_data.node2id
     rel2id = qa_data.rel2id
     _, test_data = qa_data._data
     ent2docs = qa_data.ent2docs.to(device)

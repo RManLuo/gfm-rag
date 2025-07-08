@@ -15,7 +15,7 @@ from torch.utils import data as torch_data
 from tqdm import tqdm
 
 from gfmrag import utils
-from gfmrag.datasets import QADataset
+from gfmrag.datasets import GraphIndexDataset
 from gfmrag.ultra import query_utils
 from gfmrag.utils import GraphDatasetLoader
 from gfmrag.utils.wandb_utils import (
@@ -34,7 +34,7 @@ line = "-" * 30
 
 
 def create_qa_dataloader(
-    dataset: dict[str, QADataset],
+    dataset: dict[str, GraphIndexDataset],
     batch_size: int,
     world_size: int,
     rank: int,
@@ -45,9 +45,8 @@ def create_qa_dataloader(
     Create a dataloader for the QA dataset.
     """
     data_name = dataset["data_name"]
-    qa_data = dataset["data"]
-    train_data, valid_data = qa_data._data
-    data = train_data if is_train else valid_data
+    qa_dataset = dataset["data"]
+    data = qa_dataset.train_data if is_train else qa_dataset.test_data
 
     sampler = torch_data.DistributedSampler(
         data,
@@ -65,8 +64,7 @@ def create_qa_dataloader(
     return {
         "data_name": data_name,
         "data_loader": data_loader,
-        "graph": qa_data.kg,
-        "ent2docs": qa_data.ent2docs,
+        "graph": qa_dataset.graph,
     }
 
 
@@ -109,21 +107,15 @@ def train_and_validate(
 
     # Initialize Losses
     loss_fn_list = []
-    has_doc_loss = False
-    has_ent_distillation_loss = False
-    has_doc_distillation_loss = False
+    distillation_list = set()
     for loss_cfg in cfg.task.losses:
         loss_fn = instantiate(loss_cfg.loss)
-        if loss_cfg.cfg.is_doc_loss:
-            has_doc_loss = True
+        target_node_type = loss_cfg.cfg["target_node_type"]
         if loss_cfg.cfg.get("is_distillation_loss", False):
-            if loss_cfg.cfg.is_doc_loss:
-                has_doc_distillation_loss = True
-            else:
-                has_ent_distillation_loss = True
+            distillation_list.add(target_node_type)
         loss_fn_list.append(
             {
-                "name": loss_cfg.name,
+                "name": f"{target_node_type}_{loss_cfg.name}",
                 "loss_fn": loss_fn,
                 **loss_cfg.cfg,
             }
@@ -164,10 +156,6 @@ def train_and_validate(
             train_loader.sampler.set_epoch(epoch)
             data_name = train_dataset["data_name"]
             graph = train_dataset["graph"].to(device)
-            ent2docs = train_dataset["ent2docs"].to(device)
-            entities_weight = None
-            if cfg.train.init_entities_weight:
-                entities_weight = utils.get_entities_weight(ent2docs)
             batch_per_epoch = batch_per_epoch or len(train_loader)
             for batch in tqdm(
                 islice(train_loader, batch_per_epoch),
@@ -176,43 +164,34 @@ def train_and_validate(
                 disable=not utils.is_main_process(),
             ):
                 batch = query_utils.cuda(batch, device=device)
-                pred = parallel_model(graph, batch, entities_weight=entities_weight)
-                target = batch["supporting_entities_masks"]  # supporting_entities_mask
+                pred = parallel_model(graph, batch)
+                target = batch["target_nodes_mask"]  # target_nodes_mask
 
-                if has_doc_loss:
-                    # If ent2docs is a sparse inverted index, use torch.sparse.mm to get the document predictions
-                    if isinstance(ent2docs, torch.Tensor) and ent2docs.is_sparse:
-                        doc_pred = torch.sparse.mm(pred, ent2docs)
-                    # Document entity predictions
-                    else:
-                        doc_pred = pred[:, ent2docs]  # torch.sparse.mm(pred, ent2docs)
-                    doc_target = batch["supporting_docs_masks"]  # supporting_docs_mask
-
-                # Compute the target entity similarity with text embeddings
-                if has_ent_distillation_loss:
+                # Get the distillation targets
+                distillation_target_list = {}
+                for target_node_type in distillation_list:
                     question_emb = batch["question_embeddings"]
-                    ent_embeddings = graph.ent_emb
-                    ent_distillation_target = question_emb @ ent_embeddings.T
-                if has_doc_distillation_loss:
-                    question_emb = batch["question_embeddings"]
-                    doc_embeddings = graph.ent_emb[ent2docs]  # Get document embeddings
-                    doc_distillation_target = question_emb @ doc_embeddings.T
+                    target_node_ids = graph.nodes_by_type[target_node_type]
+                    target_node_emb = graph.x[target_node_ids]
+                    distillation_target = question_emb @ target_node_emb.T
+                    distillation_target_list[target_node_type] = distillation_target
 
                 loss = 0
                 tmp_losses = {}
                 for loss_dict in loss_fn_list:
                     loss_fn = loss_dict["loss_fn"]
                     weight = loss_dict["weight"]
+                    target_node_type = loss_dict["target_node_type"]
+                    target_node_ids = graph.nodes_by_type[target_node_type]
+                    # Get the predictions and targets for the current target node type
+                    target_node_pred = pred[:, target_node_ids]
+                    target_node_label = target[:, target_node_ids]
                     if loss_dict.get("is_distillation_loss", False):
-                        if loss_dict["is_doc_loss"]:
-                            single_loss = loss_fn(doc_pred, doc_distillation_target)
-                        else:
-                            single_loss = loss_fn(pred, ent_distillation_target)
+                        single_loss = loss_fn(
+                            target_node_pred, distillation_target_list[target_node_type]
+                        )
                     else:
-                        if loss_dict["is_doc_loss"]:
-                            single_loss = loss_fn(doc_pred, doc_target)
-                        else:
-                            single_loss = loss_fn(pred, target)
+                        single_loss = loss_fn(target_node_pred, target_node_label)
                     tmp_losses[loss_dict["name"]] = single_loss.item()
                     loss += weight * single_loss
                 tmp_losses["loss"] = loss.item()  # type: ignore
@@ -327,9 +306,15 @@ def test(
     rank = utils.get_rank()
 
     # process sequentially of test datasets
-    watched_metric = cfg.train.get("watched_metric", "doc_mrr")
+    watched_metric = cfg.train.get("watched_metric", "document_mrr")
     all_metrics = {}
     all_watched_metric = []
+    # Avoid using set() to keep the order of target node types for each process
+    target_type_list = []
+    for loss in cfg.task.losses:
+        if loss.cfg.target_node_type not in target_type_list:
+            target_type_list.append(loss.cfg.target_node_type)
+
     for dataset in test_dataset_loader:
         dataset = create_qa_dataloader(
             dataset,
@@ -343,23 +328,16 @@ def test(
         test_loader.sampler.set_epoch(0)
         data_name = dataset["data_name"]
         graph = dataset["graph"].to(device)
-        ent2docs = dataset["ent2docs"].to(device)
 
         model.eval()
-        ent_preds = []
-        ent_targets = []
-        doc_preds = []
-        doc_targets = []
 
-        # Create doc retriever
-        doc_ranker = instantiate(
-            cfg.doc_ranker,
-            ent2doc=ent2docs,
-        )
-
-        entities_weight = None
-        if cfg.train.init_entities_weight:
-            entities_weight = utils.get_entities_weight(ent2docs)
+        # Initialize the predictions and targets lists
+        preds_list: dict[str, list[tuple[torch.Tensor, torch.Tensor]]] = {
+            target_type: [] for target_type in target_type_list
+        }
+        targets_list: dict[str, list[tuple[torch.Tensor, torch.Tensor]]] = {
+            target_type: [] for target_type in target_type_list
+        }
 
         for batch in tqdm(
             test_loader,
@@ -367,53 +345,46 @@ def test(
             disable=not utils.is_main_process(),
         ):
             batch = query_utils.cuda(batch, device=device)
-            ent_pred = model(graph, batch, entities_weight=entities_weight)
-            doc_pred = doc_ranker(ent_pred)  # Ent2docs mapping
-            target_entities_mask = batch[
-                "supporting_entities_masks"
-            ]  # supporting_entities_mask
-            target_docs_mask = batch["supporting_docs_masks"]  # supporting_docs_mask
-            target_entities = target_entities_mask.bool()
-            target_docs = target_docs_mask.bool()
-            ent_ranking, target_ent_ranking = utils.batch_evaluate(
-                ent_pred, target_entities
+            pred = model(graph, batch)
+            target = batch["target_nodes_mask"].bool()  # target_nodes_mask
+            for node_type in target_type_list:
+                target_node_ids = graph.nodes_by_type[node_type]
+                pred_by_type = pred[:, target_node_ids]
+                target_by_type = target[:, target_node_ids]
+                node_ranking, target_node_ranking = utils.batch_evaluate(
+                    pred_by_type, target_by_type
+                )
+
+                # Answer set cardinality prediction
+                node_prob = F.sigmoid(pred_by_type)
+                num_pred = (node_prob * (node_prob > 0.5)).sum(dim=-1)
+                num_target = target_by_type.sum(dim=-1)
+                preds_list[node_type].append((node_ranking, num_pred))
+                targets_list[node_type].append((target_node_ranking, num_target))
+
+        metrics_by_type = {}
+        for node_type in target_type_list:
+            # Concatenate the predictions and targets for the current node type
+            preds = preds_list[node_type]
+            targets = targets_list[node_type]
+            if len(preds) == 0 or len(targets) == 0:
+                continue
+
+            # Gather results across all processes
+            node_pred, node_target = query_utils.cat(preds), query_utils.cat(targets)
+            node_pred, node_target = utils.gather_results(
+                node_pred, node_target, rank, world_size, device
             )
-            doc_ranking, target_doc_ranking = utils.batch_evaluate(
-                doc_pred, target_docs
+
+            # Evaluate the metrics for the current node type
+            metrics_by_type[node_type] = utils.evaluate(
+                node_pred, node_target, cfg.task.metric
             )
 
-            # answer set cardinality prediction
-            ent_prob = F.sigmoid(ent_pred)
-            num_pred = (ent_prob * (ent_prob > 0.5)).sum(dim=-1)
-            num_target = target_entities_mask.sum(dim=-1)
-            ent_preds.append((ent_ranking, num_pred))
-            ent_targets.append((target_ent_ranking, num_target))
-
-            # document set cardinality prediction
-            doc_prob = F.sigmoid(doc_pred)
-            num_pred = (doc_prob * (doc_prob > 0.5)).sum(dim=-1)
-            num_target = target_docs_mask.sum(dim=-1)
-            doc_preds.append((doc_ranking, num_pred))
-            doc_targets.append((target_doc_ranking, num_target))
-
-        ent_pred = query_utils.cat(ent_preds)
-        ent_target = query_utils.cat(ent_targets)
-        doc_pred = query_utils.cat(doc_preds)
-        doc_target = query_utils.cat(doc_targets)
-
-        ent_pred, ent_target = utils.gather_results(
-            ent_pred, ent_target, rank, world_size, device
-        )
-        doc_pred, doc_target = utils.gather_results(
-            doc_pred, doc_target, rank, world_size, device
-        )
-        ent_metrics = utils.evaluate(ent_pred, ent_target, cfg.task.metric)
-        doc_metrics = utils.evaluate(doc_pred, doc_target, cfg.task.metric)
         metrics = {}
-        for key, value in ent_metrics.items():
-            metrics[f"ent_{key}"] = value
-        for key, value in doc_metrics.items():
-            metrics[f"doc_{key}"] = value
+        for node_type, metric in metrics_by_type.items():
+            for key, value in metric.items():
+                metrics[f"{node_type}_{key}"] = value
 
         if rank == 0:
             logger.info(f"{'-' * 15} Test on {data_name} {'-' * 15}")

@@ -308,8 +308,8 @@ class QueryNBFNet(EntityNBFNet):
         )  # (num_nodes, batch_size, feature_dim）
         node_feature = output["node_feature"]
         edge_weights = output["edge_weights"]
-        question_entities_mask = sample["question_entities_masks"]
-        target_entities_mask = sample["supporting_entities_masks"]
+        question_entities_mask = sample["start_nodes_mask"]
+        target_entities_mask = sample["target_nodes_mask"]
         query_entities_index = question_entities_mask.nonzero(as_tuple=True)[1]
         target_entities_index = target_entities_mask.nonzero(as_tuple=True)[1]
 

@@ -120,7 +120,7 @@ class QueryGNN(nn.Module):
 
         if self.use_ent_emb == "early-fusion":
             # if we use early-fusion, we add entity embeddings to the boundary condition
-            ent_emb = self.ent_mlp(graph.ent_emb)
+            ent_emb = self.ent_mlp(graph.x)
             boundary += ent_emb.unsqueeze(0).expand_as(boundary)
 
         return boundary
@@ -147,7 +147,7 @@ class QueryGNN(nn.Module):
         # relations are the same all positive and negative triples, so we can extract only one from the first triple among 1+nug_negs
         batch_size = len(batch)
         relation_representations = (
-            self.rel_mlp(graph.rel_emb).unsqueeze(0).expand(batch_size, -1, -1)
+            self.rel_mlp(graph.rel_attr).unsqueeze(0).expand(batch_size, -1, -1)
         )
         h_index, t_index, r_index = batch.unbind(-1)
 
@@ -166,7 +166,7 @@ class QueryGNN(nn.Module):
         ]  # take the first relation index for all triples in the batch
 
         # Get the input embedding for the query head and relation
-        raw_rel_emb = graph.rel_emb.unsqueeze(0).expand(batch_size, -1, -1)
+        raw_rel_emb = graph.rel_attr.unsqueeze(0).expand(batch_size, -1, -1)
         query_relation_emb = raw_rel_emb[
             torch.arange(batch_size, device=r_index.device), query_relation
         ]
@@ -240,7 +240,7 @@ class GNNRetriever(QueryGNN):
             graph (Data): A PyTorch Geometric Data object containing the graph structure and features.
             batch (dict[str, torch.Tensor]): A dictionary containing:
                 - question_embeddings: Tensor of question embeddings
-                - question_entities_masks: Tensor of masks for question entities
+                - start_nodes_mask: Tensor of masks for question entities
             entities_weight (torch.Tensor | None, optional): Optional weight tensor for entities. Defaults to None.
 
         Returns:
@@ -256,12 +256,12 @@ class GNNRetriever(QueryGNN):
         """
 
         question_emb = batch["question_embeddings"]
-        question_entities_mask = batch["question_entities_masks"]
+        question_entities_mask = batch["start_nodes_mask"]
 
         question_embedding = self.question_mlp(question_emb)  # shape: (bs, emb_dim)
         batch_size = question_embedding.size(0)
         relation_representations = (
-            self.rel_mlp(graph.rel_emb).unsqueeze(0).expand(batch_size, -1, -1)
+            self.rel_mlp(graph.rel_attr).unsqueeze(0).expand(batch_size, -1, -1)
         )
 
         # initialize the input with the fuzzy set and question embs
@@ -278,7 +278,7 @@ class GNNRetriever(QueryGNN):
             or self.use_ent_emb == "early-late-fusion"
         ):
             # if we use early-fusion, we add entity embeddings to the input
-            ent_emb = self.ent_mlp(graph.ent_emb)
+            ent_emb = self.ent_mlp(graph.x)
             # node_embedding += ent_emb.unsqueeze(0).expand_as(node_embedding)
             node_embedding = self.early_fuse_mlp(
                 torch.cat(
@@ -293,7 +293,7 @@ class GNNRetriever(QueryGNN):
         )  # shape: (bs, num_nodes, emb_dim)
         if self.use_ent_emb == "late-fusion" or self.use_ent_emb == "early-late-fusion":
             ent_late_emb = (
-                self.ent_mlp(graph.ent_emb).unsqueeze(0).expand(batch_size, -1, -1)
+                self.ent_mlp(graph.x).unsqueeze(0).expand(batch_size, -1, -1)
             )  # shape: (bs, num_nodes, emb_dim)
             output = self.predict_mlp(
                 torch.cat([output, ent_late_emb], dim=-1)
@@ -322,7 +322,7 @@ class GNNRetriever(QueryGNN):
             graph (Data): The input knowledge graph structure containing entity and relation information
             sample (dict[str, torch.Tensor]): Dictionary containing:
                 - question_embeddings: Tensor of question text embeddings
-                - question_entities_masks: Binary mask tensor indicating question entities
+                - start_nodes_mask: Binary mask tensor indicating question entities
             entities_weight (torch.Tensor | None, optional): Optional tensor of entity weights to apply.
                 Defaults to None.
 
@@ -338,14 +338,14 @@ class GNNRetriever(QueryGNN):
         """
 
         question_emb = sample["question_embeddings"]
-        question_entities_mask = sample["question_entities_masks"]
+        question_entities_mask = sample["start_nodes_mask"]
         question_embedding = self.question_mlp(question_emb)  # shape: (bs, emb_dim)
         batch_size = question_embedding.size(0)
 
         assert batch_size == 1, "Currently only supports batch size 1 for visualization"
 
         relation_representations = (
-            self.rel_mlp(graph.rel_emb).unsqueeze(0).expand(batch_size, -1, -1)
+            self.rel_mlp(graph.rel_attr).unsqueeze(0).expand(batch_size, -1, -1)
         )
 
         # initialize the input with the fuzzy set and question embs
@@ -359,7 +359,7 @@ class GNNRetriever(QueryGNN):
         )
         if self.use_ent_emb == "early-fusion":
             # if we use early-fusion, we add entity embeddings to the input
-            ent_emb = self.ent_mlp(graph.ent_emb)
+            ent_emb = self.ent_mlp(graph.x)
             node_embedding += ent_emb.unsqueeze(0).expand_as(node_embedding)
 
         return self.entity_model.visualize(

@@ -524,7 +524,14 @@ def cuda(obj, *args, **kwargs):
     Transfer any nested container of tensors to CUDA.
     """
     if hasattr(obj, "cuda"):
-        return obj.cuda(*args, **kwargs)
+        if "device" in kwargs:
+            return obj.to(*args, **kwargs)
+        else:
+            # If no device is specified, use the default CUDA device
+            if torch.cuda.is_available():
+                return obj.cuda(*args, **kwargs)
+            else:
+                raise RuntimeError("CUDA is not available")
     elif isinstance(obj, (str, bytes)):
         return obj
     elif isinstance(obj, dict):
