@@ -15,7 +15,7 @@ from torch.utils import data as torch_data
 from tqdm import tqdm
 
 from gfmrag import utils
-from gfmrag.datasets import GraphIndexDataset
+from gfmrag.graph_index_datasets import GraphIndexDataset
 from gfmrag.ultra import query_utils
 from gfmrag.utils import GraphDatasetLoader
 from gfmrag.utils.wandb_utils import (
@@ -306,14 +306,20 @@ def test(
     rank = utils.get_rank()
 
     # process sequentially of test datasets
-    watched_metric = cfg.train.get("watched_metric", "document_mrr")
+    watched_metric = cfg.train.get("watched_metric", "")
     all_metrics = {}
     all_watched_metric = []
     # Avoid using set() to keep the order of target node types for each process
-    target_type_list = []
-    for loss in cfg.task.losses:
-        if loss.cfg.target_node_type not in target_type_list:
-            target_type_list.append(loss.cfg.target_node_type)
+    target_type_list = cfg.task.get("target_type_list", [])
+    calculable_metric_list = [
+        f"{node_type}_{metric}"
+        for node_type in target_type_list
+        for metric in cfg.task.metric
+    ]
+    if watched_metric not in calculable_metric_list:
+        assert watched_metric in cfg.task.metric, (
+            f"Watched metric {watched_metric} must be in the metric list {calculable_metric_list}"
+        )
 
     for dataset in test_dataset_loader:
         dataset = create_qa_dataloader(
@@ -447,7 +453,9 @@ def main(cfg: DictConfig) -> None:
         watch_model(model, log_freq=cfg.train.log_interval)
 
     if "checkpoint" in cfg.train and cfg.train.checkpoint is not None:
-        if os.path.exists(cfg.train.checkpoint):
+        if os.path.exists(cfg.train.checkpoint) and os.path.isfile(
+            cfg.train.checkpoint
+        ):
             state = torch.load(
                 cfg.train.checkpoint, map_location="cpu", weights_only=True
             )

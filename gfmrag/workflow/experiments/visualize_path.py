@@ -7,12 +7,12 @@ import torch
 import torch.utils
 import torch.utils.data
 from hydra.core.hydra_config import HydraConfig
+from hydra.utils import get_class
 from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from torch_geometric.data import Data
 
 from gfmrag import utils
-from gfmrag.datasets import QADataset
 from gfmrag.ultra import query_utils
 
 # A logger for this file
@@ -53,8 +53,9 @@ def main(cfg: DictConfig) -> None:
     model, model_config = utils.load_model_from_pretrained(
         cfg.graph_retriever.model_path
     )
-    qa_data = QADataset(
-        **cfg.dataset,
+    dataset_cls = get_class(cfg.dataset._target_)
+    qa_data = dataset_cls(
+        **cfg.dataset.cfgs,
         text_emb_model_cfgs=OmegaConf.create(model_config["text_emb_model_config"]),
     )
     device = utils.get_device()

@@ -1,1 +1,1 @@
-_target_: gfmrag.doc_rankers.DocEntRanker
+_target_: gfmrag.models.gfm_rag_v1.rankers.DocEntRanker

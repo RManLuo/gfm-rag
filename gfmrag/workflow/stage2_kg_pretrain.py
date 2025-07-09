@@ -16,7 +16,7 @@ from torch_geometric.data import Data
 from tqdm import tqdm
 
 from gfmrag import utils
-from gfmrag.datasets import GraphIndexDataset
+from gfmrag.graph_index_datasets import GraphIndexDataset
 from gfmrag.ultra import tasks
 from gfmrag.utils import GraphDatasetLoader
 from gfmrag.utils.wandb_utils import (

@@ -11,8 +11,10 @@ defaults:
 seed: 1024
 
 dataset:
-  root: ./data
-  data_name: hotpotqa_test
+  _target_: gfmrag.graph_index_datasets.GraphIndexDataset # The QA dataset class
+  cfgs:
+    root: ./data
+    data_name: hotpotqa_test
 
 llm:
   _target_: gfmrag.llms.ChatGPT

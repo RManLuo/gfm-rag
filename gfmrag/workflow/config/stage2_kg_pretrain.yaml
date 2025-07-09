@@ -10,7 +10,7 @@ defaults:
 seed: 1024
 
 datasets:
-  _target_: gfmrag.datasets.GraphIndexDataset # The KG dataset class
+  _target_: gfmrag.graph_index_datasets.GraphIndexDataset # The KG dataset class
   cfgs:
     root: ./data # data root directory
     force_rebuild: False # Whether to force rebuild the dataset

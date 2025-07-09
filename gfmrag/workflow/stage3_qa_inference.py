@@ -6,7 +6,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 import hydra
 import torch
 from hydra.core.hydra_config import HydraConfig
-from hydra.utils import instantiate
+from hydra.utils import get_class, instantiate
 from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from torch.utils import data as torch_data
@@ -14,7 +14,6 @@ from torch.utils.data import Dataset
 from tqdm import tqdm
 
 from gfmrag import utils
-from gfmrag.datasets import QADataset
 from gfmrag.prompt_builder import QAPromptBuilder
 from gfmrag.ultra import query_utils
 
@@ -142,8 +141,9 @@ def main(cfg: DictConfig) -> None:
     model, model_config = utils.load_model_from_pretrained(
         cfg.graph_retriever.model_path
     )
-    qa_data = QADataset(
-        **cfg.dataset,
+    dataset_cls = get_class(cfg.dataset._target_)
+    qa_data = dataset_cls(
+        **cfg.dataset.cfgs,
         text_emb_model_cfgs=OmegaConf.create(model_config["text_emb_model_config"]),
     )
     device = utils.get_device()

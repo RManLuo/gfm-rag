@@ -4,7 +4,6 @@ hydra:
 
 defaults:
   - _self_
-  - doc_ranker: idf_topk_ranker # The document ranker to use
   - agent_prompt: hotpotqa_ircot # The agent prompt to use
   - qa_prompt: hotpotqa # The QA prompt to use
   - ner_model: llm_ner_model # The NER model to use
@@ -14,8 +13,10 @@ defaults:
 seed: 1024
 
 dataset:
-  root: ./data # data root directory
-  data_name: hotpotqa_test # data name
+  _target_: gfmrag.graph_index_datasets.GraphIndexDataset # The QA dataset class
+  cfgs:
+    root: ./data
+    data_name: hotpotqa_test
 
 llm:
   _target_: gfmrag.llms.ChatGPT # The language model to use
@@ -24,11 +25,10 @@ llm:
 
 graph_retriever:
   model_path: rmanluo/GFM-RAG-8M # Checkpoint path of the pre-trained GFM-RAG model
-  doc_ranker: ${doc_ranker} # The document ranker to use
   ner_model: ${ner_model} # The NER model to usek
   el_model: ${el_model} # The EL model to use
   qa_evaluator: ${qa_evaluator} # The QA evaluator to use
-  init_entities_weight: True # Whether to initialize the entities weight
+  target_type: document # The target type for the graph retriever
 
 test:
   top_k: 10 # Number of documents to retrieve

@@ -11,7 +11,7 @@ def save_model_to_pretrained(
     model: torch.nn.Module, cfg: DictConfig, path: str
 ) -> None:
     os.makedirs(path, exist_ok=True)
-    model_config = OmegaConf.to_container(cfg.model)
+    model_config = OmegaConf.to_container(cfg.model, resolve=True)
     model_config["feat_dim"] = model.feat_dim
     config = {
         "text_emb_model_config": OmegaConf.to_container(

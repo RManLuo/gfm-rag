@@ -4,17 +4,16 @@ hydra:
 
 defaults:
   - _self_
-  - doc_ranker: doc_ent_ranker # The document ranker to use
   - text_emb_model: qwen3 # The text embedding model to use
   - wandb: default # Weights & Biases configuration
 
 seed: 1024
 
 datasets:
-  _target_: gfmrag.datasets.GraphIndexDataset # The QA dataset class
+  _target_: gfmrag.graph_index_datasets.GraphIndexDataset # The QA dataset class
   cfgs:
     root: ./data # data root directory
-    force_rebuild: False # Whether to force rebuild the dataset
+    force_reload: False # Whether to force rebuild the dataset
     text_emb_model_cfgs: ${text_emb_model} # The text embedding model configuration
   train_names: # List of training dataset names
     - hotpotqa_train_example
@@ -29,7 +28,7 @@ datasets:
 
 # GFM model configuration
 model:
-  _target_: gfmrag.models.GNNRetriever
+  _target_: gfmrag.models.GraphReasoner
   use_ent_emb: early-late-fusion
   entity_model:
     _target_: gfmrag.ultra.models.QueryNBFNet
@@ -46,6 +45,7 @@ task:
   strict_negative: yes
   metric:
     [mrr, hits@1, hits@2, hits@3, hits@5, hits@10, hits@20, hits@50, hits@100]
+  target_type_list: [document] # The target node types used for metric
   losses:
     - name: bce_loss
       loss:
