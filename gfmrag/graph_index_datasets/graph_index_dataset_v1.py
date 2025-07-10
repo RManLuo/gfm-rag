@@ -190,9 +190,7 @@ class GraphIndexDatasetV1(GraphIndexDataset):
             # Skip if the other type is the same as the target type
             if other_type == self.target_type:
                 continue
-            indices = torch.tensor(
-                [group["u"].astype(int).values, group["v"].astype(int).values]
-            )
+            indices = torch.tensor(group[["u", "v"]].astype(int).values.T)
             target_to_other_mapping = torch.sparse_coo_tensor(
                 indices,
                 torch.ones(indices.size(1), dtype=torch.float),
