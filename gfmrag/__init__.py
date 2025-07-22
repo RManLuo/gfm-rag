@@ -1,2 +1,2 @@
 from .gfmrag_retriever import GFMRetriever
-from .kg_indexer import KGIndexer
+from .graph_indexer import GraphIndexer

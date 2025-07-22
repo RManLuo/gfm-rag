@@ -5,7 +5,8 @@ from torch import nn
 from torch.nn import functional as F  # noqa:N812
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.utils import degree
-from gfmrag.ultra import variadic
+
+from gfmrag.models.ultra import variadic
 
 
 class GeneralizedRelationalConv(MessagePassing):
@@ -15,10 +16,7 @@ class GeneralizedRelationalConv(MessagePassing):
         "transe": "add",
         "distmult": "mul",
     }
-    aggr2reduce = {'sum':'sum',
-                   'mean':'mean',
-                   'min':'amin',
-                   'max':'amax'}
+    aggr2reduce = {"sum": "sum", "mean": "mean", "min": "amin", "max": "amax"}
 
     # TODO for compile() - doesn't work currently
     # propagate_type = {"edge_index": torch.LongTensor, "size": Tuple[int, int]}

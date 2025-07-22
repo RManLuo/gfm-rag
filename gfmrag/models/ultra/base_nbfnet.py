@@ -5,9 +5,10 @@ from collections.abc import Sequence
 import torch
 from torch import autograd, nn
 
+from gfmrag.models.ultra import variadic
+
 from . import tasks
 
-from gfmrag.ultra import variadic
 
 class BaseNBFNet(nn.Module):
     def __init__(
@@ -279,10 +280,10 @@ class BaseNBFNet(nn.Module):
                 back_edge = back_edge.view(len(node_out_set), num_beam, 4)
 
                 distance = variadic.native_scatter(
-                    distance, node_out_set, dim=0, dim_size=num_nodes, reduce='sum'
+                    distance, node_out_set, dim=0, dim_size=num_nodes, reduce="sum"
                 )  # (num_nodes, num_beam)
                 back_edge = variadic.native_scatter(
-                    back_edge, node_out_set, dim=0, dim_size=num_nodes, reduce='sum'
+                    back_edge, node_out_set, dim=0, dim_size=num_nodes, reduce="sum"
                 )  # (num_nodes, num_beam, 4)
             else:
                 distance = torch.full(
@@ -343,7 +344,9 @@ def size_to_index(size):
 def multi_slice_mask(starts, ends, length):
     values = torch.cat([torch.ones_like(starts), -torch.ones_like(ends)])
     slices = torch.cat([starts, ends])
-    mask = variadic.native_scatter(values, slices, dim=0, dim_size=length + 1, reduce='sum')[:-1]
+    mask = variadic.native_scatter(
+        values, slices, dim=0, dim_size=length + 1, reduce="sum"
+    )[:-1]
 
     mask = mask.cumsum(0).bool()
     return mask

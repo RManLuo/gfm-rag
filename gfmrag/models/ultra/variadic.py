@@ -1,6 +1,7 @@
 # mypy: ignore-errors
 import torch
 
+
 def native_scatter_softmax(src, index, dim=-1, eps=1e-12):
     """
     Implementation of scatter_softmax using PyTorch's native scatter operations.
@@ -28,15 +29,12 @@ def native_scatter_softmax(src, index, dim=-1, eps=1e-12):
     exp_src = torch.exp(src_stable)
 
     sum_per_index = torch.zeros_like(src)
-    sum_per_index = sum_per_index.scatter_add(
-        dim=dim,
-        index=index,
-        src=exp_src
-    )
+    sum_per_index = sum_per_index.scatter_add(dim=dim, index=index, src=exp_src)
 
     gathered_sum = sum_per_index.gather(dim, index) + eps
 
     return exp_src / gathered_sum
+
 
 def broadcast(src: torch.Tensor, other: torch.Tensor, dim: int):
     if dim < 0:
@@ -49,7 +47,8 @@ def broadcast(src: torch.Tensor, other: torch.Tensor, dim: int):
     src = src.expand(other.size())
     return src
 
-def native_scatter(src, index, dim=0, dim_size=None, reduce='sum'):
+
+def native_scatter(src, index, dim=0, dim_size=None, reduce="sum"):
     """
     Implements torch_scatter style functions using PyTorch's native  method.
 
@@ -65,7 +64,7 @@ def native_scatter(src, index, dim=0, dim_size=None, reduce='sum'):
         torch.Tensor: Result of scatter operation
     """
     if index.shape != src.shape:
-        index = broadcast(index, src, dim) # Try to broadcast index to src shape
+        index = broadcast(index, src, dim)  # Try to broadcast index to src shape
 
     assert index.shape == src.shape, "Index and source tensors must have the same shape"
 
@@ -79,7 +78,9 @@ def native_scatter(src, index, dim=0, dim_size=None, reduce='sum'):
     output_shape[dim] = dim_size
 
     output = torch.zeros(tuple(output_shape), device=src.device, dtype=src.dtype)
-    output.scatter_reduce_(dim=dim, index=index, src=src, reduce=reduce, include_self=False)
+    output.scatter_reduce_(
+        dim=dim, index=index, src=src, reduce=reduce, include_self=False
+    )
 
     return output
 
@@ -165,7 +166,7 @@ def multi_slice_mask(starts, ends, length):
     slices = torch.cat([starts, ends])
     if slices.numel():
         assert slices.min() >= 0 and slices.max() <= length
-    mask = native_scatter(values, slices, dim=0, dim_size=length + 1,reduce='sum')[:-1]
+    mask = native_scatter(values, slices, dim=0, dim_size=length + 1, reduce="sum")[:-1]
     mask = mask.cumsum(0).bool()
     return mask
 
@@ -221,7 +222,7 @@ def variadic_sum(input, size):
     index2sample = index2sample.view([-1] + [1] * (input.ndim - 1))
     index2sample = index2sample.expand_as(input)
 
-    value = native_scatter(input, index2sample, dim=0, reduce='sum')
+    value = native_scatter(input, index2sample, dim=0, reduce="sum")
     return value
 
 
@@ -239,8 +240,9 @@ def variadic_mean(input, size):
     index2sample = index2sample.view([-1] + [1] * (input.ndim - 1))
     index2sample = index2sample.expand_as(input)
 
-    value = native_scatter(input, index2sample, dim=0, reduce='mean')
+    value = native_scatter(input, index2sample, dim=0, reduce="mean")
     return value
+
 
 def variadic_softmax(input, size):
     """
@@ -258,6 +260,7 @@ def variadic_softmax(input, size):
 
     log_likelihood = native_scatter_softmax(input, index2sample, dim=0)
     return log_likelihood
+
 
 def variadic_sort(input, size, descending=False):
     """

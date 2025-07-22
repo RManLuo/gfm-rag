@@ -1,73 +1,26 @@
-import hashlib
 import json
 import logging
 import os
 import re
-from abc import ABC, abstractmethod
 from multiprocessing.dummy import Pool as ThreadPool
 from typing import Any
 
 import numpy as np
 import pandas as pd
-from hydra.utils import instantiate
-from omegaconf import DictConfig, OmegaConf
 from tqdm import tqdm
 
-from gfmrag.kg_construction.utils import KG_DELIMITER, processing_phrases
+from gfmrag.graph_index_construction.entity_linking_model import BaseELModel
+from gfmrag.graph_index_construction.openie_model.base_model import BaseOPENIEModel
+from gfmrag.graph_index_construction.utils import KG_DELIMITER, processing_phrases
+from gfmrag.graph_index_datasets.graph_index_dataset import GraphIndexDataset
 
-from .entity_linking_model import BaseELModel
-from .openie_model.base_model import BaseOPENIEModel
+from .base_graph_constructor import BaseGraphConstructor, Edge, Graph, Node, Relation
 
 logger = logging.getLogger(__name__)
 
 
-class BaseKGConstructor(ABC):
-    """
-    Abstract base class for knowledge graph construction.
-
-    This class defines the interface for constructing knowledge graphs from datasets.
-    Subclasses must implement create_kg() and get_document2entities() methods.
-
-    Attributes:
-        None
-
-    Methods:
-        create_kg: Creates a knowledge graph from the specified dataset.
-
-        get_document2entities: Get mapping between documents and their associated entities.
-    """
-
-    @abstractmethod
-    def create_kg(self, data_root: str, data_name: str) -> list[tuple[str, str, str]]:
-        """
-        Create a knowledge graph from the dataset
-
-        Args:
-            data_root (str): path to the dataset
-            data_name (str): name of the dataset
-
-        Returns:
-            list[tuple[str, str, str]]: list of triples
-        """
-        pass
-
-    @abstractmethod
-    def get_document2entities(self, data_root: str, data_name: str) -> dict:
-        """
-        Get the document to entities mapping from the dataset
-
-        Args:
-            data_root (str): path to the dataset
-            data_name (str): name of the dataset
-
-        Returns:
-            dict: document to entities mapping
-        """
-        pass
-
-
-class KGConstructor(BaseKGConstructor):
-    """A class for constructing Knowledge Graphs (KG) from text data using Open Information Extraction and Entity Linking.
+class KGConstructor(BaseGraphConstructor):
+    """A class for constructing Knowledge Graphs (KG) style graph index from text data using Open Information Extraction and Entity Linking.
 
 
     Args:
@@ -175,65 +128,7 @@ class KGConstructor(BaseKGConstructor):
             os.makedirs(tmp_dir)
         return tmp_dir
 
-    @staticmethod
-    def from_config(cfg: DictConfig) -> "KGConstructor":
-        """
-        Creates a KGConstructor instance from a configuration.
-
-        This method initializes a KGConstructor using parameters specified in an OmegaConf
-        configuration object. It creates a unique fingerprint of the configuration and sets up
-        a temporary directory for storing processed data.
-
-        Args:
-            cfg (DictConfig): An OmegaConf configuration object containing the following parameters:
-
-                - root: Base directory for storing temporary files
-                - open_ie_model: Configuration for the Open IE model
-                - el_model: Configuration for the Entity Linking model
-                - num_processes: Number of processes to use
-                - cosine_sim_edges: Whether to use cosine similarity for edges
-                - threshold: Similarity threshold
-                - max_sim_neighbors: Maximum number of similar neighbors
-                - add_title: Whether to add titles
-                - force: Whether to force reprocessing
-
-        Returns:
-            KGConstructor: An initialized KGConstructor instance
-
-        Notes:
-            The method creates a fingerprint of the configuration (excluding 'force' parameters)
-            and uses it to create a temporary directory. The configuration is saved in this
-            directory for reference.
-        """
-        # create a fingerprint of config for tmp directory
-        config = OmegaConf.to_container(cfg, resolve=True)
-        if "force" in config:
-            del config["force"]
-        if "force" in config["el_model"]:
-            del config["el_model"]["force"]
-        fingerprint = hashlib.md5(json.dumps(config).encode()).hexdigest()
-
-        base_tmp_dir = os.path.join(cfg.root, fingerprint)
-        if not os.path.exists(base_tmp_dir):
-            os.makedirs(base_tmp_dir)
-            json.dump(
-                config,
-                open(os.path.join(base_tmp_dir, "config.json"), "w"),
-                indent=4,
-            )
-        return KGConstructor(
-            root=base_tmp_dir,
-            open_ie_model=instantiate(cfg.open_ie_model),
-            el_model=instantiate(cfg.el_model),
-            num_processes=cfg.num_processes,
-            cosine_sim_edges=cfg.cosine_sim_edges,
-            threshold=cfg.threshold,
-            max_sim_neighbors=cfg.max_sim_neighbors,
-            add_title=cfg.add_title,
-            force=cfg.force,
-        )
-
-    def create_kg(self, data_root: str, data_name: str) -> list[tuple[str, str, str]]:
+    def build_graph(self, data_root: str, data_name: str) -> Graph:
         """
         Create a knowledge graph from raw data.
 
@@ -244,9 +139,6 @@ class KGConstructor(BaseKGConstructor):
         Args:
             data_root (str): Root directory path containing the data.
             data_name (str): Name of the dataset to process.
-
-        Returns:
-            list[tuple[str, str, str]]: List of extracted triples in the format (head, relation, tail).
 
         Note:
             If self.force is True, it will clear all temporary files before processing.
@@ -261,9 +153,80 @@ class KGConstructor(BaseKGConstructor):
                 os.remove(os.path.join(self.tmp_dir, tmp_file))
 
         open_ie_result_path = self.open_ie_extraction(raw_path)
-        graph = self.create_graph(open_ie_result_path)
-        extracted_triples = [(h, r, t) for (h, t), r in graph.items()]
-        return extracted_triples
+        kg_path = self.build_kg(open_ie_result_path)
+
+        nodes_dict: dict[str, Node] = {}
+        relations_dict: dict[str, Relation] = {}
+        edges: list[Edge] = []
+
+        with open(os.path.join(self.tmp_dir, "passage_info.json")) as fin:
+            passage_info = json.load(fin)
+        document2entities = {doc["title"]: doc["entities"] for doc in passage_info}
+
+        # Create document nodes from documents.
+        with open(os.path.join(raw_path, GraphIndexDataset.RAW_DOCUMENT_NAME)) as f:
+            documents = json.load(f)
+
+        for doc, content in documents.items():
+            if doc not in nodes_dict:
+                nodes_dict[doc] = {
+                    "name": doc,
+                    "type": "document",
+                    "attributes": {"content": content},
+                }
+
+        with open(kg_path) as f:
+            for line in f:
+                head, relation, tail = line.strip().split(self.DELIMITER)
+                if head not in nodes_dict:
+                    nodes_dict[head] = {
+                        "name": head,
+                        "type": "entity",
+                        "attributes": {},
+                    }
+                if tail not in nodes_dict:
+                    nodes_dict[tail] = {
+                        "name": tail,
+                        "type": "entity",
+                        "attributes": {},
+                    }
+                if relation not in relations_dict:
+                    relations_dict[relation] = {
+                        "name": relation,
+                        "attributes": {},
+                    }
+                edges.append(
+                    {
+                        "source": head,
+                        "relation": relation,
+                        "target": tail,
+                        "attributes": {},
+                    }
+                )
+
+        # Special relation for entities to documents
+        ent_to_doc_rel = "is_mentioned_in"
+        if ent_to_doc_rel not in relations_dict:
+            relations_dict[ent_to_doc_rel] = {"name": ent_to_doc_rel, "attributes": {}}
+        for doc, entities in document2entities.items():
+            entity_list = [ent for ent in entities if ent in nodes_dict]
+            if doc not in documents:
+                continue
+            for entity in entity_list:
+                edges.append(
+                    {
+                        "source": entity,
+                        "relation": ent_to_doc_rel,
+                        "target": doc,
+                        "attributes": {},
+                    }
+                )
+
+        return {
+            "nodes": list(nodes_dict.values()),
+            "relations": list(relations_dict.values()),
+            "edges": edges,
+        }
 
     def get_document2entities(self, data_root: str, data_name: str) -> dict:
         """
@@ -289,7 +252,7 @@ class KGConstructor(BaseKGConstructor):
             logger.warning(
                 "Document to entities mapping is not available. Run create_kg first"
             )
-            self.create_kg(data_root, data_name)
+            self.build_graph(data_root, data_name)
 
         with open(os.path.join(self.tmp_dir, "passage_info.json")) as fin:
             passage_info = json.load(fin)
@@ -307,7 +270,7 @@ class KGConstructor(BaseKGConstructor):
             str: Path to the openie results
         """
         # Read data corpus
-        with open(os.path.join(raw_path, "dataset_corpus.json")) as f:
+        with open(os.path.join(raw_path, GraphIndexDataset.RAW_DOCUMENT_NAME)) as f:
             corpus = json.load(f)
             if self.add_title:
                 corpus = {
@@ -351,7 +314,7 @@ class KGConstructor(BaseKGConstructor):
         logger.info(f"OpenIE results saved to {open_ie_result_path}")
         return open_ie_result_path
 
-    def create_graph(self, open_ie_result_path: str) -> dict:
+    def build_kg(self, open_ie_result_path: str) -> str:
         """
         Create a knowledge graph from the openie results
 
@@ -359,10 +322,7 @@ class KGConstructor(BaseKGConstructor):
             open_ie_result_path (str): Path to the openie results
 
         Returns:
-            dict: Knowledge graph
-
-                - key: (head, tail)
-                - value: relation
+            str: Path to the knowledge graph file
         """
 
         with open(open_ie_result_path) as f:
@@ -476,8 +436,22 @@ class KGConstructor(BaseKGConstructor):
         ]
 
         logger.info("\n%s", pd.DataFrame(stat_df).set_index(0))
-
-        return graph
+        # Save graph to a tmp file
+        kg_path = os.path.join(self.tmp_dir, "kg.txt")
+        with open(kg_path, "w") as f:
+            for (h, t), r in graph.items():
+                f.write(
+                    self.DELIMITER.join(
+                        [
+                            h,
+                            r,
+                            t,
+                        ]
+                    )
+                    + "\n"
+                )
+        logger.info(f"KG saved to {kg_path}")
+        return kg_path
 
     def augment_graph(self, graph: dict[Any, Any], kb_phrase_dict: dict) -> None:
         """

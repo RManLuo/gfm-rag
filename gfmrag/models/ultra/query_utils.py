@@ -1,9 +1,7 @@
 # mypy: ignore-errors
-import copy
 import csv
 
 import torch
-from torch import Tensor
 from torch import distributed as dist
 
 from . import variadic
@@ -327,7 +325,9 @@ def batch_evaluate(pred, target, limit_nodes=None):
     order = pred.argsort(dim=-1, descending=True)
 
     range = torch.arange(num_entity, device=pred.device)
-    ranking = variadic.native_scatter(range.expand_as(order), order, dim=-1, reduce='sum')
+    ranking = variadic.native_scatter(
+        range.expand_as(order), order, dim=-1, reduce="sum"
+    )
 
     easy_ranking = ranking[easy_answer]
     hard_ranking = ranking[hard_answer]
@@ -338,7 +338,7 @@ def batch_evaluate(pred, target, limit_nodes=None):
         order_among_answer + (num_answer.cumsum(0) - num_answer)[answer2query]
     )
     ranking_among_answer = variadic.native_scatter(
-        variadic.variadic_arange(num_answer), order_among_answer, reduce='sum'
+        variadic.variadic_arange(num_answer), order_among_answer, reduce="sum"
     )
     # filtered rankings of all answers
     ranking = answer_ranking - ranking_among_answer + 1
@@ -360,27 +360,24 @@ def evaluate(pred, target, metrics, id2type):
         if _metric == "mrr":
             answer_score = 1 / ranking.float()
             query_score = variadic.variadic_mean(answer_score, num_hard)
-            type_score = variadic.native_scatter(query_score,
-                                                 type,
-                                                 dim_size=len(id2type),
-                                                 reduce='mean')
+            type_score = variadic.native_scatter(
+                query_score, type, dim_size=len(id2type), reduce="mean"
+            )
 
         elif _metric.startswith("hits@"):
             threshold = int(_metric[5:])
             answer_score = (ranking <= threshold).float()
             query_score = variadic.variadic_mean(answer_score, num_hard)
-            type_score = variadic.native_scatter(query_score,
-                                                 type,
-                                                 dim_size=len(id2type),
-                                                 reduce='mean')
+            type_score = variadic.native_scatter(
+                query_score, type, dim_size=len(id2type), reduce="mean"
+            )
         elif _metric == "mape":
             query_score = (num_pred - num_easy - num_hard).abs() / (
                 num_easy + num_hard
             ).float()
-            type_score = variadic.native_scatter(query_score,
-                                                 type,
-                                                 dim_size=len(id2type),
-                                                 reduce='mean')
+            type_score = variadic.native_scatter(
+                query_score, type, dim_size=len(id2type), reduce="mean"
+            )
         elif _metric == "spearmanr":
             type_score = []
             for i in range(len(id2type)):
@@ -399,10 +396,9 @@ def evaluate(pred, target, metrics, id2type):
             )
             mask = (num_easy > 0) & (num_hard > 0)
             query_score = answer_score[mask]
-            type_score = variadic.native_scatter(query_score,
-                                                 type[mask],
-                                                 dim_size=len(id2type),
-                                                 reduce='mean')
+            type_score = variadic.native_scatter(
+                query_score, type[mask], dim_size=len(id2type), reduce="mean"
+            )
         else:
             raise ValueError(f"Unknown metric `{_metric}`")
 
@@ -469,7 +465,7 @@ def spearmanr(pred, target):
 
         # for elements that have the same value, replace their rankings with the mean of their rankings
         mean_ranking = variadic.native_scatter(
-            ranking, input_inverse, dim=0, dim_size=len(input_set), reduce='mean'
+            ranking, input_inverse, dim=0, dim_size=len(input_set), reduce="mean"
         )
         ranking = mean_ranking[input_inverse]
         return ranking
@@ -481,6 +477,7 @@ def spearmanr(pred, target):
     target_std = target.std(unbiased=False)
     spearmanr = covariance / (pred_std * target_std + 1e-10)
     return spearmanr
+
 
 def cat(objs, *args, **kwargs):
     """

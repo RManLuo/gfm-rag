@@ -78,6 +78,7 @@ class GraphIndexDataset:
     ]
     RAW_GRAPH_NAMES = ["nodes.csv", "relations.csv", "edges.csv"]
     RAW_QA_DATA_NAMES = ["train.json", "test.json"]
+    RAW_DOCUMENT_NAME = "documents.json"
 
     PROCESSED_GRAPH_NAMES = ["graph.pt", "node2id.json", "rel2id.json"]
     PROCESSED_QA_DATA_NAMES = ["train.pt", "test.pt"]
@@ -91,7 +92,7 @@ class GraphIndexDataset:
         use_node_feat: bool = True,
         use_relation_feat: bool = True,
         use_edge_feat: bool = False,
-        inverse_relation_feat: Literal["text", "inverse"] = "inverse",
+        inverse_relation_feat: Literal["text", "inverse"] = "text",
         **kwargs: str,
     ) -> None:
         self.root = root
@@ -221,7 +222,7 @@ class GraphIndexDataset:
             self.raw_test_data = None
 
         with open(
-            os.path.join(str(self.root), str(self.name), "raw", "documents.json")
+            os.path.join(str(self.root), str(self.name), "raw", self.RAW_DOCUMENT_NAME)
         ) as fin:
             self.doc = json.load(fin)
 

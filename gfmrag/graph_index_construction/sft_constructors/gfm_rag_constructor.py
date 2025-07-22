@@ -1,55 +1,27 @@
-import hashlib
 import json
 import logging
 import os
-from abc import ABC, abstractmethod
 from multiprocessing.dummy import Pool as ThreadPool
 
-from hydra.utils import instantiate
-from omegaconf import DictConfig, OmegaConf
+import pandas as pd
 from tqdm import tqdm
 
-from gfmrag.kg_construction.utils import KG_DELIMITER
+from gfmrag.graph_index_datasets.graph_index_dataset import GraphIndexDataset
+from gfmrag.utils.util import check_all_files_exist
 
-from .entity_linking_model import BaseELModel
-from .ner_model import BaseNERModel
+from ..entity_linking_model import BaseELModel
+from ..ner_model import BaseNERModel
+from .base_sft_constructor import BaseSFTConstructor
 
 logger = logging.getLogger(__name__)
 
 
-class BaseQAConstructor(ABC):
-    """An abstract base class for constructing Question-Answering (QA) datasets.
+class GFMRAGConstructor(BaseSFTConstructor):
+    """SFT Constructor for building question-answer datasets with entity linking and named entity recognition used for GFM-RAG-v1.
 
-    Attributes:
-        None
+    This class processes raw QA datasets by performing Named Entity Recognition (NER) on questions and Entity Linking (EL) to connect identified entities to a knowledge graph (KG) to create start_nodes.
 
-    Methods:
-        prepare_data:
-            Abstract method that must be implemented by subclasses to prepare QA data.
-            Takes data location parameters and returns processed data as a list of dictionaries.
-
-    """
-
-    @abstractmethod
-    def prepare_data(self, data_root: str, data_name: str, file: str) -> list[dict]:
-        """
-        Prepare QA data for training and evaluation
-
-        Args:
-            data_root (str): path to the dataset
-            data_name (str): name of the dataset
-            file (str): file name to process
-        Returns:
-            list[dict]: list of processed data
-        """
-        pass
-
-
-class QAConstructor(BaseQAConstructor):
-    """QA Constructor for building question-answer datasets with entity linking and named entity recognition.
-
-    This class processes raw QA datasets by performing Named Entity Recognition (NER) on questions
-    and Entity Linking (EL) to connect identified entities to a knowledge graph (KG).
+    It extracts the entities from the supporting documents and links to the KGs to create target_nodes.
 
     Args:
         ner_model (BaseNERModel): Model for Named Entity Recognition
@@ -74,8 +46,6 @@ class QAConstructor(BaseQAConstructor):
     The class expects a knowledge graph and document-to-entities mapping to be pre-computed
     and stored in the processed/stage1 directory of the dataset.
     """
-
-    DELIMITER = KG_DELIMITER
 
     def __init__(
         self,
@@ -135,52 +105,6 @@ class QAConstructor(BaseQAConstructor):
             os.makedirs(tmp_dir)
         return tmp_dir
 
-    @staticmethod
-    def from_config(cfg: DictConfig) -> "QAConstructor":
-        """Creates a QAConstructor instance from a configuration.
-
-        This method initializes a QAConstructor using configuration parameters, creating a unique
-        temporary directory based on the config fingerprint to store processing artifacts.
-
-        Args:
-            cfg (DictConfig): Configuration object containing:
-
-                - root: Base directory path
-                - ner_model: Named Entity Recognition model configuration
-                - el_model: Entity Linking model configuration
-                - num_processes: Number of processes to use
-                - force: Force reprocessing flag (optional)
-
-        Returns:
-            QAConstructor: Initialized QAConstructor instance with specified configuration
-
-        Note:
-            The method creates a temporary directory using MD5 hash of the config as fingerprint,
-            excluding the 'force' parameter. The full config is saved in this directory as
-            'config.json'.
-        """
-        # create a fingerprint of config for tmp directory
-        config = OmegaConf.to_container(cfg, resolve=True)
-        if "force" in config:
-            del config["force"]
-        fingerprint = hashlib.md5(json.dumps(config).encode()).hexdigest()
-
-        base_tmp_dir = os.path.join(cfg.root, fingerprint)
-        if not os.path.exists(base_tmp_dir):
-            os.makedirs(base_tmp_dir)
-            json.dump(
-                config,
-                open(os.path.join(base_tmp_dir, "config.json"), "w"),
-                indent=4,
-            )
-        return QAConstructor(
-            root=base_tmp_dir,
-            ner_model=instantiate(cfg.ner_model),
-            el_model=instantiate(cfg.el_model),
-            num_processes=cfg.num_processes,
-            force=cfg.force,
-        )
-
     def prepare_data(self, data_root: str, data_name: str, file: str) -> list[dict]:
         """
         Prepares data for question answering by processing raw data, performing Named Entity Recognition (NER),
@@ -216,25 +140,28 @@ class QAConstructor(BaseQAConstructor):
             for tmp_file in os.listdir(self.tmp_dir):
                 os.remove(os.path.join(self.tmp_dir, tmp_file))
 
-        if not os.path.exists(os.path.join(processed_path, "kg.txt")):
+        # Create graph index for each dataset
+        raw_graph_files = [
+            os.path.join(processed_path, name)
+            for name in GraphIndexDataset.RAW_GRAPH_NAMES
+        ]
+        if not check_all_files_exist(raw_graph_files):
             raise FileNotFoundError(
-                "KG file not found. Please run KG construction first"
+                "Graph file not found. Please run KG construction first"
             )
 
-        # Read KG
-        entities = set()
-        with open(os.path.join(processed_path, "kg.txt")) as f:
-            for line in f:
-                try:
-                    u, _, v = line.strip().split(self.DELIMITER)
-                except Exception as e:
-                    logger.error(f"Error in line: {line}, {e}, Skipping")
-                    continue
-                entities.add(u)
-                entities.add(v)
-        # Read document2entities
-        with open(os.path.join(processed_path, "document2entities.json")) as f:
-            doc2entities = json.load(f)
+        # Read nodes.csv to get entities
+        nodes = pd.read_csv(os.path.join(processed_path, "nodes.csv"))
+
+        # Get nodes with type 'entity'
+        entities = nodes[nodes["type"] == "entity"]["name"].tolist()
+
+        # Read edges.csv
+        edges = pd.read_csv(os.path.join(processed_path, "edges.csv"))
+
+        # Get document2entities mapping
+        ent_doc_edges = edges[edges["relation"] == "is_mentioned_in"]
+        doc2entities = ent_doc_edges.groupby("target")["source"].apply(list).to_dict()
 
         # Load data
         with open(raw_path) as f:
@@ -289,16 +216,16 @@ class QAConstructor(BaseQAConstructor):
             for ent in ner_ents:
                 question_entities.append(el_results[ent][0]["entity"])
 
-            supporting_facts = sample.get("supporting_facts", [])
+            supporting_documents = sample.get("supporting_documents", [])
             supporting_entities = []
-            for item in list(set(supporting_facts)):
+            for item in list(set(supporting_documents)):
                 supporting_entities.extend(doc2entities.get(item, []))
 
             final_data.append(
                 {
                     **sample,
-                    "question_entities": question_entities,
-                    "supporting_entities": supporting_entities,
+                    "start_nodes": {"entity": question_entities},
+                    "target_nodes": {"entity": supporting_entities},
                 }
             )
 

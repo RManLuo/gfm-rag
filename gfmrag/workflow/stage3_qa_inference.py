@@ -14,8 +14,8 @@ from torch.utils.data import Dataset
 from tqdm import tqdm
 
 from gfmrag import utils
+from gfmrag.models.ultra import query_utils
 from gfmrag.prompt_builder import QAPromptBuilder
-from gfmrag.ultra import query_utils
 
 # A logger for this file
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ def doc_retrieval(
     doc_ranker = instantiate(cfg.doc_ranker, ent2doc=ent2docs)
 
     if cfg.test.init_entities_weight:
-        entities_weight = utils.get_entities_weight(ent2docs)
+        entities_weight = utils.get_entities_weight(ent2docs)  # type: ignore # TODO: Fix QA inference latter
     else:
         entities_weight = None
 

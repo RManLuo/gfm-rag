@@ -11,8 +11,8 @@ from tqdm import tqdm
 from gfmrag import GFMRetriever
 from gfmrag.evaluation import RetrievalEvaluator
 from gfmrag.llms import BaseLanguageModel
+from gfmrag.models.ultra import query_utils
 from gfmrag.prompt_builder import QAPromptBuilder
-from gfmrag.ultra import query_utils
 
 # A logger for this file
 logger = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ from torch import nn
 from torch_geometric.data import Data
 
 from gfmrag.models.base_model import BaseGNNModel
-from gfmrag.ultra.models import QueryNBFNet
+from gfmrag.models.ultra import QueryNBFNet
 
 
 class QueryGNN(BaseGNNModel):

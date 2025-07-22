@@ -1,10 +1,10 @@
 # mypy: ignore-errors
 import torch
-from torch import nn
+from torch import autograd, nn
 
 from . import layers
 from .base_nbfnet import BaseNBFNet
-from torch import autograd
+
 
 class EntityNBFNet(BaseNBFNet):
     """Neural Bellman-Ford Network for Entity Prediction.
@@ -48,6 +48,7 @@ class EntityNBFNet(BaseNBFNet):
             Returns:
                 torch.Tensor: Prediction scores for tail entities
     """
+
     def __init__(self, input_dim, hidden_dims, num_relation=1, **kwargs):
         # dummy num_relation = 1 as we won't use it in the NBFNet layer
         super().__init__(input_dim, hidden_dims, num_relation, **kwargs)
@@ -149,10 +150,10 @@ class EntityNBFNet(BaseNBFNet):
             layer.relation = relation_representations
 
         # if self.training:
-            # Edge dropout in the training mode
-            # here we want to remove immediate edges (head, relation, tail) from the edge_index and edge_types
-            # to make NBFNet iteration learn non-trivial paths
-            # data = self.remove_easy_edges(data, h_index, t_index, r_index)
+        # Edge dropout in the training mode
+        # here we want to remove immediate edges (head, relation, tail) from the edge_index and edge_types
+        # to make NBFNet iteration learn non-trivial paths
+        # data = self.remove_easy_edges(data, h_index, t_index, r_index)
 
         shape = h_index.shape
         # turn all triples in a batch into a tail prediction mode
@@ -315,12 +316,21 @@ class QueryNBFNet(EntityNBFNet):
 
         paths_results = {}
         for t_index in target_entities_index:
-            index = t_index.unsqueeze(0).unsqueeze(0).unsqueeze(-1).expand(-1, -1, node_feature.shape[-1])
+            index = (
+                t_index.unsqueeze(0)
+                .unsqueeze(0)
+                .unsqueeze(-1)
+                .expand(-1, -1, node_feature.shape[-1])
+            )
             feature = node_feature.gather(1, index).squeeze(0)
             score = self.mlp(feature).squeeze(-1)
 
             edge_grads = autograd.grad(score, edge_weights, retain_graph=True)
-            distances, back_edges = self.beam_search_distance(data, edge_grads, query_entities_index, t_index, self.num_beam)
-            paths, weights = self.topk_average_length(distances, back_edges, t_index, self.path_topk)
+            distances, back_edges = self.beam_search_distance(
+                data, edge_grads, query_entities_index, t_index, self.num_beam
+            )
+            paths, weights = self.topk_average_length(
+                distances, back_edges, t_index, self.path_topk
+            )
             paths_results[t_index.item()] = (paths, weights)
         return paths_results

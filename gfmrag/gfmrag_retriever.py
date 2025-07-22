@@ -5,12 +5,12 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
 from gfmrag import utils
+from gfmrag.graph_index_construction.entity_linking_model import BaseELModel
+from gfmrag.graph_index_construction.ner_model import BaseNERModel
 from gfmrag.graph_index_datasets import GraphIndexDataset
-from gfmrag.kg_construction.entity_linking_model import BaseELModel
-from gfmrag.kg_construction.ner_model import BaseNERModel
 from gfmrag.models import GNNRetriever
+from gfmrag.models.ultra import query_utils
 from gfmrag.text_emb_models import BaseTextEmbModel
-from gfmrag.ultra import query_utils
 from gfmrag.utils.qa_utils import entities_to_mask
 
 logger = logging.getLogger(__name__)

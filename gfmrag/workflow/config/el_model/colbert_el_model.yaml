@@ -1,4 +1,4 @@
-_target_: gfmrag.kg_construction.entity_linking_model.ColbertELModel
+_target_: gfmrag.graph_index_construction.entity_linking_model.ColbertELModel
 checkpoint_path: tmp/colbertv2.0
 root: tmp
 doc_index_name: nbits_2

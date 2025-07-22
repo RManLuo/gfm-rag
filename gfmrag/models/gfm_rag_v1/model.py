@@ -5,7 +5,7 @@ from torch import nn
 from torch_geometric.data import Data
 
 from gfmrag.models.base_model import BaseGNNModel
-from gfmrag.ultra.models import EntityNBFNet, QueryNBFNet
+from gfmrag.models.ultra import EntityNBFNet, QueryNBFNet
 
 from .rankers import BaseDocRanker
 

@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from gfmrag import utils
 from gfmrag.graph_index_datasets import GraphIndexDataset
-from gfmrag.ultra import query_utils
+from gfmrag.models.ultra import query_utils
 from gfmrag.utils import GraphDatasetLoader
 from gfmrag.utils.wandb_utils import (
     finish_wandb,

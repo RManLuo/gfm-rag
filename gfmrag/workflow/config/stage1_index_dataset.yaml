@@ -11,11 +11,11 @@ defaults:
 dataset:
   root: ./data # data root directory
   data_name: hotpotqa # data name
+  force: False # Whether to force recompute the dataset
 
-kg_constructor:
-  _target_: gfmrag.kg_construction.KGConstructor # The KGConstructor class
+graph_constructor:
+  _target_: gfmrag.graph_index_construction.KGConstructor # The KGConstructor class
   open_ie_model: ${openie_model}
-  ner_model: ${ner_model}
   el_model: ${el_model}
   root: tmp/kg_construction # Temporary directory for storing intermediate files during KG construction
   num_processes: 10 # Number of processes to use
@@ -25,9 +25,9 @@ kg_constructor:
   add_title: True # Whether to add the title to the content of the document during OpenIE
   force: False # Whether to force recompute the KG
 
-qa_constructor:
-  _target_: gfmrag.kg_construction.QAConstructor # The QAConstructor class
-  root: tmp/qa_construction # Temporary directory for storing intermediate files during QA construction
+sft_constructor:
+  _target_: gfmrag.graph_index_construction.GFMRAGConstructor # The SFTConstructor class
+  root: tmp/qa_construction # Temporary directory for storing intermediate files during SFT construction
   ner_model: ${ner_model}
   el_model: ${el_model}
   num_processes: 10 # Number of processes to use

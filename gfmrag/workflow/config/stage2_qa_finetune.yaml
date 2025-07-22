@@ -39,7 +39,7 @@ model:
   init_nodes_type: document # The type of nodes used for weight calculation.
   ranker: ${doc_ranker} # The document ranker to use
   entity_model:
-    _target_: gfmrag.ultra.models.QueryNBFNet
+    _target_: gfmrag.models.ultra.models.QueryNBFNet
     input_dim: 512
     hidden_dims: [512, 512, 512, 512, 512, 512]
     message_func: distmult

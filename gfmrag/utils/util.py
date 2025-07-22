@@ -75,9 +75,14 @@ def init_multi_dataset(cfg: DictConfig, world_size: int, rank: int) -> list:
     return all_feat_dim_list
 
 
-def get_entities_weight(ent2docs: torch.Tensor) -> torch.Tensor:
-    frequency = torch.sparse.sum(ent2docs, dim=-1).to_dense()
-    weights = 1 / frequency
-    # Masked zero weights
-    weights[frequency == 0] = 0
-    return weights
+def check_all_files_exist(file_paths: list) -> bool:
+    """
+    Check if all files in the list exist.
+
+    Args:
+        file_paths (list): List of file paths to check.
+
+    Returns:
+        bool: True if all files exist, False otherwise.
+    """
+    return all(os.path.exists(file_path) for file_path in file_paths)

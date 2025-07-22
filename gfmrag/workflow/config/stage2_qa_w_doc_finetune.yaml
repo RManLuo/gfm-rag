@@ -31,7 +31,7 @@ model:
   _target_: gfmrag.models.GraphReasoner
   use_ent_emb: early-late-fusion
   entity_model:
-    _target_: gfmrag.ultra.models.QueryNBFNet
+    _target_: gfmrag.models.ultra.models.QueryNBFNet
     input_dim: 1024
     hidden_dims: [1024, 1024, 1024, 1024, 1024, 1024]
     message_func: distmult
