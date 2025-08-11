@@ -12,3 +12,4 @@ logs/
 dist/*
 site/
 .DS_Store
+wandb
