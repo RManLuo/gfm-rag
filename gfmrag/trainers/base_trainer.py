@@ -97,7 +97,8 @@ class BaseTrainer(ABC):
         self.model, self.dtype = utils.configure_model_precision(self.model, self.device, self.args.dtype)
 
         self.use_amp = self.dtype != torch.float32
-        self.scaler = torch.amp.GradScaler(self.device.type, enabled=self.use_amp)
+        self.enable_grad_scaler = self.dtype is not in [torch.float32, torch.bfloat16]
+        self.scaler = torch.amp.GradScaler(self.device.type, enabled=self.enable_grad_scaler)
 
         if self.world_size > 1 and self.args.training_mode == "ddp":
             self.parallel_model = nn.parallel.DistributedDataParallel(

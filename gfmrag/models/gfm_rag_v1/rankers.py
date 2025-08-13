@@ -102,7 +102,9 @@ class IDFWeightedTopKRanker(BaseDocRanker):
         idf_weight = torch.gather(
             idf_weight.expand(ent_pred.shape[0], -1), 1, top_k_ent_pred.indices
         )
-        masked_ent_pred = torch.zeros_like(ent_pred, device=ent_pred.device)
+        masked_ent_pred = torch.zeros_like(
+            ent_pred, device=ent_pred.device, dtype=idf_weight.dtype
+        )
         masked_ent_pred.scatter_(1, top_k_ent_pred.indices, idf_weight)
         doc_pred = torch.sparse.mm(masked_ent_pred, ent2doc)
         return doc_pred

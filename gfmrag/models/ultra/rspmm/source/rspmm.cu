@@ -44,7 +44,7 @@ void rspmm_forward_out_cuda(const int64_t *row_ptr, const int64_t *col_ind, cons
     scalar_t out[kCoarseningFactor];
 #pragma unroll
     for (int64_t i = 0; i < kCoarseningFactor; i++)
-        out[i] = NaryOp::zero;
+        out[i] = get_nary_zero<NaryOp, scalar_t>();
 
     for (int64_t block_ptr = ptr_start; block_ptr < ptr_end; block_ptr += warpSize) {
         int64_t ptr = block_ptr + threadIdx.x;
@@ -226,8 +226,9 @@ Tensor rspmm_forward_cuda(const Tensor &edge_index_, const Tensor &edge_type_, c
 
     const Tensor edge_index = edge_index_.contiguous();
     const Tensor edge_type = edge_type_.contiguous();
-    const Tensor edge_weight = edge_weight_.contiguous();
-    const Tensor relation = relation_.contiguous();
+    // Convert tensors to input type for mixed precision support
+    const Tensor edge_weight = edge_weight_.to(input_.scalar_type()).contiguous();
+    const Tensor relation = relation_.to(input_.scalar_type()).contiguous();
     const Tensor input = input_.contiguous();
 
     int64_t nnz = edge_index.size(1);
@@ -248,7 +249,7 @@ Tensor rspmm_forward_cuda(const Tensor &edge_index_, const Tensor &edge_type_, c
     const int row_per_block = kThreadPerBlock / dim_per_block;
     const int num_row_block = (num_row + row_per_block - 1) / row_per_block;
 
-    AT_DISPATCH_FLOATING_TYPES(input.scalar_type(), "rspmm_forward_cuda", [&] {
+    AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input.scalar_type(), "rspmm_forward_cuda", [&]() {
         const int memory_size = kThreadPerBlock * (sizeof(int64_t) * 2 + sizeof(scalar_t));
         rspmm_forward_out_cuda<scalar_t, NaryOp<scalar_t>, BinaryOp<scalar_t>>
             <<<dim3(num_row_block, num_dim_block), dim3(dim_per_block, row_per_block), memory_size, stream>>>(
@@ -283,11 +284,12 @@ std::tuple<Tensor, Tensor, Tensor> rspmm_backward_cuda(
 
     const Tensor edge_index = edge_index_.contiguous();
     const Tensor edge_type = edge_type_.contiguous();
-    const Tensor edge_weight = edge_weight_.contiguous();
-    const Tensor relation = relation_.contiguous();
+    // Convert tensors to input type for mixed precision support
+    const Tensor edge_weight = edge_weight_.to(input_.scalar_type()).contiguous();
+    const Tensor relation = relation_.to(input_.scalar_type()).contiguous();
     const Tensor input = input_.contiguous();
-    const Tensor output = output_.contiguous();
-    const Tensor output_grad = output_grad_.contiguous();
+    const Tensor output = output_.to(input_.scalar_type()).contiguous();
+    const Tensor output_grad = output_grad_.to(input_.scalar_type()).contiguous();
 
     int64_t nnz = edge_index.size(1);
     int64_t num_row = input.size(0);
@@ -309,8 +311,8 @@ std::tuple<Tensor, Tensor, Tensor> rspmm_backward_cuda(
     const int row_per_block = kThreadPerBlock / dim_per_block;
     const int num_row_block = (num_row + row_per_block - 1) / row_per_block;
 
-    if (edge_weight.requires_grad())
-        AT_DISPATCH_FLOATING_TYPES(input.scalar_type(), "rspmm_backward_cuda", [&] {
+    if (edge_weight.requires_grad()) {
+        AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input.scalar_type(), "rspmm_backward_cuda", [&]() {
             const int memory_size = kThreadPerBlock * (sizeof(int64_t) * 2 + sizeof(scalar_t));
             rspmm_backward_out_cuda<scalar_t, NaryOp<scalar_t>, BinaryOp<scalar_t>>
                 <<<dim3(num_row_block, num_dim_block), dim3(dim_per_block, row_per_block), memory_size, stream>>>(
@@ -328,8 +330,8 @@ std::tuple<Tensor, Tensor, Tensor> rspmm_backward_cuda(
                 num_row, nnz, dim
             );
         });
-    else
-        AT_DISPATCH_FLOATING_TYPES(input.scalar_type(), "rspmm_backward_cuda", [&] {
+    } else {
+        AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input.scalar_type(), "rspmm_backward_cuda", [&]() {
             const int memory_size = kThreadPerBlock * (sizeof(int64_t) * 2 + sizeof(scalar_t));
             rspmm_backward_out_cuda<scalar_t, NaryOp<scalar_t>, BinaryOp<scalar_t>>
                 <<<dim3(num_row_block, num_dim_block), dim3(dim_per_block, row_per_block), memory_size, stream>>>(
@@ -346,8 +348,14 @@ std::tuple<Tensor, Tensor, Tensor> rspmm_backward_cuda(
                 num_row, nnz, dim
             );
         });
+    }
 
-    return std::make_tuple(weight_grad, relation_grad, input_grad);
+    // Convert gradients back to original types for mixed precision support
+    Tensor weight_grad_orig = weight_grad.to(edge_weight_.scalar_type());
+    Tensor relation_grad_orig = relation_grad.to(relation_.scalar_type());
+    Tensor input_grad_orig = input_grad.to(input_.scalar_type());
+
+    return std::make_tuple(weight_grad_orig, relation_grad_orig, input_grad_orig);
 }
 
 #define DECLARE_FORWARD_IMPL(ADD, MUL, NARYOP, BINARYOP) \
