@@ -62,6 +62,27 @@ def init_multi_dataset(cfg: DictConfig, world_size: int, rank: int) -> list:
     for i, data_name in enumerate(data_name_list):
         if i % world_size == rank:
             dataset = dataset_cls(**cfg.datasets.cfgs, data_name=data_name)
+            if dataset.graph.x is not None:
+                assert (
+                    len(dataset.graph.x) == dataset.graph.num_nodes
+                )  # Check if the number of nodes matches the feature dimension
+                assert (
+                    dataset.graph.x.shape[1] == dataset.feat_dim
+                )  # Check if the feature dimension matches
+            if dataset.graph.rel_attr is not None:
+                assert (
+                    len(dataset.graph.rel_attr) == dataset.graph.num_relations
+                )  # Check if the number of relations matches
+                assert (
+                    dataset.graph.rel_attr.shape[1] == dataset.feat_dim
+                )  # Check if the feature dimension matches
+            if dataset.graph.edge_attr is not None:
+                assert (
+                    len(dataset.graph.edge_attr) == dataset.graph.num_edges
+                )  # Check if the number of edges matches
+                assert (
+                    dataset.graph.edge_attr.shape[1] == dataset.feat_dim
+                )  # Check if the feature dimension matches
             feat_dim_list.append(dataset.feat_dim)
     # Gather the feat_dim from all processes
     if world_size > 1:

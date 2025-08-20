@@ -290,7 +290,7 @@ class GraphIndexDataset:
         if not osp.exists(file_path):
             raise FileNotFoundError(f"File {file_path} does not exist.")
 
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, keep_default_na=False)
         df["id"] = df.index  # Add an ID column based on the index
         # Change index to 'name' for nodes and 'relation' for relations
         df = df.set_index("name")
@@ -357,7 +357,7 @@ class GraphIndexDataset:
         rel2id = relations_df["id"].to_dict()
 
         # Load triplets from edges.csv
-        edges_df = pd.read_csv(edge_file)
+        edges_df = pd.read_csv(edge_file, keep_default_na=False)
         edges_df["attributes"] = edges_df["attributes"].apply(
             lambda x: {} if pd.isna(x) else ast.literal_eval(x)
         )

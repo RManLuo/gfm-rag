@@ -78,7 +78,7 @@ def agent_reasoning(
 
 
 @hydra.main(
-    config_path="config", config_name="stage3_qa_ircot_inference", version_base=None
+    config_path="config/gfm_rag", config_name="qa_ircot_inference", version_base=None
 )
 def main(cfg: DictConfig) -> None:
     output_dir = HydraConfig.get().runtime.output_dir

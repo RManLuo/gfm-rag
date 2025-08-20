@@ -5,6 +5,7 @@ import time
 from collections import OrderedDict
 from collections.abc import Generator
 from concurrent.futures import Future, ProcessPoolExecutor
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -24,6 +25,12 @@ def _load_dataset_worker(datasets_cfg_dict: dict, data_name: str) -> Any:
     except Exception as e:
         print(f"Error loading dataset {data_name} in worker process: {e}")
         return None
+
+
+@dataclass
+class GraphDataset:
+    name: str
+    data: Any
 
 
 class GraphDatasetLoader:
@@ -248,7 +255,7 @@ class GraphDatasetLoader:
             self.loaded_datasets[data_name] = dataset
             return dataset
 
-    def __iter__(self) -> Generator[dict[str, Any], None, None]:
+    def __iter__(self) -> Generator[GraphDataset, None, None]:
         data_name_list = self.data_names.copy()
         if self.shuffle:
             np.random.shuffle(data_name_list)
@@ -266,7 +273,7 @@ class GraphDatasetLoader:
             # Get current dataset
             dataset = self._get_dataset(data_name)
 
-            yield {"data_name": data_name, "data": dataset}
+            yield GraphDataset(name=data_name, data=dataset)
 
     def clear_cache(self) -> None:
         """Clear all cached datasets and cancel pending loads"""

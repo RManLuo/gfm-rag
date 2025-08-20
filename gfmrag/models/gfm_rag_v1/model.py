@@ -57,6 +57,7 @@ class QueryGNN(BaseGNNModel):
         self.feat_dim = feat_dim
         self.entity_model = entity_model
         self.rel_mlp = nn.Linear(feat_dim, self.entity_model.dims[0])
+        self.question_mlp = nn.Linear(self.feat_dim, self.entity_model.dims[0])
 
     def get_input_node_feature(
         self, graph: Data, query_head: torch.Tensor, query_representation: torch.Tensor
@@ -221,7 +222,6 @@ class GNNRetriever(QueryGNN):
         """
 
         super().__init__(entity_model, feat_dim)
-        self.question_mlp = nn.Linear(self.feat_dim, self.entity_model.dims[0])
         self.ranker = ranker
         self.init_nodes_weight = init_nodes_weight
         self.init_nodes_type = init_nodes_type

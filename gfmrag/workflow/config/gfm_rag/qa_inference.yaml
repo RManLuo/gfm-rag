@@ -1,0 +1,42 @@
+hydra:
+  run:
+    dir: outputs/qa_inference/${dataset.cfgs.data_name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  searchpath:
+    - pkg://gfmrag.workflow.config
+
+defaults:
+  - _self_
+  - doc_ranker: idf_topk_ranker
+  - qa_prompt: hotpotqa
+  - qa_evaluator: hotpotqa
+
+seed: 1024
+
+dataset:
+  _target_: gfmrag.graph_index_datasets.GraphIndexDatasetV1 # The QA dataset class
+  cfgs:
+    root: ./data
+    data_name: hotpotqa_test
+    target_type: entity # Only target type nodes are used for graph index construction, need to be one of the node type names in the graph
+    use_node_feat: False # GFM-RAG v1 does not use node features
+    use_edge_feat: False # GFM-RAG v1 does not use edge features
+    use_relation_feat: True
+    inverse_relation_feat: text # The GFM-RAG v1 add "inverse" to the original relation names to generate inverse relation features.
+
+llm:
+  _target_: gfmrag.llms.ChatGPT
+  model_name_or_path: gpt-3.5-turbo
+  retry: 5
+
+graph_retriever:
+  model_path: rmanluo/GFM-RAG-8M
+
+test:
+  retrieval_batch_size: 8
+  top_k: 5
+  save_retrieval: False
+  save_top_k_entity: 10
+  n_threads: 5
+  retrieved_result_path: null
+  prediction_result_path: null
+  target_types: ["entity", "document"]

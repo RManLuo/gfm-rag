@@ -39,7 +39,9 @@ def get_tmp_dir(cfg: DictConfig) -> str:
     return base_tmp_dir
 
 
-@hydra.main(config_path="config", config_name="stage1_index_dataset", version_base=None)
+@hydra.main(
+    config_path="config/gfm_rag", config_name="index_dataset", version_base=None
+)
 def main(cfg: DictConfig) -> None:
     output_dir = HydraConfig.get().runtime.output_dir
     logger.info(f"Config:\n {OmegaConf.to_yaml(cfg)}")

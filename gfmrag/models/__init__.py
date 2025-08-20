@@ -1,4 +1,3 @@
-from .gfm_rag_v1.model import GNNRetriever, QueryGNN
-from .gfm_reasoner.model import GraphReasoner
+from .base_model import BaseGNNModel
 
-__all__ = ["QueryGNN", "GNNRetriever", "GraphReasoner"]
+__all__ = ["BaseGNNModel"]

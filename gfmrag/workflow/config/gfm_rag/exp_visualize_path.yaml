@@ -1,6 +1,8 @@
 hydra:
   run:
     dir: outputs/experiments/visualize/${dataset.data_name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  searchpath:
+    - pkg://gfmrag.workflow.config
 
 defaults:
   - _self_

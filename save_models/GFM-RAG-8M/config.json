@@ -9,7 +9,7 @@
         "model_kwargs": null
     },
     "model_config": {
-        "_target_": "gfmrag.models.GNNRetriever",
+        "_target_": "gfmrag.models.gfm_rag_v1.GNNRetriever",
         "feat_dim": 768,
         "init_nodes_weight": true,
         "init_nodes_type": "document",
@@ -18,7 +18,7 @@
             "top_k": 20
         },
         "entity_model": {
-            "_target_": "gfmrag.ultra.models.QueryNBFNet",
+            "_target_": "gfmrag.models.ultra.models.QueryNBFNet",
             "input_dim": 512,
             "hidden_dims": [
                 512,

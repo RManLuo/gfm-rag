@@ -5,7 +5,8 @@ import os
 import pandas as pd
 from omegaconf import DictConfig
 
-from gfmrag.graph_index_construction import BaseGraphConstructor, BaseSFTConstructor
+from gfmrag.graph_index_construction.graph_constructors import BaseGraphConstructor
+from gfmrag.graph_index_construction.sft_constructors import BaseSFTConstructor
 from gfmrag.graph_index_datasets.graph_index_dataset import GraphIndexDataset
 from gfmrag.utils import check_all_files_exist
 
