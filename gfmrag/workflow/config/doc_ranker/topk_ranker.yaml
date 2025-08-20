@@ -1,2 +1,2 @@
-_target_: gfmrag.doc_rankers.TopKRanker
+_target_: gfmrag.models.gfm_rag_v1.rankers.TopKRanker
 top_k: 10

@@ -1,0 +1,6 @@
+_target_: gfmrag.graph_index_construction.sft_constructors.GFMReasonerConstructor # The SFTConstructor class
+root: tmp/qa_construction # Temporary directory for storing intermediate files during SFT construction
+ner_model: ${ner_model}
+el_model: ${el_model}
+num_processes: 10 # Number of processes to use
+force: False # Whether to force recompute the QA data

@@ -1,4 +1,4 @@
-_target_: gfmrag.kg_construction.entity_linking_model.DPRELModel
+_target_: gfmrag.graph_index_construction.entity_linking_model.DPRELModel
 model_name: BAAI/bge-large-en-v1.5
 root: tmp
 use_cache: True

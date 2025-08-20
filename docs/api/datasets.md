@@ -1,1 +1,1 @@
-::: gfmrag.datasets
+::: gfmrag.graph_index_datasets

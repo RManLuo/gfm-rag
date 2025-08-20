@@ -3,7 +3,7 @@
 import torch
 from torch import distributed as dist
 
-from gfmrag.ultra import variadic
+from gfmrag.models.ultra import variadic
 
 
 class DocumentRetriever:

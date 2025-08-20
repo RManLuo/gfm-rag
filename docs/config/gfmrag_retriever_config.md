@@ -49,7 +49,7 @@ Please refer to the [LLMs][gfmrag.llms] page for more details.
 | :--------------------: | :------------: | :----------------------------------------------------------------: |
 |       `_target_`       |      None      |        The [graph retriever][gfmrag.GFMRetriever] to use        |
 |      `model_path`      |      None      |          Checkpoint path of the pre-trained GFM-RAG model          |
-|      `doc_ranker`      |      None      |          The [document ranker][gfmrag.doc_rankers] to use          |
+|      `doc_ranker`      |      None      |          The [document ranker][gfmrag.models.gfm_rag_v1.rankers] to use          |
 |      `ner_model`       |      None      |      The [NER model][gfmrag.kg_construction.ner_model] to use      |
 |       `el_model`       |      None      | The [EL model][gfmrag.kg_construction.entity_linking_model] to use |
 |     `qa_evaluator`     |      None      |                      The QA evaluator to use                       |

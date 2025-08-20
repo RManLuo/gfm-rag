@@ -1,0 +1,39 @@
+hydra:
+  run:
+    dir: outputs/qa_agent_inference/${dataset.data_name}/${now:%Y-%m-%d}/${now:%H-%M-%S} # Output directory
+  searchpath:
+    - pkg://gfmrag.workflow.config
+
+defaults:
+  - _self_
+  - agent_prompt: hotpotqa_ircot # The agent prompt to use
+  - qa_prompt: hotpotqa # The QA prompt to use
+  - ner_model: llm_ner_model # The NER model to use
+  - el_model: colbert_el_model # The EL model to use
+  - qa_evaluator: hotpotqa # The QA evaluator to use
+
+seed: 1024
+
+dataset:
+  _target_: gfmrag.graph_index_datasets.GraphIndexDataset # The QA dataset class
+  cfgs:
+    root: ./data
+    data_name: hotpotqa_test
+
+llm:
+  _target_: gfmrag.llms.ChatGPT # The language model to use
+  model_name_or_path: gpt-3.5-turbo # The model name or path
+  retry: 5 # Number of retries
+
+graph_retriever:
+  model_path: rmanluo/GFM-RAG-8M # Checkpoint path of the pre-trained GFM-RAG model
+  ner_model: ${ner_model} # The NER model to usek
+  el_model: ${el_model} # The EL model to use
+  qa_evaluator: ${qa_evaluator} # The QA evaluator to use
+  target_type: document # The target type for the graph retriever
+
+test:
+  top_k: 10 # Number of documents to retrieve
+  max_steps: 2 # Maximum number of steps
+  max_test_samples: -1 # -1 for all samples
+  resume: null # Resume from previous prediction

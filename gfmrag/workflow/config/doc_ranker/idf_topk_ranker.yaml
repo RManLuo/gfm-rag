@@ -1,2 +1,2 @@
-_target_: gfmrag.doc_rankers.IDFWeightedTopKRanker
+_target_: gfmrag.models.gfm_rag_v1.rankers.IDFWeightedTopKRanker
 top_k: 20

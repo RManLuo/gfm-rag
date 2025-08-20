@@ -1,103 +1,61 @@
-from gfmrag.datasets.kg_dataset import KGDataset
-from gfmrag.datasets.qa_dataset import QADataset
-
-
-def test_kg_dataset() -> None:
+def test_graph_dataset() -> None:
     from omegaconf import OmegaConf
+
+    from gfmrag.graph_index_datasets import GraphIndexDataset
 
     text_emb_cfgs = OmegaConf.create(
         {
-            "_target_": "gfmrag.text_emb_models.BaseTextEmbModel",
-            "text_emb_model_name": "sentence-transformers/all-mpnet-base-v2",
-            "normalize": False,
+            "_target_": "gfmrag.text_emb_models.Qwen3TextEmbModel",
+            "text_emb_model_name": "Qwen/Qwen3-Embedding-0.6B",
+            "normalize": True,
             "batch_size": 32,
-            "query_instruct": "",
-            "model_kwargs": None,
+            "query_instruct": "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: ",
+            "passage_instruct": None,
+            "truncate_dim": 1024,
         }
     )
-    dataset = KGDataset(
-        root="data",
+    dataset = GraphIndexDataset(
+        root="data_full/new_graph_interface",
         data_name="hotpotqa_test",
         text_emb_model_cfgs=text_emb_cfgs,
+        use_node_feat=True,
+        use_relation_feat=True,
+        use_edge_feat=False,
     )
-    kg = dataset[0]
-    assert kg.num_nodes == 82157
-    assert kg.num_relations == 35768
+    graph = dataset.graph
+    assert graph.feat_dim == 1024
 
 
-def test_kg_datasets_with_documents() -> None:
+def test_graph_dataset_v1() -> None:
     from omegaconf import OmegaConf
 
-    from gfmrag.datasets.kg_dataset import KGDatasetWithDocuments
+    from gfmrag.graph_index_datasets import GraphIndexDatasetV1
 
     text_emb_cfgs = OmegaConf.create(
         {
-            "_target_": "gfmrag.text_emb_models.BaseTextEmbModel",
-            "text_emb_model_name": "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
-            "normalize": False,
-            "batch_size": 4,
+            "_target_": "gfmrag.text_emb_models.Qwen3TextEmbModel",
+            "text_emb_model_name": "Qwen/Qwen3-Embedding-0.6B",
+            "normalize": True,
+            "batch_size": 32,
             "query_instruct": "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: ",
-            "model_kwargs": None,
+            "passage_instruct": None,
+            "truncate_dim": 1024,
         }
     )
-    dataset = KGDatasetWithDocuments(
-        root="data",
+    dataset = GraphIndexDatasetV1(
+        target_type="entity",
+        root="data_full/new_graph_interface",
         data_name="hotpotqa_test",
         text_emb_model_cfgs=text_emb_cfgs,
+        use_node_feat=False,
+        use_relation_feat=True,
+        use_edge_feat=False,
+        inverse_relation_feat="text",
     )
-    kg = dataset[0]
-    assert kg.num_nodes == 96983
-    assert kg.num_relations == 45114
-
-
-def test_qa_dataset() -> None:
-    from omegaconf import OmegaConf
-
-    text_emb_cfgs = OmegaConf.create(
-        {
-            "text_emb_model_name": "sentence-transformers/all-mpnet-base-v2",
-            "normalize": False,
-            "batch_size": 32,
-            "query_instruct": "",
-            "model_kwargs": None,
-        }
-    )
-    dataset = QADataset(
-        root="data",
-        data_name="hotpotqa_train_example",
-        text_emb_model_cfgs=text_emb_cfgs,
-    )
-    train_data, test_data = dataset._data
-    assert len(train_data) == 800
-    assert len(test_data) == 200
-
-
-def test_qa_dataset_with_documents() -> None:
-    from omegaconf import OmegaConf
-
-    from gfmrag.datasets.qa_dataset import QADatasetWithDocuments
-
-    text_emb_cfgs = OmegaConf.create(
-        {
-            "_target_": "gfmrag.text_emb_models.BaseTextEmbModel",
-            "text_emb_model_name": "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
-            "normalize": False,
-            "batch_size": 16,
-            "query_instruct": "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: ",
-            "model_kwargs": None,
-        }
-    )
-    dataset = QADatasetWithDocuments(
-        root="data",
-        data_name="hotpotqa_train0",
-        text_emb_model_cfgs=text_emb_cfgs,
-    )
-    train_data, test_data = dataset._data
-    assert len(test_data) == 1000
+    graph = dataset.graph
+    assert graph.feat_dim == 1024
 
 
 if __name__ == "__main__":
-    # test_kg_dataset()
-    # test_qa_dataset()
-    # test_kg_datasets_with_documents()
-    test_qa_dataset_with_documents()
+    # test_graph_dataset()
+    test_graph_dataset_v1()

@@ -1,7 +1,10 @@
-import torch
-from vllm import LLM, PoolingParams
+import os
 
-from gfmrag.utils import get_world_size
+import requests
+import torch
+from openai import NOT_GIVEN, OpenAI
+from tqdm import tqdm
+from vllm import LLM, PoolingParams
 
 from .base_model import BaseTextEmbModel
 
@@ -18,9 +21,13 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
         truncate_dim (int | None, optional): Dimension to truncate the embeddings to. Defaults to None.
         model_kwargs (dict | None, optional): Additional keyword arguments for the model. Defaults to None.
         tokenizer_kwargs (dict | None, optional): Additional keyword arguments for the tokenizer. Defaults to None.
+        api_base (str, optional): Base URL for the vLLM server. If no URL is provided, a local server will be started.
+        api_key (str, optional): API key for authentication. Defaults to "EMPTY".
+        vllm_timeout (int, optional): Timeout for vLLM requests in seconds. Defaults to 600.
 
     Attributes:
-        text_emb_model (LLM): The underlying text embedding model
+        client (OpenAI): The OpenAI client for making requests to vLLM server
+        async_client (AsyncOpenAI): The async OpenAI client for concurrent requests
         text_emb_model_name (str): Name of the model being used
         normalize (bool): Whether embeddings are L2-normalized
         batch_size (int): Batch size used for encoding
@@ -31,8 +38,8 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
         tokenizer_kwargs (dict | None): Additional tokenizer configuration parameters
 
     Methods:
-        encode(text: list[str], is_query: bool = False, show_progress_bar: bool = True) -> torch.Tensor:
-            Encodes a list of texts into embeddings.
+        encode(text: list[str], is_query: bool = False, show_progress_bar: bool = True, use_async: bool = True) -> torch.Tensor:
+            Encodes a list of texts into embeddings with optional async processing for improved performance.
     """
 
     def __init__(
@@ -45,6 +52,9 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
         truncate_dim: int | None = None,
         model_kwargs: dict | None = None,
         tokenizer_kwargs: dict | None = None,
+        api_base: str | None = None,
+        api_key: str = "EMPTY",
+        vllm_timeout: int = 600,
     ) -> None:
         """
         Initialize the BaseTextEmbModel.
@@ -58,6 +68,9 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
             truncate_dim (int | None, optional): Dimension to truncate the embeddings to. Defaults to None.
             model_kwargs (dict | None, optional): Additional keyword arguments for the model. Defaults to None.
             tokenizer_kwargs (dict | None, optional): Additional keyword arguments for the tokenizer. Defaults to None.
+            api_base (str | None, optional): Base URL for the vLLM server. If no url is provided we would start a local server.
+            api_key (str | None, optional): API key for authentication. Defaults to "EMPTY".
+            vllm_timeout (int, optional): Timeout for vLLM requests in seconds. Defaults to 600.
         """
         self.text_emb_model_name = text_emb_model_name
         self.normalize = normalize
@@ -67,23 +80,69 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
         self.truncate_dim = truncate_dim
         self.model_kwargs = model_kwargs
         self.tokenizer_kwargs = tokenizer_kwargs
+        self.api_base = api_base
+        self.api_key = api_key
+        self.vllm_timeout = vllm_timeout
 
-        # Use external launcher for distributed execution if we have multiple processes
-        if get_world_size() > 1:
-            self.text_emb_model = LLM(
-                model=self.text_emb_model_name,
-                task="embed",
-                distributed_executor_backend="external_launcher",
-                seed=1,
-                hf_overrides={"is_matryoshka": True},
-            )
+        if api_base is None:
+            self.text_emb_model = self._start_vllm_server()
         else:
-            self.text_emb_model = LLM(
-                model=self.text_emb_model_name,
-                task="embed",
-                seed=1,
-                hf_overrides={"is_matryoshka": True},
+            # Check if API is available
+            if not self._is_api_available():
+                raise RuntimeError("vLLM API is not available")
+
+            self.client = OpenAI(
+                api_key=self.api_key,
+                base_url=self.api_base,
             )
+
+    def _is_api_available(self) -> bool:
+        """Check if the vLLM API is available at the specified URL."""
+        try:
+            health_url = self.api_base.replace("/v1", "/health")  # type: ignore
+            response = requests.get(health_url, timeout=5)
+            return response.status_code == 200
+        except requests.RequestException:
+            return False
+
+    def _start_vllm_server(self) -> LLM:
+        """Start a vLLM server for embedding generation."""
+
+        dist_keys = [
+            "RANK",
+            "LOCAL_RANK",
+            "WORLD_SIZE",
+            "LOCAL_WORLD_SIZE",
+            "GROUP_RANK",
+            "ROLE_RANK",
+            "ROLE_NAME",
+            "OMP_NUM_THREADS",
+            "MASTER_ADDR",
+            "MASTER_PORT",
+            "TORCHELASTIC_USE_AGENT_STORE",
+            "TORCHELASTIC_MAX_RESTARTS",
+            "TORCHELASTIC_RUN_ID",
+            "TORCH_NCCL_ASYNC_ERROR_HANDLING",
+            "TORCHELASTIC_ERROR_FILE",
+        ]
+        old_env = {}
+        for dist_key in dist_keys:
+            if dist_key in os.environ:
+                old_env[dist_key] = os.environ.pop(dist_key)
+        os.environ["CUDA_VISIBLE_DEVICES"] = old_env.get("LOCAL_RANK", "0")
+        os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
+        text_emb_model = LLM(
+            model=self.text_emb_model_name,
+            enforce_eager=True,
+            task="embed",
+            hf_overrides={"is_matryoshka": True},
+        )
+        # Restore environment variables
+        os.environ.pop("CUDA_VISIBLE_DEVICES")
+        for dist_key, dist_value in old_env.items():
+            if dist_value is not None:
+                os.environ[dist_key] = dist_value
+        return text_emb_model
 
     def add_instruct(self, instruct: str | None, query: str) -> str:
         """Adds an instruction prefix to the query text if provided.
@@ -100,6 +159,72 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
         else:
             return f"{instruct}{query}"
 
+    def _make_request(self, text: list[str], show_progress_bar: bool) -> torch.Tensor:
+        """Makes a request to the vLLM API to get embeddings for the provided text.
+
+        Args:
+            text (list[str]): List of text strings to encode
+            is_query (bool): Whether the text is a query (True) or passage (False).
+            show_progress_bar (bool): Whether to display a progress bar during the request.
+
+        Returns:
+            torch.Tensor: Tensor containing the embeddings for the input text
+        """
+        # Make request to vLLM server
+        dimensions = (
+            self.truncate_dim
+            if self.truncate_dim is not None and self.truncate_dim > 0
+            else NOT_GIVEN
+        )
+
+        # Process in batches
+        all_embeddings = []
+        for i in tqdm(
+            range(0, len(text), self.batch_size), disable=not show_progress_bar
+        ):
+            batch = text[i : min(i + self.batch_size, len(text))]
+
+            response = self.client.embeddings.create(
+                model=self.text_emb_model_name,
+                input=batch,
+                dimensions=dimensions,
+                timeout=self.vllm_timeout,
+            )
+
+            batch_embeddings = [data.embedding for data in response.data]
+            all_embeddings.extend(batch_embeddings)
+
+        return torch.tensor(
+            all_embeddings,
+            device="cuda" if torch.cuda.is_available() else "cpu",
+        )
+
+    def embed(self, text: list[str], show_progress_bar: bool = True) -> torch.Tensor:
+        """
+        Embeds a list of text strings using the text embedding model.
+
+        Args:
+            text (list[str]): List of text strings to embed.
+            show_progress_bar (bool, optional): Whether to display a progress bar during embedding.
+                Defaults to True.
+
+        Returns:
+            torch.Tensor: Tensor containing the embeddings for the input text.
+        """
+        if self.truncate_dim is not None and self.truncate_dim > 0:
+            output = self.text_emb_model.embed(
+                text,
+                pooling_params=PoolingParams(dimensions=self.truncate_dim),
+                use_tqdm=show_progress_bar,
+            )
+        else:
+            output = self.text_emb_model.embed(text, use_tqdm=show_progress_bar)
+
+        return torch.tensor(
+            [o.outputs.embedding for o in output],
+            device="cuda" if torch.cuda.is_available() else "cpu",
+        )
+
     def encode(
         self, text: list[str], is_query: bool = False, show_progress_bar: bool = True
     ) -> torch.Tensor:
@@ -111,6 +236,8 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
             is_query (bool, optional): Whether the text is a query (True) or passage (False).
                 Determines which instruction prompt to use. Defaults to False.
             show_progress_bar (bool, optional): Whether to display progress bar during encoding.
+                Defaults to True.
+            use_async (bool, optional): Whether to use asynchronous processing for better performance.
                 Defaults to True.
 
         Returns:
@@ -127,19 +254,7 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
             else self.add_instruct(self.passage_instruct, t)
             for t in text
         ]
-
-        if self.truncate_dim is not None and self.truncate_dim > 0:
-            output = self.text_emb_model.embed(
-                text_with_instruct,
-                pooling_params=PoolingParams(dimensions=self.truncate_dim),
-                use_tqdm=show_progress_bar,
-            )
+        if self.api_base:
+            return self._make_request(text_with_instruct, show_progress_bar)
         else:
-            output = self.text_emb_model.embed(
-                text_with_instruct, use_tqdm=show_progress_bar
-            )
-
-        return torch.tensor(
-            [o.outputs.embedding for o in output],
-            device="cuda" if torch.cuda.is_available() else "cpu",
-        )
+            return self.embed(text_with_instruct, show_progress_bar)

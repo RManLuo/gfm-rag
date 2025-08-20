@@ -1,0 +1,67 @@
+hydra:
+  run:
+    dir: outputs/kg_pretrain/${now:%Y-%m-%d}/${now:%H-%M-%S} # Output directory
+  searchpath:
+    - pkg://gfmrag.workflow.config
+
+defaults:
+  - _self_
+  - text_emb_model: mpnet # The text embedding model to use
+  - wandb: default # Weights & Biases configuration
+
+# Misc
+seed: 1024
+timeout: 60 # timeout minutes for multi-gpu training
+save_pretrained: yes # Save the model in pre-trained format
+load_model_from_pretrained: null # Load model from pre-trained format, which would overwrite the model configuration
+
+datasets:
+  _target_: gfmrag.graph_index_datasets.GraphIndexDataset # The KG dataset class
+  cfgs:
+    root: ./data # data root directory
+    force_reload: False # Whether to force rebuild the dataset
+    text_emb_model_cfgs: ${text_emb_model} # The text embedding model configuration
+    inverse_relation_feat: text # The GFM-RAG add "inverse" to the original relation names to generate inverse relation features.
+  train_names: # List of training dataset names
+    - hotpotqa_train_example
+  valid_names: []
+  init_datasets: True # Whether to pre-process datasets at the beginning, if true, it will pre-process all datasets in the train_names and valid_names at the beginning
+  feat_dim: 1024 # Feature dimension for the embeddings, must be given if init_datasets is False
+  max_datasets_in_memory: 10 # Number of datasets to load into memory at once
+  data_loading_workers: 4 # Number of workers for data loading
+
+# GFM model configuration
+model:
+  _target_: gfmrag.models.gfm_reasoner.QueryGNN
+  use_ent_emb: early-late-fusion
+  entity_model:
+    _target_: gfmrag.models.ultra.models.QueryNBFNet
+    input_dim: 1024
+    hidden_dims: [1024, 1024, 1024, 1024, 1024, 1024]
+    message_func: distmult
+    aggregate_func: sum
+    short_cut: yes
+    layer_norm: yes
+    return_hidden: True # Return the hidden states of the entity model
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 5.0e-4
+
+# Training configuration
+trainer:
+  _target_: gfmrag.trainers.KGCTrainer
+  args:
+    _target_: gfmrag.trainers.TrainingArguments
+    train_batch_size: 8
+    num_epoch: 10
+    logging_steps: 100
+    max_steps_per_epoch: null
+    resume_from_checkpoint: null
+    save_best_only: no
+    metric_for_best_model: mrr
+  num_negative: 256
+  strict_negative: yes
+  adversarial_temperature: 1
+  metrics: [mr, mrr, hits@1, hits@3, hits@10]
+  fast_test: 500

@@ -24,7 +24,7 @@ An example configuration file for GFM fine-tuning is shown below:
 
 |         Parameter          | Options |                                  Note                                   |
 | :------------------------: | :-----: | :---------------------------------------------------------------------: |
-|        `_target_`        |  None   |                 [QADataset][gfmrag.datasets.QADataset]                  |
+|        `_target_`        |  None   |                 [QADataset][gfmrag.graph_index_datasets.QADataset]                  |
 |        `cfgs.root`         |  None   |               root dictionary of the datasets saving path               |
 |    `cfgs.force_rebuild`    |  None   |                  whether to force rebuild the dataset                   |
 | `cfgs.text_emb_model_cfgs` |  None   | [text embedding model][text-embedding-model-configuration]configuration |

@@ -17,7 +17,7 @@ ninja = "^1.11.1.1"
 easydict = "^1.13"
 pyyaml = "^6.0.2"
 tqdm = "^4.66.5"
-sentence-transformers = "^3.4.1"
+sentence-transformers = ">=3.4.1"
 hydra-core = "^1.3.2"
 python-dotenv = "^1.0.1"
 wandb = "^0.18.5"
@@ -31,7 +31,7 @@ langchain-community = "^0.3.9"
 langchain-nvidia-ai-endpoints = "^0.3.9"
 colbert-ai = {git = "https://github.com/stanford-futuredata/ColBERT.git", rev = "2b14566f8120ba57c47e879150ec73eca0286b2c"}
 faiss-gpu-cu12 = "^1.9.0.post1"
-vllm = ">=0.8.5"
+vllm = "<=0.10.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -51,7 +51,7 @@ mkdocs-same-dir = "^0.1.3"
 mike = "^2.1.3"
 
 [tool.ruff]
-exclude = ['gfmrag/ultra']
+exclude = ['gfmrag/models/ultra']
 
 [tool.ruff.lint]
 extend-select = ["I", "N", "UP", "B", "PD002"]

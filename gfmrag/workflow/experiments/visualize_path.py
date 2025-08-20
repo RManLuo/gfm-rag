@@ -7,13 +7,13 @@ import torch
 import torch.utils
 import torch.utils.data
 from hydra.core.hydra_config import HydraConfig
+from hydra.utils import get_class
 from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from torch_geometric.data import Data
 
 from gfmrag import utils
-from gfmrag.datasets import QADataset
-from gfmrag.ultra import query_utils
+from gfmrag.models.ultra import query_utils
 
 # A logger for this file
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ def visualize_path(
     device: torch.device,
 ) -> dict:
     if cfg.test.init_entities_weight:
-        entities_weight = utils.get_entities_weight(ent2docs)
+        entities_weight = utils.get_entities_weight(ent2docs)  # type: ignore # TODO: Fix QA inference latter
     else:
         entities_weight = None
 
@@ -53,14 +53,15 @@ def main(cfg: DictConfig) -> None:
     model, model_config = utils.load_model_from_pretrained(
         cfg.graph_retriever.model_path
     )
-    qa_data = QADataset(
-        **cfg.dataset,
+    dataset_cls = get_class(cfg.dataset._target_)
+    qa_data = dataset_cls(
+        **cfg.dataset.cfgs,
         text_emb_model_cfgs=OmegaConf.create(model_config["text_emb_model_config"]),
     )
     device = utils.get_device()
     model = model.to(device)
-    graph = qa_data.kg.to(device)
-    ent2id = qa_data.ent2id
+    graph = qa_data.graph.to(device)
+    ent2id = qa_data.node2id
     rel2id = qa_data.rel2id
     _, test_data = qa_data._data
     ent2docs = qa_data.ent2docs.to(device)
