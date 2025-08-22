@@ -181,6 +181,7 @@ class KLDivLoss(BaseLoss):
     It is often used in variational inference and generative models.
 
     Args:
+        reduction (Literal["sum", "mean", "batchmean"]): Specifies the reduction method to apply to the loss.
         *args: Additional positional arguments (unused).
         **kwargs: Additional keyword arguments (unused).
 
@@ -190,24 +191,16 @@ class KLDivLoss(BaseLoss):
 
     def __init__(
         self,
-        temperature: float = 1.0,
-        learnable_temperature: bool = False,
-        reduction: Literal["sum", "mean", "batchmean"] = "mean",
+        reduction: Literal["sum", "mean", "batchmean"] = "batchmean",
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        self.learnable_temperature = learnable_temperature
-        if self.learnable_temperature:
-            self.temperature = torch.nn.Parameter(torch.FloatTensor([temperature]))
-        else:
-            self.temperature = temperature
-        self.eps = 1e-7
-
         if reduction not in ["sum", "mean", "batchmean"]:
             raise ValueError(
                 f"Invalid reduction mode: {reduction}. Supported modes are 'sum', 'mean', and 'batchmean'."
             )
         self.reduction = reduction
+        self.eps = 1e-6  # Small epsilon to avoid log(0)
 
     def __call__(
         self, pred: torch.Tensor, target: torch.Tensor, *args: Any, **kwargs: Any
@@ -223,11 +216,8 @@ class KLDivLoss(BaseLoss):
         Returns:
             torch.Tensor: Scalar loss value averaged over the batch.
         """
-        # If the temperature is learnable, ensure it is on the same device as pred and target
-        if self.learnable_temperature:
-            self.temperature = self.temperature.to(pred.device)
         pred_prob = F.sigmoid(pred)
-        target_prob = F.sigmoid(target / self.temperature)
+        target_prob = (target + 1) / 2
         # Ensure prob is not zero to avoid log(0)
         student_prob = torch.clamp(pred_prob, min=self.eps, max=1 - self.eps)
         target_prob = torch.clamp(target_prob, min=self.eps, max=1 - self.eps)
