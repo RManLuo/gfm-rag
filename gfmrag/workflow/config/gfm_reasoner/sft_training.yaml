@@ -65,6 +65,12 @@ losses:
     weight: 1
     target_node_type: document
     is_distillation_loss: True
+  # - name: kl_loss
+  #   loss:
+  #     _target_: gfmrag.losses.KLDivLoss
+  #   weight: 0.01
+  #   target_node_type: document
+  #   is_distillation_loss: True
 
 # Optimizer configuration
 optimizer:

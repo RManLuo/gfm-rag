@@ -109,7 +109,9 @@ class BaseTrainer(ABC):
             # Load optimizer state
             if "optimizer" in state and hasattr(self, "optimizer"):
                 try:
-                    self.optimizer.load_state_dict(state["optimizer"])
+                    self.optimizer.load_state_dict(
+                        state["optimizer"], map_location=self.device
+                    )
                     logger.info("Loaded optimizer state from checkpoint")
                 except Exception as e:
                     logger.warning(f"Could not load optimizer state: {e}")
