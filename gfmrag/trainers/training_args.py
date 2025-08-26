@@ -68,5 +68,6 @@ class TrainingArguments:
         default="ddp", metadata={"help": "The distributed training mode."}
     )
     dtype: Literal["float32", "float16", "bfloat16", "auto"] = field(
-        default="float32", metadata={"help": "The dtype to use for mixed precision training."}
+        default="float32",
+        metadata={"help": "The dtype to use for mixed precision training."},
     )

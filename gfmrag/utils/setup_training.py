@@ -1,7 +1,7 @@
 import datetime
 import logging
 import os
-from typing import Any, Tuple
+from typing import Any
 
 import torch
 from torch import distributed as dist
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def configure_model_precision(
     model: nn.Module, device: torch.device, precision: str
-) -> Tuple[nn.Module, torch.dtype]:
+) -> tuple[nn.Module, torch.dtype]:
     """Configure model precision based on config setting and device capabilities.
 
     Args:
