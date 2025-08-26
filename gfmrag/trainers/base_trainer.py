@@ -63,6 +63,10 @@ class BaseTrainer(ABC):
         self.train_graph_dataset_loader = train_graph_dataset_loader
         self.eval_graph_dataset_loader = eval_graph_dataset_loader
 
+        # Evaluation strategy
+        self.eval_strategy = args.eval_strategy
+        self.eval_steps = args.eval_steps
+
         # Set up distributed training
         self.device = utils.get_device()
         self.world_size = utils.get_world_size()
@@ -153,7 +157,7 @@ class BaseTrainer(ABC):
                 # Log model checkpoint to wandb
                 log_model_checkpoint(
                     best_path,
-                    f"best-epoch-{self.state['epoch']}",
+                    f"best-epoch-{self.state['epoch']}-step-{self.state['global_step']}",
                     metadata={
                         "epoch": self.state["epoch"],
                         "best_metric": self.state["best_metric"],
@@ -163,13 +167,14 @@ class BaseTrainer(ABC):
             # Save regular checkpoint
             elif not self.args.save_best_only:
                 checkpoint_path = os.path.join(
-                    output_dir, f"checkpoint-{self.state['epoch']}.pth"
+                    output_dir,
+                    f"checkpoint-epoch-{self.state['epoch']}-step-{self.state['global_step']}.pth",
                 )
                 torch.save(state, checkpoint_path)
                 logger.info(f"Saved checkpoint to {checkpoint_path}")
                 log_model_checkpoint(
                     checkpoint_path,
-                    f"checkpoint-{self.state['epoch']}",
+                    f"checkpoint-epoch-{self.state['epoch']}-step-{self.state['global_step']}",
                     metadata={
                         "epoch": self.state["epoch"],
                         "global_step": self.state["global_step"],
@@ -266,8 +271,12 @@ class BaseTrainer(ABC):
                 # Training
                 self._train_epoch()
                 utils.synchronize()
-                # Evaluation
-                if self.eval_graph_dataset_loader is not None:
+
+                # Evaluation by epoch
+                if (
+                    self.eval_strategy == "epoch"
+                    and self.eval_graph_dataset_loader is not None
+                ):
                     eval_metrics = self.evaluate()
                     self._log_metrics(eval_metrics, prefix="eval")
                     self._maybe_save_best_model(eval_metrics)
@@ -349,6 +358,21 @@ class BaseTrainer(ABC):
                 # Log step metrics
                 if self.state["global_step"] % self.args.logging_steps == 0:
                     self._log_metrics(step_metrics, prefix="train")
+
+                # Evaluation by step
+                if (
+                    self.eval_strategy == "step"
+                    and self.eval_graph_dataset_loader is not None
+                    and self.eval_steps is not None
+                    and self.state["global_step"] % self.eval_steps == 0
+                ):
+                    eval_metrics = self.evaluate()
+                    self._log_metrics(eval_metrics, prefix="eval")
+                    self._maybe_save_best_model(eval_metrics)
+
+                    # Save checkpoint
+                    if not self.args.save_best_only:
+                        self._save_checkpoint(self.output_dir)
 
                 # Update progress bar
                 progress_bar.set_postfix(loss=step_metrics.get("loss", 0.0))

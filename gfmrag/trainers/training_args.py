@@ -34,6 +34,13 @@ class TrainingArguments:
     logging_steps: int = field(
         default=100, metadata={"help": "Log every X updates steps."}
     )
+    eval_strategy: Literal["epoch", "step"] = field(
+        default="epoch", metadata={"help": "Evaluation strategy: 'epoch' or 'step'."}
+    )
+    eval_steps: int | None = field(
+        default=None,
+        metadata={"help": "Run evaluation every X steps if eval_strategy == 'step'."},
+    )
 
     # Checkpointing
     save_best_only: bool = field(
