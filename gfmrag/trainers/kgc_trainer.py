@@ -198,27 +198,32 @@ class KGCTrainer(BaseTrainer):
                 disable=not utils.is_main_process(),
                 desc=f"Evaluating {data_name}",
             ):
-                batch = batch.to(self.device)
-                t_batch, h_batch = tasks.all_negative(graph, batch)
-                t_pred = self.parallel_model(graph, t_batch)
-                h_pred = self.parallel_model(graph, h_batch)
+                with torch.amp.autocast(
+                    device_type=self.device.type, dtype=self.dtype, enabled=self.use_amp
+                ):
+                    batch = batch.to(self.device)
+                    t_batch, h_batch = tasks.all_negative(graph, batch)
+                    t_pred = self.parallel_model(graph, t_batch)
+                    h_pred = self.parallel_model(graph, h_batch)
 
-                if filtered_data is None:
-                    t_mask, h_mask = tasks.strict_negative_mask(graph, batch)
-                else:
-                    t_mask, h_mask = tasks.strict_negative_mask(filtered_data, batch)
+                    if filtered_data is None:
+                        t_mask, h_mask = tasks.strict_negative_mask(graph, batch)
+                    else:
+                        t_mask, h_mask = tasks.strict_negative_mask(
+                            filtered_data, batch
+                        )
 
-                pos_h_index, pos_t_index, pos_r_index = batch.t()
-                t_ranking = tasks.compute_ranking(t_pred, pos_t_index, t_mask)
-                h_ranking = tasks.compute_ranking(h_pred, pos_h_index, h_mask)
-                num_t_negative = t_mask.sum(dim=-1)
-                num_h_negative = h_mask.sum(dim=-1)
+                    pos_h_index, pos_t_index, pos_r_index = batch.t()
+                    t_ranking = tasks.compute_ranking(t_pred, pos_t_index, t_mask)
+                    h_ranking = tasks.compute_ranking(h_pred, pos_h_index, h_mask)
+                    num_t_negative = t_mask.sum(dim=-1)
+                    num_h_negative = h_mask.sum(dim=-1)
 
-                rankings += [t_ranking, h_ranking]
-                num_negatives += [num_t_negative, num_h_negative]
+                    rankings += [t_ranking, h_ranking]
+                    num_negatives += [num_t_negative, num_h_negative]
 
-                tail_rankings += [t_ranking]
-                num_tail_negs += [num_t_negative]
+                    tail_rankings += [t_ranking]
+                    num_tail_negs += [num_t_negative]
 
             ranking = torch.cat(rankings)
             num_negative = torch.cat(num_negatives)
