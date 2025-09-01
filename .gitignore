@@ -6,6 +6,7 @@ checkpoints/
 tmp
 .env
 saved_models/
+data
 data_full
 logs/
 *.ipynb

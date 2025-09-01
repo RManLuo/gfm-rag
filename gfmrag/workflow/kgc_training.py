@@ -64,7 +64,7 @@ def main(cfg: DictConfig) -> None:
 
     # Initialize wandb logging (only on rank 0)
     if utils.get_rank() == 0:
-        init_wandb(cfg, project_name="gfm-rag-pretrain")
+        init_wandb(cfg, project_name="gfm-rag")
         watch_model(model, log_freq=cfg.trainer.args.get("logging_steps", 1000))
 
     if utils.get_rank() == 0:

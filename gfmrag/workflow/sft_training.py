@@ -64,12 +64,13 @@ def main(cfg: DictConfig) -> None:
     # Load model from pre-trained format, which would overwrite the model configuration
     if cfg.load_model_from_pretrained:
         model, _ = utils.load_model_from_pretrained(cfg.load_model_from_pretrained)
+        logger.info(f"Loaded pre-trained model from {cfg.load_model_from_pretrained}")
     else:
         model = instantiate(cfg.model, feat_dim=feat_dim.pop())
 
     # Initialize wandb logging (only on rank 0)
     if utils.get_rank() == 0:
-        init_wandb(cfg, project_name="gfm-rag-sft")
+        init_wandb(cfg, project_name="gfm-rag")
         watch_model(model, log_freq=cfg.trainer.args.get("logging_steps", 1000))
 
     if utils.get_rank() == 0:
