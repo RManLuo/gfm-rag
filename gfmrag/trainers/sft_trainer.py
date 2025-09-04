@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from itertools import islice
 from typing import Any
 
 import numpy as np
@@ -273,67 +274,102 @@ class SFTTrainer(BaseTrainer):
         return eval_metrics
 
     @torch.no_grad()
-    def predict(self, test_dataset: GraphDataset) -> list[dict]:
+    def predict(self) -> dict[str, Any]:
         """Perform the prediction
 
         Returns:
             List of predicted outputs of target node types
         """
+        if self.eval_graph_dataset_loader is None:
+            return {}
+
         self.model.eval()
+        predictions_by_dataset = {}
 
-        sft_dataset = self._create_task_dataset(test_dataset, is_train=False)
+        for test_dataset in self.eval_graph_dataset_loader:
+            sft_dataset = self._create_task_dataset(test_dataset, is_train=False)
 
-        data_name = sft_dataset.name
-        graph = sft_dataset.graph
-        data_loader = sft_dataset.data_loader
+            data_name = sft_dataset.name
+            graph = sft_dataset.graph
+            data_loader = sft_dataset.data_loader
 
-        # Set epoch for sampler
-        if hasattr(data_loader.sampler, "set_epoch"):
-            data_loader.sampler.set_epoch(0)
+            # Set epoch for sampler
+            if hasattr(data_loader.sampler, "set_epoch"):
+                data_loader.sampler.set_epoch(0)
 
-        # Initialize predictions and targets for each target type
-        preds_list: list[dict] = []
+            data_loader = islice(data_loader, 2)
 
-        for batch in tqdm(
-            data_loader,
-            desc=f"Predicting {data_name}",
-            disable=not utils.is_main_process(),
-        ):
-            batch = query_utils.cuda(batch, device=self.device)
+            # Initialize predictions and targets for each target type
+            preds_list: list[dict] = []
 
-            # Forward pass
-            pred = self.model(graph, batch)
-            idx = batch["sample_id"]
-            preds_by_type: dict[str, torch.Tensor] = {
-                target_type: [] for target_type in self.target_types
-            }
-            # Collect predictions and targets for each target type
-            for target_type in self.target_types:
-                target_node_ids = graph.nodes_by_type[target_type]  # type: ignore
-                target_node_pred = pred[:, target_node_ids]  # type: ignore
-                preds_by_type[target_type] = target_node_pred
+            for batch in tqdm(
+                data_loader,
+                desc=f"Predicting {data_name}",
+                disable=not utils.is_main_process(),
+            ):
+                batch = query_utils.cuda(batch, device=self.device)
 
-            for i in idx.cpu():
-                preds_list.append(
-                    {
-                        "id": i,
-                        **{
-                            target_type: p[i].cpu()
-                            for target_type, p in preds_by_type.items()
-                        },
-                    }
-                )
+                # Forward pass
+                pred = self.model(graph, batch)
+                idx = batch["sample_id"]
+                preds_by_type: dict[str, torch.Tensor] = {
+                    target_type: [] for target_type in self.target_types
+                }
+                # Collect predictions and targets for each target type
+                for target_type in self.target_types:
+                    target_node_ids = graph.nodes_by_type[target_type]  # type: ignore
+                    target_node_pred = pred[:, target_node_ids]  # type: ignore
+                    # Get top-k predictions
+                    top_k = torch.topk(
+                        target_node_pred, k=self.args.predict_top_k, dim=-1
+                    )
+                    top_k_indices = top_k.indices
+                    top_k_scores = top_k.values
+                    # Convert to original node ids and names
+                    original_node_ids = target_node_ids[top_k_indices]
+                    node_name = [
+                        [
+                            (test_dataset.data.id2node[node_id.item()], score.item())
+                            for node_id, score in zip(
+                                original_node_ids[batch_idx], top_k_scores[batch_idx]
+                            )
+                        ]
+                        for batch_idx in range(len(original_node_ids))
+                    ]
+                    preds_by_type[target_type] = node_name
 
-        # Gather the predictions across all processes
-        if utils.get_world_size() > 1:
-            gathered_predictions = [None] * torch.distributed.get_world_size()
-            torch.distributed.all_gather_object(gathered_predictions, preds_list)
-        else:
-            gathered_predictions = [preds_list]  # type: ignore
+                for i in range(len(idx)):
+                    preds_list.append(
+                        {
+                            "id": idx[i].item(),
+                            "predictions": {
+                                target_type: p[i]
+                                for target_type, p in preds_by_type.items()
+                            },
+                        }
+                    )
 
-        sorted_predictions = sorted(
-            [item for sublist in gathered_predictions for item in sublist],  # type: ignore
-            key=lambda x: x["id"],
-        )
+            # Gather the predictions across all processes
+            if utils.get_world_size() > 1:
+                gathered_predictions = [None] * torch.distributed.get_world_size()
+                torch.distributed.all_gather_object(gathered_predictions, preds_list)
+            else:
+                gathered_predictions = [preds_list]  # type: ignore
+
+            sorted_predictions = sorted(
+                [item for sublist in gathered_predictions for item in sublist],  # type: ignore
+                key=lambda x: x["id"],
+            )
+
+            # Map the predictions to the dataset name
+            retrieval_results = []
+            for raw_sample, pred in zip(
+                test_dataset.data.raw_test_data, sorted_predictions
+            ):
+                raw_sample.update({"predictions": pred["predictions"]})
+                retrieval_results.append(raw_sample)
+
+            predictions_by_dataset[data_name] = retrieval_results
+
         utils.synchronize()
-        return sorted_predictions
+        return predictions_by_dataset
