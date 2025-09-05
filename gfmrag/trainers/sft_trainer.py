@@ -1,6 +1,5 @@
 import logging
 from dataclasses import dataclass
-from itertools import islice
 from typing import Any
 
 import numpy as np
@@ -296,8 +295,6 @@ class SFTTrainer(BaseTrainer):
             # Set epoch for sampler
             if hasattr(data_loader.sampler, "set_epoch"):
                 data_loader.sampler.set_epoch(0)
-
-            data_loader = islice(data_loader, 2)
 
             # Initialize predictions and targets for each target type
             preds_list: list[dict] = []
