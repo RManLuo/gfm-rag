@@ -59,18 +59,18 @@ losses:
       _target_: gfmrag.losses.ListCELoss
     weight: 0.7
     target_node_type: document
-  # - name: mse_loss
-  #   loss:
-  #     _target_: gfmrag.losses.MSELoss
-  #   weight: 1
-  #   target_node_type: document
-  #   is_distillation_loss: True
-  - name: kl_loss
+  - name: mse_loss
     loss:
-      _target_: gfmrag.losses.KLDivLoss
-    weight: 0.01
+      _target_: gfmrag.losses.MSELoss
+    weight: 1
     target_node_type: document
     is_distillation_loss: True
+  # - name: kl_loss
+  #   loss:
+  #     _target_: gfmrag.losses.KLDivLoss
+  #   weight: 0.01
+  #   target_node_type: document
+  #   is_distillation_loss: True
 
 # Optimizer configuration
 optimizer:

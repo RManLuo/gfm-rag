@@ -543,7 +543,7 @@ class GraphIndexDataset:
             with open(data_name) as fin:
                 data = json.load(fin)
 
-                for index, item in enumerate(data):
+                for item in data:
                     # Get start nodes and target nodes for each node type
                     start_nodes_ids = []
                     target_nodes_ids = []
@@ -564,10 +564,13 @@ class GraphIndexDataset:
                             target_nodes_ids,
                         ]
                     ):
+                        logger.warning(
+                            f"Skipping sample {item['id']} in {data_name} due to empty start or target nodes."
+                        )
                         continue
 
                     num_sample += 1
-                    sample_id.append(index)
+                    sample_id.append(item["id"])
                     question = item["question"]
                     questions.append(question)
 
@@ -588,7 +591,7 @@ class GraphIndexDataset:
             questions,
             is_query=True,
         ).cpu()
-        sample_id = torch.tensor(sample_id, dtype=torch.long)
+
         start_nodes_mask = torch.stack(start_nodes_mask)
         target_nodes_mask = torch.stack(target_nodes_mask)
 
@@ -597,7 +600,7 @@ class GraphIndexDataset:
                 "question_embeddings": question_embeddings,
                 "start_nodes_mask": start_nodes_mask,
                 "target_nodes_mask": target_nodes_mask,
-                "sample_id": sample_id,
+                "id": sample_id,
             }
         ).with_format("torch")
 

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -124,6 +125,15 @@ def main(cfg: DictConfig) -> None:
     if utils.is_main_process() and cfg.save_pretrained:
         pre_trained_dir = os.path.join(output_dir, "pretrained")
         utils.save_model_to_pretrained(model, cfg, pre_trained_dir)
+
+    if trainer.args.do_predict:
+        predictions = trainer.predict()
+        if utils.is_main_process():
+            for data_name, preds in predictions.items():
+                pred_path = os.path.join(output_dir, f"predictions_{data_name}.json")
+                with open(pred_path, "w") as f:
+                    json.dump(preds, f, indent=4)
+                logger.info(f"Predictions saved to {pred_path}")
 
     # Shutdown the dataset loaders
     train_graph_dataset_loader.shutdown()

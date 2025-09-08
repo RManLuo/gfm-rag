@@ -24,6 +24,14 @@ class TrainingArguments:
     )
     do_train: bool = field(default=True, metadata={"help": "Whether to run training."})
     do_eval: bool = field(default=True, metadata={"help": "Whether to run evaluation."})
+    do_predict: bool = field(
+        default=False, metadata={"help": "Whether to save the predictions."}
+    )
+    predict_top_k: int = field(
+        default=10,
+        metadata={"help": "The top k predictions to save if do_predict is True."},
+    )
+
     # Checkpoint resuming
     resume_from_checkpoint: str | None = field(
         default=None,
