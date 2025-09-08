@@ -308,7 +308,7 @@ class SFTTrainer(BaseTrainer):
 
                 # Forward pass
                 pred = self.model(graph, batch)
-                idx = batch["sample_id"]
+                idx = batch["id"]
                 preds_by_type: dict[str, torch.Tensor] = {
                     target_type: [] for target_type in self.target_types
                 }
@@ -338,7 +338,9 @@ class SFTTrainer(BaseTrainer):
                 for i in range(len(idx)):
                     preds_list.append(
                         {
-                            "id": idx[i].item(),
+                            "id": idx[i].item()
+                            if isinstance(idx[i], torch.Tensor)
+                            else idx[i],
                             "predictions": {
                                 target_type: p[i]
                                 for target_type, p in preds_by_type.items()
@@ -353,16 +355,19 @@ class SFTTrainer(BaseTrainer):
             else:
                 gathered_predictions = [preds_list]  # type: ignore
 
-            sorted_predictions = sorted(
-                [item for sublist in gathered_predictions for item in sublist],  # type: ignore
-                key=lambda x: x["id"],
-            )
+            flatten_predictions = [
+                item
+                for sublist in gathered_predictions
+                for item in sublist  # type: ignore
+            ]
 
+            id_to_raw_data = {
+                sample["id"]: sample for sample in test_dataset.data.raw_test_data
+            }
             # Map the predictions to the dataset name
             retrieval_results = []
-            for raw_sample, pred in zip(
-                test_dataset.data.raw_test_data, sorted_predictions
-            ):
+            for pred in flatten_predictions:
+                raw_sample = id_to_raw_data[pred["id"]]
                 raw_sample.update({"predictions": pred["predictions"]})
                 retrieval_results.append(raw_sample)
 
