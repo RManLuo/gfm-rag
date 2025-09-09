@@ -38,6 +38,7 @@ class GraphIndexDataset:
         inverse_relation_feat (Literal['text', 'inverse'], optional): How to handle inverse relations.
             - 'text': Generate text embeddings for inverse relations by adding "inverse_" prefix to the relation name.
             - 'inverse': Use the negative of the relation embeddings for inverse relations following: http://arxiv.org/abs/2505.20422
+        skip_empty_target (bool, optional): Whether to skip samples with empty target nodes. Defaults to True. Can be set to False for QA tasks where some samples may not have target nodes.
         **kwargs (str): Additional keyword arguments.
 
     Attributes:
@@ -93,6 +94,7 @@ class GraphIndexDataset:
         use_relation_feat: bool = True,
         use_edge_feat: bool = False,
         inverse_relation_feat: Literal["text", "inverse"] = "text",
+        skip_empty_target: bool = True,
         **kwargs: str,
     ) -> None:
         self.root = root
@@ -102,6 +104,7 @@ class GraphIndexDataset:
         self.use_relation_feat = use_relation_feat
         self.use_edge_feat = use_edge_feat
         self.inverse_relation_feat = inverse_relation_feat
+        self.skip_empty_target = skip_empty_target
 
         # Get fingerprint of the model configuration
         cfgs = OmegaConf.to_container(text_emb_model_cfgs, resolve=True)
@@ -557,15 +560,14 @@ class GraphIndexDataset:
                         )
 
                     # Skip samples if any of the entities or documens are empty
-                    if any(
-                        len(x) == 0
-                        for x in [
-                            start_nodes_ids,
-                            target_nodes_ids,
-                        ]
-                    ):
+                    if len(start_nodes_ids) == 0:
                         logger.warning(
-                            f"Skipping sample {item['id']} in {data_name} due to empty start or target nodes."
+                            f"Skipping sample {item['id']} in {data_name} due to empty start nodes."
+                        )
+                        continue
+                    if self.skip_empty_target and len(target_nodes_ids) == 0:
+                        logger.warning(
+                            f"Skipping sample {item['id']} in {data_name} due to empty target nodes."
                         )
                         continue
 
