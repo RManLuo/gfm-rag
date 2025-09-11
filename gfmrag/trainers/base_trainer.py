@@ -99,7 +99,7 @@ class BaseTrainer(ABC):
         )
 
         self.use_amp = self.dtype != torch.float32
-        self.enable_grad_scaler = self.dtype not in [torch.float32, torch.float16]
+        self.enable_grad_scaler = self.dtype not in [torch.float32, torch.bfloat16]
         self.scaler = torch.amp.GradScaler(
             self.device.type, enabled=self.enable_grad_scaler
         )
@@ -377,6 +377,12 @@ class BaseTrainer(ABC):
                     self.optimizer.zero_grad()
 
                 epoch_losses.append(loss.item())  # type: ignore
+
+                # Convert step metrics to float for logging
+                step_metrics = {
+                    k: v.item() if isinstance(v, torch.Tensor) else v
+                    for k, v in step_metrics.items()
+                }
 
                 # Accumulate metrics
                 for key, value in step_metrics.items():
