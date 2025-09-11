@@ -96,19 +96,21 @@ class BCELoss(BaseLoss):
         num_positive = is_positive.sum(dim=-1)
         num_negative = is_negative.sum(dim=-1)
 
-        neg_weight = torch.zeros_like(pred)
-        neg_weight[is_positive] = (1 / num_positive.float()).repeat_interleave(
-            num_positive
+        neg_weight = torch.zeros_like(pred, dtype=pred.dtype)
+        neg_weight[is_positive] = (
+            (1 / num_positive).repeat_interleave(num_positive).to(pred.dtype)
         )
 
         if self.adversarial_temperature > 0:
             with torch.no_grad():
                 logit = pred[is_negative] / self.adversarial_temperature
-                neg_weight[is_negative] = variadic_softmax(logit, num_negative)
+                neg_weight[is_negative] = variadic_softmax(logit, num_negative).to(
+                    pred.dtype
+                )
                 # neg_weight[:, 1:] = F.softmax(pred[:, 1:] / cfg.task.adversarial_temperature, dim=-1)
         else:
-            neg_weight[is_negative] = (1 / num_negative.float()).repeat_interleave(
-                num_negative
+            neg_weight[is_negative] = (
+                (1 / num_negative).repeat_interleave(num_negative).to(pred.dtype)
             )
         loss = (loss * neg_weight).sum(dim=-1) / neg_weight.sum(dim=-1)
         loss = loss.mean()

@@ -93,6 +93,17 @@ class BaseTrainer(ABC):
             self._load_checkpoint(self.args.resume_from_checkpoint)
 
         self.model = self.model.to(self.device)
+        # Configure model precision based on config
+        self.model, self.dtype = utils.configure_model_precision(
+            self.model, self.device, self.args.dtype
+        )
+
+        self.use_amp = self.dtype != torch.float32
+        self.enable_grad_scaler = self.dtype not in [torch.float32, torch.bfloat16]
+        self.scaler = torch.amp.GradScaler(
+            self.device.type, enabled=self.enable_grad_scaler
+        )
+
         if self.world_size > 1 and self.args.training_mode == "ddp":
             self.parallel_model = nn.parallel.DistributedDataParallel(
                 self.model, device_ids=[self.device]
@@ -104,7 +115,9 @@ class BaseTrainer(ABC):
         """Load a checkpoint."""
         if os.path.exists(checkpoint_path):
             logger.info(f"Loading checkpoint from {checkpoint_path}")
-            state = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+            state = torch.load(
+                checkpoint_path, map_location=self.device, weights_only=False
+            )
 
             # Load model state
             if "model" in state:
@@ -113,9 +126,7 @@ class BaseTrainer(ABC):
             # Load optimizer state
             if "optimizer" in state and hasattr(self, "optimizer"):
                 try:
-                    self.optimizer.load_state_dict(
-                        state["optimizer"], map_location=self.device
-                    )
+                    self.optimizer.load_state_dict(state["optimizer"])
                     logger.info("Loaded optimizer state from checkpoint")
                 except Exception as e:
                     logger.warning(f"Could not load optimizer state: {e}")
@@ -129,6 +140,8 @@ class BaseTrainer(ABC):
                 self.state["best_metric"] = state["best_metric"]
             if "best_epoch" in state:
                 self.state["best_epoch"] = state["best_epoch"]
+            if "scaler" in state:
+                self.scaler.load_state_dict(state["scaler"])
 
             logger.info(
                 f"Resumed from epoch {self.state['epoch']}, global step {self.state['global_step']}"
@@ -142,6 +155,7 @@ class BaseTrainer(ABC):
             state = {
                 "model": self.model.state_dict(),
                 "optimizer": self.optimizer.state_dict(),
+                "scaler": self.scaler.state_dict(),
                 "epoch": self.state["epoch"],
                 "global_step": self.state["global_step"],
                 "best_metric": self.state["best_metric"],
@@ -223,7 +237,9 @@ class BaseTrainer(ABC):
         pass
 
     @abstractmethod
-    def train_step(self, batch: Any, task_dataset: TaskDataset) -> dict[str, float]:
+    def train_step(
+        self, batch: Any, task_dataset: TaskDataset
+    ) -> dict[str, float | torch.Tensor]:
         """
         Perform a single training step.
 
@@ -344,8 +360,29 @@ class BaseTrainer(ABC):
 
             for batch in progress_bar:
                 # Training step
-                step_metrics = self.train_step(batch, task_dataset)
-                epoch_losses.append(step_metrics.get("loss", 0.0))
+                with torch.amp.autocast(
+                    device_type=self.device.type, dtype=self.dtype, enabled=self.use_amp
+                ):
+                    step_metrics = self.train_step(batch, task_dataset)
+
+                    assert "loss" in step_metrics, (
+                        "Training step must return 'loss' in metrics"
+                    )
+
+                    # Backward pass
+                    loss = step_metrics["loss"]
+                    self.scaler.scale(loss).backward()
+                    self.scaler.step(self.optimizer)
+                    self.scaler.update()
+                    self.optimizer.zero_grad()
+
+                epoch_losses.append(loss.item())  # type: ignore
+
+                # Convert step metrics to float for logging
+                step_metrics = {
+                    k: v.item() if isinstance(v, torch.Tensor) else v
+                    for k, v in step_metrics.items()
+                }
 
                 # Accumulate metrics
                 for key, value in step_metrics.items():

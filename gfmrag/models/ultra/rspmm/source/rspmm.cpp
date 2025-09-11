@@ -20,7 +20,8 @@ void rspmm_forward_check(CheckedFrom c, const TensorArg &edge_index_arg, const T
     checkDim(c, relation_arg, 2);
     checkDim(c, input_arg, 2);
     checkSameType(c, edge_index_arg, edge_type_arg);
-    checkAllSameType(c, {edge_weight_arg, relation_arg, input_arg});
+    // Allow mixed precision by commenting out the strict type check
+    // checkAllSameType(c, {edge_weight_arg, relation_arg, input_arg});
     checkSize(c, edge_index_arg, 0, 2);
     checkSize(c, edge_type_arg, {edge_index_arg->size(1)});
     checkSize(c, edge_weight_arg, {edge_index_arg->size(1)});
@@ -131,8 +132,9 @@ Tensor rspmm_forward_cpu(const Tensor &edge_index_, const Tensor &edge_type_, co
 
     const Tensor edge_index = edge_index_.contiguous();
     const Tensor edge_type = edge_type_.contiguous();
-    const Tensor edge_weight = edge_weight_.contiguous();
-    const Tensor relation = relation_.contiguous();
+    // Convert tensors to input type for mixed precision support
+    const Tensor edge_weight = edge_weight_.to(input_.scalar_type()).contiguous();
+    const Tensor relation = relation_.to(input_.scalar_type()).contiguous();
     const Tensor input = input_.contiguous();
 
     int64_t nnz = edge_index.size(1);
@@ -215,7 +217,12 @@ std::tuple<Tensor, Tensor, Tensor> rspmm_backward_cpu(
         );
     });
 
-    return std::make_tuple(weight_grad, relation_grad, input_grad);
+    // Convert gradients back to original types for mixed precision support
+    Tensor weight_grad_orig = weight_grad.to(edge_weight_.scalar_type());
+    Tensor relation_grad_orig = relation_grad.to(relation_.scalar_type());
+    Tensor input_grad_orig = input_grad.to(input_.scalar_type());
+
+    return std::make_tuple(weight_grad_orig, relation_grad_orig, input_grad_orig);
 }
 
 #define DECLARE_FORWARD_IMPL(ADD, MUL, NARYOP, BINARYOP) \

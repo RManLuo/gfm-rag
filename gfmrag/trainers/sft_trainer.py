@@ -117,7 +117,9 @@ class SFTTrainer(BaseTrainer):
             data_loader=data_loader,
         )
 
-    def train_step(self, batch: Any, task_dataset: TaskDataset) -> dict[str, float]:
+    def train_step(
+        self, batch: Any, task_dataset: TaskDataset
+    ) -> dict[str, float | torch.Tensor]:
         """Perform a single training step for QA fine-tuning."""
         graph = task_dataset.graph.to(self.device)
         batch = query_utils.cuda(batch, device=self.device)
@@ -163,12 +165,7 @@ class SFTTrainer(BaseTrainer):
             step_metrics[loss_name] = single_loss.item()
             total_loss = total_loss + weight * single_loss
 
-        step_metrics["loss"] = total_loss.item()
-
-        # Backward pass
-        total_loss.backward()
-        self.optimizer.step()
-        self.optimizer.zero_grad()
+        step_metrics["loss"] = total_loss
 
         return step_metrics
 
@@ -206,10 +203,13 @@ class SFTTrainer(BaseTrainer):
                 desc=f"Evaluating {data_name}",
                 disable=not utils.is_main_process(),
             ):
-                batch = query_utils.cuda(batch, device=self.device)
-
-                # Forward pass
-                pred = self.model(graph, batch)
+                # Eval step
+                with torch.amp.autocast(
+                    device_type=self.device.type, dtype=self.dtype, enabled=self.use_amp
+                ):
+                    batch = query_utils.cuda(batch, device=self.device)
+                    # Forward pass
+                    pred = self.model(graph, batch)
                 target = batch["target_nodes_mask"].bool()  # type: ignore
 
                 # Collect predictions and targets for each target type
