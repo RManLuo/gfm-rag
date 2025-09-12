@@ -37,7 +37,11 @@ class QAPromptBuilder:
         self.examples = self.cfg.examples
 
     def build_input_prompt(
-        self, question: str, retrieved_docs: list, thoughts: list | None = None
+        self,
+        question: str,
+        retrieved_docs: list,
+        retrieved_entities: list | None = None,
+        thoughts: list | None = None,
     ) -> list:
         prompt = [
             {"role": "system", "content": self.system_prompt},
@@ -49,6 +53,15 @@ class QAPromptBuilder:
                 for doc in retrieved_docs
             ]
         )
+        entity_context = ""
+        if retrieved_entities is not None and len(retrieved_entities) > 0:
+            entity_context = (
+                "Relevant entities:\n"
+                + "\n".join([entity["name"] for entity in retrieved_entities])
+                + "\n"
+            )
+        if entity_context:
+            doc_context = doc_context + "\n" + entity_context
 
         question = self.question_prompt.format(question=question)
         if thoughts is not None:

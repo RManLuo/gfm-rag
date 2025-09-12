@@ -58,7 +58,19 @@ def ans_prediction(
                     f"Document title {title} not found in the provided documents. Skipping this document."
                 )
 
-        message = prompt_builder.build_input_prompt(data["question"], retrieved_docs)
+        retrieved_entities: list[dict] = []
+        for entity in data["predictions"].get("entity", []):
+            entity_name = entity[0]
+            retrieved_entities.append(
+                {
+                    "name": entity_name,
+                    "score": entity[1],
+                }
+            )
+
+        message = prompt_builder.build_input_prompt(
+            data["question"], retrieved_docs, retrieved_entities
+        )
 
         response = llm.generate_sentence(message)
         if isinstance(response, Exception):

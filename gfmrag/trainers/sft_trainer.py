@@ -307,7 +307,10 @@ class SFTTrainer(BaseTrainer):
                 batch = query_utils.cuda(batch, device=self.device)
 
                 # Forward pass
-                pred = self.model(graph, batch)
+                with torch.amp.autocast(
+                    device_type=self.device.type, dtype=self.dtype, enabled=self.use_amp
+                ):
+                    pred = self.model(graph, batch)
                 idx = batch["id"]
                 preds_by_type: dict[str, torch.Tensor] = {
                     target_type: [] for target_type in self.target_types
