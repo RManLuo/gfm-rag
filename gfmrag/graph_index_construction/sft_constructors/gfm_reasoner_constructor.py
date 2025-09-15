@@ -151,7 +151,9 @@ class GFMReasonerConstructor(BaseSFTConstructor):
             )
 
         # Read nodes.csv to get entities
-        nodes = pd.read_csv(os.path.join(processed_path, "nodes.csv"))
+        nodes = pd.read_csv(
+            os.path.join(processed_path, "nodes.csv"), keep_default_na=False
+        )
 
         # Get nodes with type 'entity'
         entities = nodes[nodes["type"] == "entity"]["name"].tolist()

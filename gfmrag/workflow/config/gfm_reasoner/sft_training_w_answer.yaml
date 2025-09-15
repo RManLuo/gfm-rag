@@ -36,6 +36,7 @@ datasets:
 model:
   _target_: gfmrag.models.gfm_reasoner.GraphReasoner
   use_ent_emb: early-late-fusion
+  dtype: bfloat16 # Precision type: 'float32', 'float16', 'bfloat16', or 'auto'
   entity_model:
     _target_: gfmrag.models.ultra.models.QueryNBFNet
     input_dim: 1024
@@ -108,5 +109,6 @@ trainer:
     do_eval: true
     save_best_only: yes
     metric_for_best_model: document_mrr
+    dtype: ${model.dtype} # Use the same precision type
   metrics: [mrr, hits@1, hits@2, hits@3, hits@5, hits@10, hits@20, recall@2, recall@3, recall@5, recall@10, recall@20] # List of metrics to calculate
   target_types: [document,entity] # The target node types used for metric calculation
