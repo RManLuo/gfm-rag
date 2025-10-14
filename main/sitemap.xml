@@ -2,134 +2,134 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/CHANGELOG/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/DEVELOPING/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/install/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/datasets/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/doc_ranker/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/evaluator/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/gfmrag_retriever/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/kg_indexer/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/llms/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/losses/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/models/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/prompt_builder/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/text_emb_models/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/kg_construnction/el_model/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/kg_construnction/kg_constructor/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/kg_construnction/ner_model/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/kg_construnction/openie_model/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/api/kg_construnction/qa_constructor/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/config/doc_ranker_config/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/config/el_model_config/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/config/gfmrag_finetune_config/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/config/gfmrag_pretrain_config/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/config/gfmrag_retriever_config/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/config/kg_index_config/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/config/ner_model_config/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/config/openie_model_config/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/config/text_embedding_config/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/workflow/data_preparation/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/workflow/inference/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/workflow/kg_index/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/workflow/path_interpretation/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
     <url>
          <loc>https://rmanluo.github.io/gfm-rag/main/workflow/training/</loc>
-         <lastmod>2025-09-30</lastmod>
+         <lastmod>2025-10-14</lastmod>
     </url>
 </urlset>
