@@ -1,9 +1,11 @@
+import ast
 import json
 import logging
 import os
 from multiprocessing.dummy import Pool as ThreadPool
 
 import hydra
+import pandas as pd
 import torch
 from hydra.core.hydra_config import HydraConfig
 from hydra.utils import instantiate
@@ -21,7 +23,7 @@ logger = logging.getLogger(__name__)
 def ans_prediction(
     cfg: DictConfig,
     output_dir: str,
-    documents: dict,
+    nodes: pd.DataFrame,
     retrieval_result: list[dict],
 ) -> str:
     llm = instantiate(cfg.llm)
@@ -29,48 +31,31 @@ def ans_prediction(
     prompt_builder = QAPromptBuilder(cfg.qa_prompt)
 
     def predict(data: dict) -> dict | Exception:
-        if "document" in data["predictions"]:
-            if len(data["predictions"]["document"]) < cfg.test.top_k:
-                logger.warning(
-                    f"The number of retrieved documents ({len(data['predictions']['document'])}) is less than top_k ({cfg.test.top_k}) for sample id {data['id']}. Using all retrieved documents."
+        retrieved_result: dict[str, list[dict]] = {}
+        for target_type in cfg.test.target_types:
+            if target_type not in data["predictions"]:
+                raise ValueError(
+                    f"The retrieval results do not contain '{target_type}' key!"
                 )
-            docs_prediction = data["predictions"]["document"][
-                : min(cfg.test.top_k, len(data["predictions"]["document"]))
+            target_prediction = data["predictions"][target_type]
+            if len(target_prediction) < cfg.test.top_k:
+                logger.warning(
+                    f"The number of retrieved {target_type}s ({len(target_prediction)}) is less than top_k ({cfg.test.top_k}) for sample id {data['id']}. Using all retrieved {target_type}s."
+                )
+            target_prediction = target_prediction[
+                : min(cfg.test.top_k, len(target_prediction))
             ]
-        else:
-            raise ValueError("The retrieval results do not contain 'document' key!")
+            retrieved_result[target_type] = []
+            for item in target_prediction:
+                uid = item[
+                    0
+                ]  # The first element is the uid or name, the second element is the score
+                matched_node = nodes.loc[uid]
 
-        retrieved_docs: list[dict] = []
-        for doc in docs_prediction:
-            title = doc[
-                0
-            ]  # The first element is the title, the second element is the score
-            if title in documents:
-                retrieved_docs.append(
-                    {
-                        "title": title,
-                        "content": documents[title],
-                        "score": doc[1],
-                    }
+                retrieved_result[target_type].append(
+                    {"name": matched_node.name, **matched_node.attributes}
                 )
-            else:
-                logger.warning(
-                    f"Document title {title} not found in the provided documents. Skipping this document."
-                )
-
-        retrieved_entities: list[dict] = []
-        for entity in data["predictions"].get("entity", []):
-            entity_name = entity[0]
-            retrieved_entities.append(
-                {
-                    "name": entity_name,
-                    "score": entity[1],
-                }
-            )
-
-        message = prompt_builder.build_input_prompt(
-            data["question"], retrieved_docs, retrieved_entities
-        )
+        message = prompt_builder.build_input_prompt(data["question"], retrieved_result)
 
         response = llm.generate_sentence(message)
         if isinstance(response, Exception):
@@ -84,7 +69,7 @@ def ans_prediction(
                     "answer_aliases", []
                 ),  # Some datasets have answer aliases
                 "response": response,
-                "retrieved_docs": retrieved_docs,
+                "retrieved_result": retrieved_result,
             }
 
     with open(os.path.join(output_dir, "prediction.jsonl"), "w") as f:
@@ -124,14 +109,32 @@ def main(cfg: DictConfig) -> None:
     else:
         raise FileNotFoundError("Please provide the retrieved_result_path!")
 
-    if cfg.test.document_path is None:
-        raise ValueError("Please provide the document_path for QA inference!")
+    if cfg.test.node_path is None:
+        raise ValueError("Please provide the node_path for QA inference!")
     else:
-        with open(cfg.test.document_path) as f:
-            documents = json.load(f)
-        logger.info(f"Loaded {len(documents)} documents from {cfg.test.document_path}")
+        nodes = pd.read_csv(cfg.test.node_path, keep_default_na=False)
+        logger.info(f"Loaded {len(nodes)} nodes from {cfg.test.node_path}")
 
-    output_path = ans_prediction(cfg, output_dir, documents, retrieval_result)
+        if "uid" in nodes.columns:
+            if nodes["uid"].nunique() != len(nodes):
+                raise ValueError(
+                    f"The 'uid' column must contain unique values. Unique values found: {nodes['uid'].nunique()}, total rows: {len(nodes)}"
+                )
+            else:
+                nodes = nodes.set_index("uid")
+        elif "name" in nodes.columns:
+            if nodes["name"].nunique() != len(nodes):
+                raise ValueError(
+                    f"The 'name' column must contain unique values. Unique values found: {nodes['name'].nunique()}, total rows: {len(nodes)}"
+                )
+            else:
+                nodes = nodes.set_index("name")
+        # Handle attributes
+        nodes["attributes"] = nodes["attributes"].apply(
+            lambda x: {} if pd.isna(x) else ast.literal_eval(x)
+        )
+
+    output_path = ans_prediction(cfg, output_dir, nodes, retrieval_result)
 
     # Evaluation
     evaluator = instantiate(cfg.qa_evaluator, prediction_file=output_path)
