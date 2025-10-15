@@ -48,9 +48,9 @@ class GraphIndexDataset:
         train_data (torch.utils.data.Dataset | None): Training data.
         test_data (torch.utils.data.Dataset | None): Testing data.
         feat_dim (int): Dimension of the entity and relation embeddings.
-        node2id (dict): Mapping from node names to continuous IDs.
-        rel2id (dict): Mapping from relation names to continuous IDs.
-        id2node: Dict[str, int]: Mapping from continuous IDs to node names.
+        node2id (dict): Mapping from node name or uid to continuous IDs.
+        rel2id (dict): Mapping from relation name or uid to continuous IDs.
+        id2node: Dict[str, int]: Mapping from continuous IDs to node uid.
         doc: Dict[str, Any]: The original document data
         raw_train_data (Dict[str, Any]): The raw training data.
         raw_test_data (Dict[str, Any]): The raw testing data.
@@ -65,8 +65,8 @@ class GraphIndexDataset:
         - graph.pt: Contains the processed graph data.
         - train.pt: Contains the processed training data, if available.
         - test.pt: Contains the processed testing data, if available.
-        - node2id.json: Maps node names to continuous IDs.
-        - rel2id.json: Maps relation names to continuous IDs (including inverse relations).
+        - node2id.json: Maps node name or uid to continuous IDs.
+        - rel2id.json: Maps relation name or uid to continuous IDs (including inverse relations).
         - config.json: Contains the configuration of the text embedding model and dataset attributes.
 
     """
@@ -129,9 +129,9 @@ class GraphIndexDataset:
 
         Setting attributes:
             - self.graph: The processed graph data as a torch_geometric Data object.
-            - self.node2id: A dictionary mapping node names to continuous IDs.
-            - self.rel2id: A dictionary mapping relation names to continuous IDs.
-            - self.id2node: A dictionary mapping continuous IDs back to node names.
+            - self.node2id: A dictionary mapping node name or uid to continuous IDs.
+            - self.rel2id: A dictionary mapping relation name or uid to continuous IDs.
+            - self.id2node: A dictionary mapping continuous IDs back to node uid or name.
             - self.feat_dim: The dimension of the entity and relation embeddings.
 
         Args:
@@ -295,8 +295,23 @@ class GraphIndexDataset:
 
         df = pd.read_csv(file_path, keep_default_na=False)
         df["id"] = df.index  # Add an ID column based on the index
-        # Change index to 'name' for nodes and 'relation' for relations
-        df = df.set_index("name")
+        # Change index to 'uid' or 'name' for nodes and 'relation' for relations
+        if "uid" in df.columns:
+            if df["uid"].nunique() != len(df):
+                raise ValueError(
+                    f"The 'uid' column must contain unique values. Unique values found: {df['uid'].nunique()}, total rows: {len(df)}"
+                )
+            df = df.set_index("uid")
+        elif "name" in df.columns:
+            if df["name"].nunique() != len(df):
+                raise ValueError(
+                    f"The 'name' column must contain unique values. Unique values found: {df['name'].nunique()}, total rows: {len(df)}"
+                )
+            df = df.set_index("name")
+        else:
+            raise ValueError(
+                "CSV file must contain either 'uid' or 'name' column as unique identifiers."
+            )
 
         # Handle attributes
         df["attributes"] = df["attributes"].apply(
@@ -343,7 +358,7 @@ class GraphIndexDataset:
 
         # Load nodes
         nodes_df = self._read_csv_file(node_file)
-        node2id = nodes_df["id"].to_dict()  # Map names to continuous IDs
+        node2id = nodes_df["id"].to_dict()  # Map name or uids to continuous IDs
         nodes_type_id, node_type_names = pd.factorize(nodes_df["type"])
         nodes_df["type_id"] = nodes_type_id  # Add type ID column
         # Create a tensor for node types

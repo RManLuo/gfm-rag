@@ -1,6 +1,8 @@
 import json
 import os
 import re
+import uuid
+from typing import Any
 
 KG_DELIMITER = ","
 
@@ -30,3 +32,7 @@ def extract_json_dict(text: str) -> str | dict:
             return ""
     else:
         return ""
+
+
+def generate_uuid(obj: Any) -> str:
+    return str(uuid.uuid5(uuid.NAMESPACE_X500, str(obj)))

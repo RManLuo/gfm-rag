@@ -122,7 +122,7 @@ class GraphIndexDatasetV1(GraphIndexDataset):
 
         # Load nodes
         nodes_df = self._read_csv_file(node_file)
-        node2id = nodes_df["id"].to_dict()  # Map names to continuous IDs
+        node2id = nodes_df["id"].to_dict()  # Map names or uid to continuous IDs
         nodes_type_id, node_type_names = pd.factorize(nodes_df["type"])
         nodes_df["type_id"] = nodes_type_id  # Add type ID column
         # Create a tensor for node types

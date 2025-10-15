@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 logger = logging.getLogger(__name__)
 
@@ -13,11 +13,13 @@ class Node(TypedDict):
         name (str): Unique identifier for the node.
         type (str): Type of the node (e.g., "entity", "document").
         attributes (dict): Additional attributes of the node.
+        uid (str, optional): Optional unique identifier for the node.
     """
 
     name: str
     type: str
     attributes: dict
+    uid: NotRequired[str]  # Optional unique identifier for the node
 
 
 class Edge(TypedDict):
@@ -25,9 +27,9 @@ class Edge(TypedDict):
     Represents an edge in the graph.
 
     Attributes:
-        source (str): Source node ID.
-        relation (str): Type of relation between the nodes.
-        target (str): Target node ID.
+        source (str): Source node name or uid.
+        relation (str): Relation (name or uid) between the nodes.
+        target (str): Target node name or uid.
         attributes (dict): Additional attributes of the edge.
     """
 
@@ -44,10 +46,12 @@ class Relation(TypedDict):
     Attributes:
         name (str): Unique identifier for the relation.
         attributes (dict): Additional attributes of the relation.
+        uid (str, optional): Optional unique identifier for the relation.
     """
 
     name: str
     attributes: dict
+    uid: NotRequired[str]
 
 
 class Graph(TypedDict):
