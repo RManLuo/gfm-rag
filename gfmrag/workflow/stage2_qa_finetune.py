@@ -402,7 +402,7 @@ def main(cfg: DictConfig) -> None:
             state = torch.load(
                 cfg.train.checkpoint, map_location="cpu", weights_only=True
             )
-            model.load_state_dict(state["model"])
+            model.load_state_dict(state["model"], strict=False)
         # Try to load the model from the remote dictionary
         else:
             model, _ = utils.load_model_from_pretrained(cfg.train.checkpoint)
