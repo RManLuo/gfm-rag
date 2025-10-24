@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gfmrag"
-version = "0.2.1"
+version = "0.2.2"
 description = "Graph Foundation Model for Retrieval Augmented Generation"
 authors = [
     "Linhao Luo <linhao.luo@monash.edu>",

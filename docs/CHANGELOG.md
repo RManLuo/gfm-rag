@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+- Fix: load model from pre-trained with different architectures
+- Release the [full training data](https://drive.google.com/drive/folders/11iTxDWtECnkGdiCkMlp0Mh2MFqItdvcY?usp=drive_link).
+
 ## 0.2.1
 - Fix `colbert-ai` dependency with new version of `torch`.
 
