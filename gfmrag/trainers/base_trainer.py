@@ -121,7 +121,7 @@ class BaseTrainer(ABC):
 
             # Load model state
             if "model" in state:
-                self.model.load_state_dict(state["model"])
+                self.model.load_state_dict(state["model"], strict=False)
 
             # Load optimizer state
             if "optimizer" in state and hasattr(self, "optimizer"):
