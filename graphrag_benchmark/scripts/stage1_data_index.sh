@@ -10,4 +10,3 @@ for DATA_NAME in ${DATA_NAME_LIST}; do
     graph_constructor.num_processes=15 \
     force=false
 done
-

@@ -57,9 +57,9 @@ def ans_prediction(
             f"Missing prompt config for task types: {sorted(missing_prompts)}"
         )
 
-    for task_type, data in task_groups.items():
+    for task_type, data_samples in task_groups.items():
         logger.warning(task_type)
-        logger.warning(len(data))
+        logger.warning(len(data_samples))
         logger.warning("-" * 100)
 
     def predict(data: dict, prompt_builder: QAPromptBuilder) -> dict | Exception:

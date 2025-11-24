@@ -1,7 +1,7 @@
 system_prompt: |-
-    Please answer the following multiple-select question based on your knowledge and retrieved context (more than one choice may be correct). 
-    Begin with your rationale, explaining why your choices are correct and the others are not. 
-    The last line of your response should be of the following format: 'RATIONALE: $REASONING. ANSWER: $LETTER$LETTER' (without quotes), replace $REASONING with your rationale and replace $LETTER with some of ABCD (two to four letters). 
+    Please answer the following multiple-select question based on your knowledge and retrieved context (more than one choice may be correct).
+    Begin with your rationale, explaining why your choices are correct and the others are not.
+    The last line of your response should be of the following format: 'RATIONALE: $REASONING. ANSWER: $LETTER$LETTER' (without quotes), replace $REASONING with your rationale and replace $LETTER with some of ABCD (two to four letters).
     List all correct answer letters without using commas or spaces.
 doc_prompt: "Retrieved context:\n{content}\n"
 question_prompt: "Question \n{question}\n"
