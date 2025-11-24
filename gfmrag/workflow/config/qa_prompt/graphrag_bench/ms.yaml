@@ -6,4 +6,3 @@ system_prompt: |-
 doc_prompt: "Retrieved context:\n{content}\n"
 question_prompt: "Question \n{question}\n"
 examples: []
-

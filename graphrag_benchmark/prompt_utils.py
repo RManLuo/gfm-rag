@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from typing import Dict
 
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
@@ -13,7 +12,7 @@ from gfmrag.prompt_builder import QAPromptBuilder
 PROMPT_CONFIG_ROOT = os.path.join("gfmrag", "workflow", "config")
 
 
-def load_prompt_builders(prompt_map: Dict[str, str]) -> dict[str, QAPromptBuilder]:
+def load_prompt_builders(prompt_map: dict[str, str]) -> dict[str, QAPromptBuilder]:
     """Create a prompt builder per task type as described in the config map."""
     builders: dict[str, QAPromptBuilder] = {}
     for task_type, prompt_path in prompt_map.items():
