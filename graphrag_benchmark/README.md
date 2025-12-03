@@ -13,7 +13,7 @@ Two GraphRAG benchmarks uses similar name, we will use the following names to av
 
 ## 1) Prepare data
 
-Download our preprocessed data from [here](https://huggingface.co/datasets/graphrag/graphrag-benchmark-data) and place it under `data/`.
+Download our preprocessed data from [here](https://drive.google.com/drive/folders/1SF4r7ShP1RaUFfogHyzjigwvHvQVj3IS) and place it under `data/`.
 
 ```text
 data/
@@ -33,7 +33,7 @@ data/
 
 ## 2) Build the KG index
 
-You can run indexing yourself or use our prebuilt KG indices. Download our prebuilt KG indices from [here](https://huggingface.co/datasets/graphrag/graphrag-benchmark-indices).
+You can run indexing yourself or use our prebuilt KG indices. Download our prebuilt KG indices from [here](https://drive.google.com/drive/folders/1SF4r7ShP1RaUFfogHyzjigwvHvQVj3IS).
 
 To build KG indices locally, create `nodes.csv`, `edges.csv`, `relations.csv`, and processed `test.json` for each dataset running the following script.
 
@@ -55,7 +55,7 @@ data/<dataset>/processed/stage1/
 
 The QA scripts need retrieval results per dataset with top documents and entities for each question.
 
-You can either run retrieval yourself or use our precomputed results. Download our precomputed retrieval results from [here](https://huggingface.co/datasets/graphrag/graphrag-benchmark-retrieval).
+You can either run retrieval yourself or use our precomputed results. Download our precomputed retrieval results from [here](https://drive.google.com/drive/folders/1SF4r7ShP1RaUFfogHyzjigwvHvQVj3IS).
 
 To generate retrieval results locally using GFM-RAG running the following script:
 
