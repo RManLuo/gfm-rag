@@ -1,7 +1,7 @@
 from typing import Any, Literal
 
 import torch
-from torch import nn
+from torch import autograd, nn
 from torch_geometric.data import Data
 
 from gfmrag.models.base_model import BaseGNNModel
@@ -291,7 +291,7 @@ class GraphReasoner(QueryGNN):
         output = self.entity_model(
             graph, node_embedding, relation_representations, question_embedding
         )  # shape: (bs, num_nodes, emb_dim)
-        if self.use_ent_emb == "late-fusion" or self.use_ent_emb == "early-late-fusion":
+        if self.use_ent_emb == "late-fusion":
             ent_late_emb = (
                 self.ent_mlp(graph.x).unsqueeze(0).expand(batch_size, -1, -1)
             )  # shape: (bs, num_nodes, emb_dim)
@@ -357,15 +357,64 @@ class GraphReasoner(QueryGNN):
         node_embedding = torch.einsum(
             "bn, bd -> bnd", question_entities_mask, question_embedding
         )
-        if self.use_ent_emb == "early-fusion":
+        if (
+            self.use_ent_emb == "early-fusion"
+            or self.use_ent_emb == "early-late-fusion"
+        ):
             # if we use early-fusion, we add entity embeddings to the input
             ent_emb = self.ent_mlp(graph.x)
-            node_embedding += ent_emb.unsqueeze(0).expand_as(node_embedding)
+            # node_embedding += ent_emb.unsqueeze(0).expand_as(node_embedding)
+            node_embedding = self.early_fuse_mlp(
+                torch.cat(
+                    [node_embedding, ent_emb.unsqueeze(0).expand_as(node_embedding)],
+                    dim=-1,
+                )
+            )
 
-        return self.entity_model.visualize(
-            graph,
-            sample,
-            node_embedding,
-            relation_representations,
-            question_embedding,  # type: ignore
+        for layer in self.entity_model.layers:
+            layer.relation = relation_representations
+
+        output = self.entity_model.bellmanford(
+            graph, node_embedding, question_embedding, separate_grad=True
         )
+
+        node_feature = output["node_feature"]
+
+        if self.use_ent_emb == "late-fusion":
+            ent_late_emb = (
+                self.ent_mlp(graph.x).unsqueeze(0).expand(batch_size, -1, -1)
+            )  # shape: (bs, num_nodes, emb_dim)
+            all_score = self.predict_mlp(
+                torch.cat([node_feature, ent_late_emb], dim=-1)
+            ).squeeze(-1)  # shape: (bs, num_nodes)
+        elif self.use_ent_emb == "early-late-fusion":
+            all_score = self.predict_mlp(
+                torch.cat(
+                    [node_feature, ent_emb.unsqueeze(0).expand(batch_size, -1, -1)],
+                    dim=-1,
+                )
+            ).squeeze(-1)  # shape: (bs, num_nodes)
+
+        edge_weights = output["edge_weights"]
+        question_entities_mask = sample["start_nodes_mask"]
+        target_entities_mask = sample["target_nodes_mask"]
+        query_entities_index = question_entities_mask.nonzero(as_tuple=True)[1]
+        target_entities_index = target_entities_mask.nonzero(as_tuple=True)[1]
+
+        paths_results = {}
+        for t_index in target_entities_index:
+            score = all_score[:, t_index].squeeze(0)
+
+            edge_grads = autograd.grad(score, edge_weights, retain_graph=True)
+            distances, back_edges = self.entity_model.beam_search_distance(
+                graph,
+                edge_grads,
+                query_entities_index,
+                t_index,
+                self.entity_model.num_beam,
+            )
+            paths, weights = self.entity_model.topk_average_length(
+                distances, back_edges, t_index, self.entity_model.path_topk
+            )
+            paths_results[t_index.item()] = (paths, weights)
+        return paths_results

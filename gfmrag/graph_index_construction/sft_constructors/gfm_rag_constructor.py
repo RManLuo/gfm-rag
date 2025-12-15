@@ -229,7 +229,10 @@ class GFMRAGConstructor(BaseSFTConstructor):
                 {
                     **sample,
                     "start_nodes": {"entity": question_entities},
-                    "target_nodes": {"entity": supporting_entities},
+                    "target_nodes": {
+                        "entity": supporting_entities,
+                        "document": supporting_documents,
+                    },
                 }
             )
 
