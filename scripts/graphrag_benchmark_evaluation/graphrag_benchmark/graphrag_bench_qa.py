@@ -1,6 +1,6 @@
 """
-This script is used to answer the questions with the retrieved documents and entities for graphrag bench datasets (G-Bench: Novel and Medical).
-When to use Graphs in RAG: A Comprehensive Analysis for Graph Retrieval-Augmented Generation
+This script is used to answer the questions with the retrieved documents and entities for graphrag benchmark datasets (G-Bench: CS).
+GraphRAG-Bench: Challenging Domain-Specific Reasoning for Evaluating Graph Retrieval-Augmented Generation.
 """
 
 import json
@@ -18,7 +18,8 @@ from tqdm import tqdm
 
 from gfmrag import utils
 from gfmrag.prompt_builder import QAPromptBuilder
-from graphrag_benchmark.prompt_utils import load_prompt_builders, resolve_task_type
+
+from .prompt_utils import load_prompt_builders, resolve_task_type
 
 # A logger for this file
 logger = logging.getLogger(__name__)
@@ -34,17 +35,15 @@ def ans_prediction(
 
     prompt_builders = load_prompt_builders(cfg.prompt_map)
 
-    output_file = cfg.test.prediction_result_path
-    if output_file:
-        # Allow passing a directory or explicit file path.
-        if output_file.endswith(os.sep) or os.path.isdir(output_file):
-            os.makedirs(output_file, exist_ok=True)
-            output_file = os.path.join(output_file, "prediction.jsonl")
-        else:
-            os.makedirs(os.path.dirname(output_file) or ".", exist_ok=True)
-    else:
-        output_file = os.path.join(output_dir, "prediction.jsonl")
-        os.makedirs(os.path.dirname(output_file) or ".", exist_ok=True)
+    output_root = cfg.test.prediction_result_path or output_dir
+    if cfg.test.prediction_result_path and os.path.splitext(output_root)[1]:
+        logger.warning(
+            "prediction_result_path is expected to be a directory for GraphRAG-Bench; "
+            "using its parent directory instead."
+        )
+        output_root = os.path.dirname(output_root) or "."
+
+    os.makedirs(output_root, exist_ok=True)
 
     task_groups: dict[str, list[dict]] = {}
     for data in retrieval_result:
@@ -77,8 +76,9 @@ def ans_prediction(
 
         retrieved_docs: list[dict] = []
         for doc in docs_prediction:
-            # The first element is the title, the second element is the score
-            title = doc[0]
+            title = doc[
+                0
+            ]  # The first element is the title, the second element is the score
             if title in documents:
                 retrieved_docs.append(
                     {
@@ -102,54 +102,63 @@ def ans_prediction(
                 }
             )
 
+        # Build retrieved result dict to align with the shared prompt builder API
         retrieved_result = {"document": retrieved_docs}
         if retrieved_entities:
             retrieved_result["entity"] = retrieved_entities
 
         message = prompt_builder.build_input_prompt(data["question"], retrieved_result)
 
+        # GraphRAG-Bench eval script will extract the answer from the response, so we don't need to do it here.
         response = llm.generate_sentence(message)
         if isinstance(response, Exception):
             return response
+        else:
+            # align with the format of the graphrag benchmark eval data
+            return {
+                "id": data["id"],
+                "question": data["original_question"],
+                "full_question": data["question"],
+                "ground_truth": data["answer"],
+                "prediction": response,
+                "context": retrieved_docs,
+                "question_type": task_type,
+            }
 
-        generated_answer = None
-        if isinstance(response, str) and "Answer:" in response:
-            generated_answer = response.split("Answer:", maxsplit=1)[1].strip()
+    for task_type, data_samples in task_groups.items():
+        prompt_builder = prompt_builders[task_type]
+        logger.info(f"{task_type} prompt loaded")
+        logger.info(f"task prompt: {prompt_builder.system_prompt}")
 
-        # align with the format of the graphrag benchmark eval data
-        return {
-            "id": data["id"],
-            "question": data["question"],
-            "ground_truth": data["answer"],
-            "response": response,
-            "context": retrieved_docs,
-            "question_type": data["question_type"],
-            "generated_answer": generated_answer,
-            "evidence": data.get("evidence", []),
-        }
+        # Collect all results in a list and save incrementally to JSON
+        results_list: list[dict] = []
+        output_file = os.path.join(
+            output_root, f"{cfg.output_name_map.get(task_type, task_type)}.json"
+        )
 
-    with open(output_file, "w") as f:
-        for task_type, data_samples in task_groups.items():
-            prompt_builder = prompt_builders[task_type]
-            logger.info("%s prompt loaded", task_type)
+        with ThreadPool(cfg.test.n_threads) as pool:
+            predict_with_prompt = partial(predict, prompt_builder=prompt_builder)
+            for results in tqdm(
+                pool.imap(predict_with_prompt, data_samples),
+                total=len(data_samples),
+            ):
+                if isinstance(results, Exception):
+                    logger.error(f"Error: {results}")
+                    continue
 
-            with ThreadPool(cfg.test.n_threads) as pool:
-                predict_with_prompt = partial(predict, prompt_builder=prompt_builder)
-                for results in tqdm(
-                    pool.imap(predict_with_prompt, data_samples),
-                    total=len(data_samples),
-                ):
-                    if isinstance(results, Exception):
-                        logger.error(f"Error: {results}")
-                        continue
+                # Append to in-memory list
+                results_list.append(results)
 
-                    f.write(json.dumps(results) + "\n")
-                    f.flush()
+                # Immediately save the entire list to JSON (backup in case of crash)
+                with open(output_file, "w") as f_json:
+                    json.dump(results_list, f_json, indent=4)
+
+        logger.info(f"Saved {len(results_list)} results to {output_file}")
 
 
 @hydra.main(
-    config_path="../gfmrag/workflow/config/gfm_rag",
-    config_name="graphrag_benchmark_qa_inference",
+    config_path="config",
+    config_name="graphrag_bench_cs_qa_inference",
     version_base=None,
 )
 def main(cfg: DictConfig) -> None:

@@ -1,13 +1,13 @@
 hydra:
   run:
-    dir: outputs/qa_inference/${now:%Y-%m-%d}/${now:%H-%M-%S}/graphrag_bench
+    dir: outputs/qa_inference/${now:%Y-%m-%d}/${now:%H-%M-%S}/graphrag_bench_cs
   searchpath:
     - pkg://gfmrag.workflow.config
 
 defaults:
   - _self_
   # Not used directly in the script but kept for consistency with other workflows.
-  - qa_prompt: graphrag_bench/fb
+  - qa_prompt: graphrag_bench_cs/fb
 
 seed: 1024
 
@@ -18,11 +18,11 @@ llm:
 
 # Map task type (parsed from sample id) to prompt config path under config/qa_prompt/.
 prompt_map:
-  FB: qa_prompt/graphrag_bench/fb
-  MC: qa_prompt/graphrag_bench/mc
-  MS: qa_prompt/graphrag_bench/ms
-  OE: qa_prompt/graphrag_bench/oe
-  TF: qa_prompt/graphrag_bench/tf
+  FB: qa_prompt/graphrag_bench_cs/fb
+  MC: qa_prompt/graphrag_bench_cs/mc
+  MS: qa_prompt/graphrag_bench_cs/ms
+  OE: qa_prompt/graphrag_bench_cs/oe
+  TF: qa_prompt/graphrag_bench_cs/tf
 
 # Output file names expected by the official GraphRAG-Bench evaluator.
 output_name_map:
@@ -42,5 +42,5 @@ test:
   top_k: 10
   n_threads: 10
   retrieved_result_path: null
-  document_path: data/graphrag_bench/raw/documents.json
+  document_path: data/graphrag_bench_cs/raw/documents.json
   prediction_result_path: null
