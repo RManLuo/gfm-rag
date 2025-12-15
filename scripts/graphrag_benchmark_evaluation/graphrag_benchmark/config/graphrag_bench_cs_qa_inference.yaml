@@ -1,0 +1,46 @@
+hydra:
+  run:
+    dir: outputs/qa_inference/${now:%Y-%m-%d}/${now:%H-%M-%S}/graphrag_bench_cs
+  searchpath:
+    - pkg://gfmrag.workflow.config
+
+defaults:
+  - _self_
+  # Not used directly in the script but kept for consistency with other workflows.
+  - qa_prompt: graphrag_bench_cs/fb
+
+seed: 1024
+
+llm:
+  _target_: gfmrag.llms.ChatGPT
+  model_name_or_path: gpt-4o-mini
+  retry: 5
+
+# Map task type (parsed from sample id) to prompt config path under config/qa_prompt/.
+prompt_map:
+  FB: qa_prompt/graphrag_bench_cs/fb
+  MC: qa_prompt/graphrag_bench_cs/mc
+  MS: qa_prompt/graphrag_bench_cs/ms
+  OE: qa_prompt/graphrag_bench_cs/oe
+  TF: qa_prompt/graphrag_bench_cs/tf
+
+# Output file names expected by the official GraphRAG-Bench evaluator.
+output_name_map:
+  FB: GraphRAG-Bench_FB
+  MC: GraphRAG-Bench_MC
+  MS: GraphRAG-Bench_MS
+  OE: GraphRAG-Bench_OE
+  TF: GraphRAG-Bench_TF
+
+task_type:
+  source: id_prefix
+  delimiter: "-"
+  index: 0
+
+test:
+  n_sample: -1
+  top_k: 10
+  n_threads: 10
+  retrieved_result_path: null
+  document_path: data/graphrag_bench_cs/raw/documents.json
+  prediction_result_path: null
