@@ -125,8 +125,10 @@ class LLMNERModel(BaseNERModel):
             self.client, ChatLlamaCpp
         ):
             response_content = self.client.invoke(query_ner_messages.to_messages())
+            if hasattr(response_content, "content"):
+                response_content = response_content.content
             response_content = extract_json_dict(response_content)
-            len(response_content.split())
+            # len(response_content.split())
         else:  # no JSON mode
             chat_completion = self.client.invoke(
                 query_ner_messages.to_messages(),

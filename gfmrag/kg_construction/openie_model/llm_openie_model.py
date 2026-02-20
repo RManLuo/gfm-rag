@@ -66,6 +66,8 @@ class LLMOPENIEModel(BaseOPENIEModel):
         model_name: str = "gpt-4o-mini",
         max_ner_tokens: int = 1024,
         max_triples_tokens: int = 4096,
+        n_ctx: int | None = None,
+        low_vram: bool = False,
     ):
         """Initialize LLM-based OpenIE model.
 
@@ -75,6 +77,8 @@ class LLMOPENIEModel(BaseOPENIEModel):
             model_name (str): Name of the language model to use. Defaults to "gpt-4o-mini".
             max_ner_tokens (int): Maximum number of tokens for NER processing. Defaults to 1024.
             max_triples_tokens (int): Maximum number of tokens for triple extraction. Defaults to 4096.
+            n_ctx: Context window size (llama.cpp / ollama only)
+            low_vram: Enable low VRAM mode (llama.cpp only)
 
         Attributes:
             llm_api: The selected LLM API provider
@@ -87,8 +91,16 @@ class LLMOPENIEModel(BaseOPENIEModel):
         self.model_name = model_name
         self.max_ner_tokens = max_ner_tokens
         self.max_triples_tokens = max_triples_tokens
+        self.n_ctx = n_ctx
+        self.low_vram = low_vram
 
-        self.client = init_langchain_model(llm_api, model_name)
+        self.client = init_langchain_model(
+            llm=llm_api,
+            model_name=model_name,
+            temperature=0.0,
+            n_ctx=n_ctx,
+            low_vram=low_vram,
+        )
 
     def ner(self, text: str) -> list:
         """
