@@ -154,10 +154,12 @@ class ColbertELModel(BaseELModel):
 
             # Build entries
             for r in result_list:
-                linked_entity_dict[query].append({
-                    "entity": r.get("content"),
-                    "score": r.get("score", 0.0),
-                    "norm_score": r.get("score", 0.0) / max_score
-                })
+                linked_entity_dict[query].append(
+                    {
+                        "entity": r.get("content"),
+                        "score": r.get("score", 0.0),
+                        "norm_score": r.get("score", 0.0) / max_score,
+                    }
+                )
 
         return linked_entity_dict

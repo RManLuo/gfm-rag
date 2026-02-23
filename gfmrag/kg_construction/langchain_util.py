@@ -69,7 +69,7 @@ def init_langchain_model(
     elif llm == "llama.cpp":
         # https://python.langchain.com/v0.2/docs/integrations/chat/llamacpp/
         llama_kwargs = {
-            "model_path": model_name, # model_name is the model path (gguf file)
+            "model_path": model_name,  # model_name is the model path (gguf file)
             "temperature": temperature,
             "verbose": True,
         }
