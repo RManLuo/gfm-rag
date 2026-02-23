@@ -134,20 +134,31 @@ class ColbertELModel(BaseELModel):
         )
 
         linked_entity_dict: dict[str, list] = {}
-        for i in range(len(queries)):
-            query = queries[i]
-            result = results[i]
+        for query, result in zip(queries, results):
             linked_entity_dict[query] = []
-            max_score = (
-                max([r["score"] for r in result]) if result else 1.0
-            )  # Avoid division by zero
+            # Normalize result to a list
+            if isinstance(result, dict):
+                result_list = [result]
+            elif isinstance(result, list):
+                result_list = result
+            else:
+                raise TypeError(f"Invalid result type: {type(result)}")
 
-            for r in result:
+            # Compute max score safely
+            if result_list:
+                max_score = max(r.get("score", 0.0) for r in result_list)
+                if max_score == 0:
+                    max_score = 1.0
+            else:
+                max_score = 1.0
+
+            # Build entries
+            for r in result_list:
                 linked_entity_dict[query].append(
                     {
-                        "entity": r["content"],
-                        "score": r["score"],
-                        "norm_score": r["score"] / max_score,
+                        "entity": r.get("content"),
+                        "score": r.get("score", 0.0),
+                        "norm_score": r.get("score", 0.0) / max_score,
                     }
                 )
 

@@ -13,6 +13,8 @@ def init_langchain_model(
     temperature: float = 0.0,
     max_retries: int = 5,
     timeout: int = 60,
+    n_ctx: int | None = None,
+    low_vram: bool = False,
     **kwargs: Any,
 ) -> ChatOpenAI | ChatTogether | ChatOllama | ChatLlamaCpp:
     """
@@ -53,14 +55,35 @@ def init_langchain_model(
         )
     elif llm == "ollama":
         # https://python.langchain.com/v0.1/docs/integrations/chat/ollama/
+        options = {}
+        if n_ctx is not None:
+            options["num_ctx"] = n_ctx
 
-        return ChatOllama(model=model_name)  # e.g., 'llama3'
+        return ChatOllama(
+            model=model_name,  # e.g., 'llama3'
+            temperature=temperature,
+            options=options if options else None,
+            **kwargs,
+        )
+
     elif llm == "llama.cpp":
         # https://python.langchain.com/v0.2/docs/integrations/chat/llamacpp/
+        llama_kwargs = {
+            "model_path": model_name,  # model_name is the model path (gguf file)
+            "temperature": temperature,
+            "verbose": True,
+        }
 
-        return ChatLlamaCpp(
-            model_path=model_name, verbose=True
-        )  # model_name is the model path (gguf file)
+        if n_ctx is not None:
+            llama_kwargs["n_ctx"] = n_ctx
+
+        if low_vram:
+            llama_kwargs["low_vram"] = True
+
+        llama_kwargs.update(kwargs)
+
+        return ChatLlamaCpp(**llama_kwargs)
+
     else:
         # add any LLMs you want to use here using LangChain
         raise NotImplementedError(f"LLM '{llm}' not implemented yet.")
