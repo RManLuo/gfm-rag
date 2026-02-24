@@ -474,6 +474,15 @@ We greatly appreciate the following repositories for their help to this project:
 If you find this repository helpful, please consider citing our paper:
 
 ```bibtex
+@article{luo2026g,
+  title={G-reasoner: Foundation Models for Unified Reasoning over Graph-structured Knowledge},
+  author={Luo, Linhao and Zhao, Zicheng and Liu, Junnan and Qiu, Zhangchi and Dong, Junnan and Panev, Serge and Gong, Chen and Vu, Thuy-Trang and Haffari, Gholamreza and Phung, Dinh and others},
+  journal={ICLR 2026},
+  year={2026}
+}
+```
+
+```bibtex
 @article{luo2025gfmrag,
   title={GFM-RAG: Graph Foundation Model for Retrieval Augmented Generation},
   author={Luo, Linhao and Zhao, Zicheng and Haffari, Gholamreza and Phung, Dinh and Gong, Chen and Pan, Shirui},
