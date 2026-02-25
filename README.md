@@ -474,11 +474,13 @@ We greatly appreciate the following repositories for their help to this project:
 If you find this repository helpful, please consider citing our paper:
 
 ```bibtex
-@article{luo2026g,
-  title={G-reasoner: Foundation Models for Unified Reasoning over Graph-structured Knowledge},
-  author={Luo, Linhao and Zhao, Zicheng and Liu, Junnan and Qiu, Zhangchi and Dong, Junnan and Panev, Serge and Gong, Chen and Vu, Thuy-Trang and Haffari, Gholamreza and Phung, Dinh and others},
-  journal={ICLR 2026},
-  year={2026}
+@inproceedings{
+	luo2026greasoner,
+	title={G-reasoner: Foundation Models for Unified Reasoning over Graph-structured Knowledge},
+	author={Linhao Luo and Zicheng Zhao and Junnan Liu and Zhangchi Qiu and Junnan Dong and Serge Panev and Chen Gong and Thuy-Trang Vu and Gholamreza Haffari and Dinh Phung and Alan Wee-Chung Liew and Shirui Pan},
+	booktitle={The Fourteenth International Conference on Learning Representations},
+	year={2026},
+	url={https://openreview.net/forum?id=zJm9nmoahk}
 }
 ```
 
