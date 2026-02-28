@@ -29,6 +29,7 @@ class BaseELModel(ABC):
         """
         pass
 
+    @abstractmethod
     def batch_index(self, docs: list[Any]) -> Any:
         pass
 

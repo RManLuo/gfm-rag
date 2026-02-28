@@ -3,14 +3,13 @@ import os
 from typing import Any
 
 import torch
-import numpy as np
-from sentence_transformers import SentenceTransformer, util
 from vllm import LLM
 
 from .base_model import BaseELModel
 
 # os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
 # os.environ["VLLM_USE_DEEPSPEED_ZERO3"] = "1"
+
 
 class QWENELModel(BaseELModel):
     """
@@ -73,14 +72,13 @@ class QWENELModel(BaseELModel):
             model=self.model_name,
             tensor_parallel_size=tensor_parallel_size,
             gpu_memory_utilization=gpu_memory_utilization,
-            task='embed'
+            task="embed",
         )
-    
+
         self.query_instruct = query_instruct
         self.passage_instruct = passage_instruct
 
     def batch_index(self, entity_list: list) -> torch.Tensor:
-
         # Get md5 fingerprint of the whole given entity list
         fingerprint = hashlib.md5("".join(entity_list).encode()).hexdigest()
         cache_file = f"{self.root}/{fingerprint}.pt"
@@ -91,23 +89,25 @@ class QWENELModel(BaseELModel):
                 weights_only=True,
             )
         else:
-            all_embeddings=  []
+            all_embeddings = []
             from tqdm import tqdm
+
             for i in tqdm(range(0, len(entity_list), self.batch_size)):
                 batch = entity_list[i : i + self.batch_size]
-                outputs = self.model.embed(batch,use_tqdm=False)
-                batch_emb = torch.tensor([o.outputs.embedding for o in outputs], dtype=torch.float32)
+                outputs = self.model.embed(batch, use_tqdm=False)
+                batch_emb = torch.tensor(
+                    [o.outputs.embedding for o in outputs], dtype=torch.float32
+                )
                 all_embeddings.append(batch_emb)
 
-            embeddings =  torch.cat(all_embeddings, dim=0)
-        
+            embeddings = torch.cat(all_embeddings, dim=0)
+
             if self.use_cache:
                 torch.save(embeddings, cache_file, _use_new_zipfile_serialization=False)
-        
+
         return embeddings
 
     def batch_index_v1(self, entity_list: list) -> torch.Tensor:
-
         # Get md5 fingerprint of the whole given entity list
         fingerprint = hashlib.md5("".join(entity_list).encode()).hexdigest()
         cache_file = f"{self.root}/{fingerprint}.pt"
@@ -118,29 +118,28 @@ class QWENELModel(BaseELModel):
                 weights_only=True,
             )
         else:
-
             outputs = self.model.embed(
                 entity_list,
             )
 
             embeddings = torch.tensor([o.outputs.embedding for o in outputs])
-        
+
             if self.use_cache:
                 torch.save(embeddings, cache_file, _use_new_zipfile_serialization=False)
-        
-        return embeddings
-    
-    def get_detailed_instruct(self, task_description: str, query: str) -> str:
-        return f'Instruct: {task_description}\nQuery:{query}'
 
-    def index(self, texts: list[Any], instruction: str="") -> torch.Tensor:  # type: ignore
-        if isinstance(texts, str): 
+        return embeddings
+
+    def get_detailed_instruct(self, task_description: str, query: str) -> str:
+        return f"Instruct: {task_description}\nQuery:{query}"
+
+    def index(self, texts: list[Any], instruction: str = "") -> torch.Tensor:  # type: ignore
+        if isinstance(texts, str):
             texts = [texts]
         input_texts = [self.get_detailed_instruct(instruction, text) for text in texts]
-        
+
         outputs = self.model.embed(
-                input_texts,
-            )
+            input_texts,
+        )
         embeddings = torch.tensor([o.outputs.embedding for o in outputs])
         return embeddings
 
@@ -162,5 +161,6 @@ class QWENELModel(BaseELModel):
                 - score (float): Raw similarity score
                 - norm_score (float): Normalized similarity score (relative to top match)
         """
-        raise NotImplementedError("The __call__ method for QwenELModel is not implemented yet.")
-
+        raise NotImplementedError(
+            "The __call__ method for QwenELModel is not implemented yet."
+        )

@@ -115,7 +115,7 @@ def test_qwen_el_model() -> None:
         ["source", "relation", "target"]
     ].values.tolist()
     facts = [str(fact) for fact in docs]
-    el_model.batch_index(facts) # type: ignore
+    el_model.batch_index(facts)  # type: ignore
 
 
 if __name__ == "__main__":
