@@ -1,19 +1,10 @@
 import json
-import hashlib
-
 import logging
 import os
-import copy
-import torch
-import igraph as ig
 from collections import defaultdict
+
 import numpy as np
-from multiprocessing.dummy import Pool as ThreadPool
-
-from typing import List, Tuple, Dict
-
 import pandas as pd
-from tqdm import tqdm
 
 from gfmrag.graph_index_datasets.graph_index_dataset import GraphIndexDataset
 from gfmrag.utils.util import check_all_files_exist
@@ -30,23 +21,25 @@ def min_max_normalize(x: np.ndarray) -> np.ndarray:
     min_val = np.min(x)
     max_val = np.max(x)
     range_val = max_val - min_val
-    
+
     # Handle the case where all values are the same (range is zero)
     if range_val == 0:
         return np.ones_like(x)  # Return an array of ones with the same shape as x
-    
+
     return (x - min_val) / range_val
 
 
 def get_query_instruction(linking_method: str) -> str:
     instructions = {
-        'ner_to_node': 'Given a phrase, retrieve synonymous or relevant phrases that best match this phrase.',
-        'query_to_node': 'Given a question, retrieve relevant phrases that are mentioned in this question.',
-        'query_to_fact': 'Given a question, retrieve relevant triplet facts that matches this question.',
-        'query_to_sentence': 'Given a question, retrieve relevant sentences that best answer the question.',
-        'query_to_passage': 'Given a question, retrieve relevant documents that best answer the question.',
+        "ner_to_node": "Given a phrase, retrieve synonymous or relevant phrases that best match this phrase.",
+        "query_to_node": "Given a question, retrieve relevant phrases that are mentioned in this question.",
+        "query_to_fact": "Given a question, retrieve relevant triplet facts that matches this question.",
+        "query_to_sentence": "Given a question, retrieve relevant sentences that best answer the question.",
+        "query_to_passage": "Given a question, retrieve relevant documents that best answer the question.",
     }
-    default_instruction = 'Given a question, retrieve relevant documents that best answer the question.'
+    default_instruction = (
+        "Given a question, retrieve relevant documents that best answer the question."
+    )
     return instructions.get(linking_method, default_instruction)
 
 
@@ -89,8 +82,8 @@ class HippoRAG2Constructor(BaseSFTConstructor):
         num_processes: int = 1,
         topk: int = 5,
         force: bool = False,
-        start_type: list = ["entity"],
-        target_type: list = ["document"],
+        start_type: list | None = None,
+        target_type: list | None = None,
     ) -> None:
         """Initialize the Question Answer Constructor.
 
@@ -172,8 +165,8 @@ class HippoRAG2Constructor(BaseSFTConstructor):
             embeddings dictionary.
         """
         query_embedding = self.el_model.index(
-            query, 
-            instruction=get_query_instruction('query_to_fact')
+            [query],
+            instruction=get_query_instruction("query_to_fact"),  # type: ignore
         )
 
         # Check if there are any facts
@@ -182,46 +175,65 @@ class HippoRAG2Constructor(BaseSFTConstructor):
             return np.array([])
 
         try:
-            query_embedding = query_embedding.to(self.fact_embeddings.device)   #
-            query_fact_scores = self.fact_embeddings @ query_embedding.T # shape: (#facts, )
+            query_embedding = query_embedding.to(self.fact_embeddings.device)  # type: ignore
+            query_fact_scores = (
+                self.fact_embeddings @ query_embedding.T
+            )  # shape: (#facts, )
             query_fact_scores = query_fact_scores.cpu().numpy()
-            query_fact_scores = np.squeeze(query_fact_scores) if query_fact_scores.ndim == 2 else query_fact_scores
+            query_fact_scores = (
+                np.squeeze(query_fact_scores)
+                if query_fact_scores.ndim == 2
+                else query_fact_scores
+            )
             query_fact_scores = min_max_normalize(query_fact_scores)
             return query_fact_scores
         except Exception as e:
             print(e)
             logger.error(f"Error computing fact scores: {str(e)}")
             return np.array([])
-    
-    def rerank_facts(self, query: str, query_fact_scores: np.ndarray) -> Tuple[List[int], List[Tuple], dict]:
+
+    def rerank_facts(
+        self, query: str, query_fact_scores: np.ndarray
+    ) -> tuple[list[int], list[tuple], dict]:
         link_top_k: int = self.topk
-        
+
         if len(query_fact_scores) == 0 or len(self.facts_id) == 0:
             logger.warning("No facts available for reranking. Returning empty lists.")
-            return [], [], {'facts_before_rerank': [], 'facts_after_rerank': []}
-            
+            return [], [], {"facts_before_rerank": [], "facts_after_rerank": []}
+
         try:
             if len(query_fact_scores) <= link_top_k:
                 candidate_fact_indices = np.argsort(query_fact_scores)[::-1].tolist()
             else:
-                candidate_fact_indices = np.argsort(query_fact_scores)[-link_top_k:][::-1].tolist()
+                candidate_fact_indices = np.argsort(query_fact_scores)[-link_top_k:][
+                    ::-1
+                ].tolist()
 
-            candidate_facts =  [self.facts[idx] for idx in candidate_fact_indices]
-            
-            top_k_fact_indices, top_k_facts, reranker_dict = self.rerank_filter(query,
-                                                                                candidate_facts,
-                                                                                candidate_fact_indices,
-                                                                                len_after_rerank=link_top_k)
-        
-            rerank_log = {'facts_before_rerank': candidate_facts, 'facts_after_rerank': top_k_facts}
-            
+            candidate_facts = [self.facts[idx] for idx in candidate_fact_indices]
+
+            top_k_fact_indices, top_k_facts, reranker_dict = self.rerank_filter(
+                query,
+                candidate_facts,
+                candidate_fact_indices,
+                len_after_rerank=link_top_k,
+            )
+
+            rerank_log = {
+                "facts_before_rerank": candidate_facts,
+                "facts_after_rerank": top_k_facts,
+            }
+
             return top_k_fact_indices, top_k_facts, rerank_log
-            
+
         except Exception as e:
             logger.error(f"Error in rerank_facts: {str(e)}")
-            return [], [], {'facts_before_rerank': [], 'facts_after_rerank': [], 'error': str(e)}
-    
-    def dense_passage_retrieval(self, query: str) -> Tuple[np.ndarray, np.ndarray]:
+            return (
+                [],
+                [],
+                {"facts_before_rerank": [], "facts_after_rerank": [], "error": str(e)},
+            )
+
+    def dense_passage_retrieval(self, query: str) -> tuple[np.ndarray, np.ndarray]:
         """
         Conduct dense passage retrieval to find relevant documents for a query.
 
@@ -245,25 +257,35 @@ class HippoRAG2Constructor(BaseSFTConstructor):
             - A numpy array of the normalized similarity scores for the corresponding
               documents.
         """
-        query_embedding = self.el_model.index(query,
-                                              instruction=get_query_instruction('query_to_passage'))
-        query_embedding = query_embedding.to(self.passage_embeddings.device)   #
+        query_embedding = self.el_model.index(
+            [query],
+            instruction=get_query_instruction("query_to_passage"),  # type: ignore
+        )
+        query_embedding = query_embedding.to(self.passage_embeddings.device)  # type: ignore
         query_doc_scores = self.passage_embeddings @ query_embedding.T
         query_doc_scores = query_doc_scores.cpu().numpy()
-        query_doc_scores = np.squeeze(query_doc_scores) if query_doc_scores.ndim == 2 else query_doc_scores
+        query_doc_scores = (
+            np.squeeze(query_doc_scores)
+            if query_doc_scores.ndim == 2
+            else query_doc_scores
+        )
         query_doc_scores = min_max_normalize(query_doc_scores)
 
         sorted_doc_ids = np.argsort(query_doc_scores)[::-1]
         sorted_doc_scores = query_doc_scores[sorted_doc_ids.tolist()]
         return sorted_doc_ids, sorted_doc_scores
-    
+
     def el_answer(self, ans: str) -> str:
-        ans_embedding = self.el_model.index(ans,
-                                              instruction=get_query_instruction('query_to_node'))
-        ans_embedding = ans_embedding.to(self.entities_embeddings.device)   #
+        ans_embedding = self.el_model.index(
+            [ans],
+            instruction=get_query_instruction("query_to_node"),  # type: ignore
+        )
+        ans_embedding = ans_embedding.to(self.entities_embeddings.device)  # type: ignore
         ans_ent_scores = self.entities_embeddings @ ans_embedding.T
         ans_ent_scores = ans_ent_scores.cpu().numpy()
-        ans_ent_scores = np.squeeze(ans_ent_scores) if ans_ent_scores.ndim == 2 else ans_ent_scores
+        ans_ent_scores = (
+            np.squeeze(ans_ent_scores) if ans_ent_scores.ndim == 2 else ans_ent_scores
+        )
         ans_ent_scores = min_max_normalize(ans_ent_scores)
 
         sorted_ent_ids = np.argsort(ans_ent_scores)[::-1]
@@ -297,9 +319,11 @@ class HippoRAG2Constructor(BaseSFTConstructor):
         # Get dataset information
         self.data_name = data_name  # type: ignore
         raw_path = os.path.join(data_root, data_name, "raw", file)
-        corpus_path = os.path.join(data_root, data_name, "raw", GraphIndexDataset.RAW_DOCUMENT_NAME)
+        corpus_path = os.path.join(
+            data_root, data_name, "raw", GraphIndexDataset.RAW_DOCUMENT_NAME
+        )
         processed_path = os.path.join(data_root, data_name, "processed", "stage1")
-        
+
         # Load data
         with open(raw_path) as f:
             data = json.load(f)
@@ -320,7 +344,9 @@ class HippoRAG2Constructor(BaseSFTConstructor):
         edges = pd.read_csv(
             os.path.join(processed_path, "edges.csv"), keep_default_na=False
         )
-        self.facts = edges[edges["relation"] != "is_mentioned_in"][["source", "relation", "target"]].values.tolist()
+        self.facts = edges[edges["relation"] != "is_mentioned_in"][
+            ["source", "relation", "target"]
+        ].values.tolist()
 
         self.ent_node_to_chunk_ids = defaultdict(set)
         mention_edges = edges[edges["relation"] == "is_mentioned_in"]
@@ -345,18 +371,22 @@ class HippoRAG2Constructor(BaseSFTConstructor):
         # # Prepare final data
         final_data = []
         for sample in data:
-            query = sample['question']
-            answer = sample['answer']
-            
+            query = sample["question"]
+            answer = sample["answer"]
+
             query_fact_scores = self.get_fact_scores(query)
-            top_k_fact_indices, top_k_facts, _ = self.rerank_facts(query, query_fact_scores)
+            top_k_fact_indices, top_k_facts, _ = self.rerank_facts(
+                query, query_fact_scores
+            )
 
             if len(top_k_facts) == 0:
-                logger.info('No facts found after reranking, return DPR results')
+                logger.info("No facts found after reranking, return DPR results")
                 sorted_doc_ids, sorted_doc_scores = self.dense_passage_retrieval(query)
-                top_k_docs = [self.docs[idx] for idx in sorted_doc_ids[:self.topk]]
-                
-                question_entities = [doc.split('\n')[0] for doc in top_k_docs[:self.topk]]
+                top_k_docs = [self.docs[idx] for idx in sorted_doc_ids[: self.topk]]
+
+                question_entities = [
+                    doc.split("\n")[0] for doc in top_k_docs[: self.topk]
+                ]
                 starting_documents = question_entities
 
             else:
@@ -366,15 +396,15 @@ class HippoRAG2Constructor(BaseSFTConstructor):
                     query_fact_scores=query_fact_scores,
                     top_k_facts=top_k_facts,
                     top_k_fact_indices=top_k_fact_indices,
-                    passage_node_weight=0.05
+                    passage_node_weight=0.05,
                 )
 
                 question_entities = []
                 starting_documents = []
                 start_nodes = list(linking_score_map.keys())
                 for k in start_nodes:
-                    if '\n' in k:
-                        doc = k.split('\n')[0]
+                    if "\n" in k:
+                        doc = k.split("\n")[0]
                         starting_documents.append(doc)
                     else:
                         question_entities.append(k)
@@ -386,8 +416,8 @@ class HippoRAG2Constructor(BaseSFTConstructor):
                 {
                     **sample,
                     "start_nodes": {
-                        "entity": question_entities[:self.topk],
-                        "document": starting_documents[:self.topk],
+                        "entity": question_entities[: self.topk],
+                        "document": starting_documents[: self.topk],
                     },
                     "target_nodes": {
                         "entity": answer_entities,
@@ -397,13 +427,16 @@ class HippoRAG2Constructor(BaseSFTConstructor):
             )
 
         return final_data
-    
-    def graph_search_with_fact_entities(self, query: str,
-                                        link_top_k: int,
-                                        query_fact_scores: np.ndarray,
-                                        top_k_facts: List[Tuple],
-                                        top_k_fact_indices: List[str],
-                                        passage_node_weight: float = 0.05) -> Dict:
+
+    def graph_search_with_fact_entities(
+        self,
+        query: str,
+        link_top_k: int,
+        query_fact_scores: np.ndarray,
+        top_k_facts: list[tuple],
+        top_k_fact_indices: list[int],
+        passage_node_weight: float = 0.05,
+    ) -> dict:
         """
         Computes document scores based on fact-based similarity and relevance using personalized
         PageRank (PPR) and dense retrieval models. This function combines the signal from the relevant
@@ -428,11 +461,15 @@ class HippoRAG2Constructor(BaseSFTConstructor):
                 - The second array consists of the PPR scores associated with the sorted document IDs.
         """
 
-        #Assigning phrase weights based on selected facts from previous steps.
-        linking_score_map = {}  # from phrase to the average scores of the facts that contain the phrase
-        phrase_scores = {}  # store all fact scores for each phrase regardless of whether they exist in the knowledge graph or not
+        # Assigning phrase weights based on selected facts from previous steps.
+        linking_score_map: dict[
+            str, float
+        ] = {}  # from phrase to the average scores of the facts that contain the phrase
+        phrase_scores: dict[
+            str, list[float]
+        ] = {}  # store all fact scores for each phrase regardless of whether they exist in the knowledge graph or not
         phrase_weights = np.zeros(len(self.nodes))
-        passage_weights = np.zeros(len(self.nodes))
+        np.zeros(len(self.nodes))
         number_of_occurs = np.zeros(len(self.nodes))
 
         phrases_and_ids = set()
@@ -440,8 +477,11 @@ class HippoRAG2Constructor(BaseSFTConstructor):
         for rank, f in enumerate(top_k_facts):
             subject_phrase = f[0].lower()
             object_phrase = f[2].lower()
-            fact_score = query_fact_scores[
-                top_k_fact_indices[rank]] if query_fact_scores.ndim > 0 else query_fact_scores
+            fact_score = (
+                query_fact_scores[top_k_fact_indices[rank]]
+                if query_fact_scores.ndim > 0
+                else query_fact_scores
+            )
 
             for phrase in [subject_phrase, object_phrase]:
                 phrase_id = self.nodes.index(phrase)
@@ -470,7 +510,11 @@ class HippoRAG2Constructor(BaseSFTConstructor):
             linking_score_map[phrase] = float(np.mean(scores))
 
         if link_top_k:
-            linking_score_map = dict(sorted(linking_score_map.items(), key=lambda x: x[1], reverse=True)[:link_top_k])
+            linking_score_map = dict(
+                sorted(linking_score_map.items(), key=lambda x: x[1], reverse=True)[
+                    :link_top_k
+                ]
+            )
 
         # Get passage scores according to chosen dense retrieval model
         dpr_sorted_doc_ids, dpr_sorted_doc_scores = self.dense_passage_retrieval(query)
@@ -479,10 +523,14 @@ class HippoRAG2Constructor(BaseSFTConstructor):
         for i, dpr_sorted_doc_id in enumerate(dpr_sorted_doc_ids.tolist()):
             passage_dpr_score = normalized_dpr_sorted_scores[i]
             passage_node_text = self.docs[dpr_sorted_doc_id]
-            linking_score_map[passage_node_text] = passage_dpr_score * passage_node_weight
+            linking_score_map[passage_node_text] = (
+                passage_dpr_score * passage_node_weight
+            )
 
         # Recording top 30 facts in linking_score_map
         if len(linking_score_map) > 30:
-            linking_score_map = dict(sorted(linking_score_map.items(), key=lambda x: x[1], reverse=True)[:30])
+            linking_score_map = dict(
+                sorted(linking_score_map.items(), key=lambda x: x[1], reverse=True)[:30]
+            )
 
         return linking_score_map

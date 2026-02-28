@@ -29,6 +29,9 @@ class BaseELModel(ABC):
         """
         pass
 
+    def batch_index(self, docs: list[Any]) -> Any:
+        pass
+
     @abstractmethod
     def __call__(self, ner_entity_list: list, topk: int = 1) -> dict:
         """

@@ -20,7 +20,7 @@ class Fact(BaseModel):
 
 
 class DSPyFilter:
-    def __init__(self, hipporag) -> None:
+    def __init__(self, hipporag: Any) -> None:
         """
         Initializes the object with the necessary configurations and templates for processing input and output messages.
 
@@ -45,7 +45,7 @@ class DSPyFilter:
             retry = 5
         )
         self.model_name = 'gpt-4o-mini'
-        self.default_gen_kwargs = {}
+        self.default_gen_kwargs: dict[str, Any] = {}
 
     def make_template(self, dspy_file_path: str) -> List[Dict[str, str]]:
         if dspy_file_path is not None:
@@ -64,7 +64,7 @@ class DSPyFilter:
         return message_template
     
     def parse_filter(self, response: str) -> List:
-        sections = [(None, [])]
+        sections: List[Tuple[Optional[str], List[str]]] = [(None, [])] # [(None, [])]
         field_header_pattern = re.compile('\\[\\[ ## (\\w+) ## \\]\\]')
         for line in response.splitlines():
             match = field_header_pattern.match(line.strip())
@@ -73,9 +73,9 @@ class DSPyFilter:
             else:
                 sections[-1][1].append(line)
 
-        sections = [(k, "\n".join(v).strip()) for k, v in sections]
+        joined_sections: List[Tuple[Optional[str], str]] = [(k, "\n".join(v).strip()) for k, v in sections]
         parsed = []
-        for k, value in sections:
+        for k, value in joined_sections:
             if k == "fact_after_filter":
                 try:
                     # fields[k] = parse_value(v, signature.output_fields[k].annotation) if _parse_values else v
@@ -110,14 +110,14 @@ class DSPyFilter:
         response = response.choices[0].message.content.strip()
         return response
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self.rerank(*args, **kwargs)
 
     def rerank(self,
                query: str,
                candidate_items: List[Tuple],
                candidate_indices: List[int],
-               len_after_rerank: int =None) -> Tuple[List[int], List[Tuple], dict]:
+               len_after_rerank: int) -> Tuple[List[int], List[Tuple], dict]:
         fact_before_filter = {"fact": [list(candidate_item) for candidate_item in candidate_items]}
         try:
             # prediction = self.program(question=query, fact_before_filter=json.dumps(fact_before_filter))

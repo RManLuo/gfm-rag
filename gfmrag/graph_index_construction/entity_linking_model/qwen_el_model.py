@@ -133,8 +133,9 @@ class QWENELModel(BaseELModel):
     def get_detailed_instruct(self, task_description: str, query: str) -> str:
         return f'Instruct: {task_description}\nQuery:{query}'
 
-    def index(self, texts: str | list, instruction: str):
-        if isinstance(texts, str): texts = [texts]
+    def index(self, texts: list[Any], instruction: str="") -> torch.Tensor:  # type: ignore
+        if isinstance(texts, str): 
+            texts = [texts]
         input_texts = [self.get_detailed_instruct(instruction, text) for text in texts]
         
         outputs = self.model.embed(
@@ -143,7 +144,7 @@ class QWENELModel(BaseELModel):
         embeddings = torch.tensor([o.outputs.embedding for o in outputs])
         return embeddings
 
-    def __call__(self, ner_entity_list: list, topk: int = 1) -> None:
+    def __call__(self, ner_entity_list: list, topk: int = 1) -> dict:
         """
         Performs entity linking by matching input entities with pre-encoded entity embeddings.
 
@@ -161,5 +162,5 @@ class QWENELModel(BaseELModel):
                 - score (float): Raw similarity score
                 - norm_score (float): Normalized similarity score (relative to top match)
         """
-        pass
+        raise NotImplementedError("The __call__ method for QwenELModel is not implemented yet.")
 
