@@ -3,7 +3,8 @@ import os
 from typing import Any
 
 import torch
-from sentence_transformers import SentenceTransformer
+import numpy as np
+from sentence_transformers import SentenceTransformer, util
 
 from .base_model import BaseELModel
 
@@ -44,9 +45,10 @@ class DPRELModel(BaseELModel):
         root: str = "tmp",
         use_cache: bool = True,
         normalize: bool = True,
-        batch_size: int = 32,
+        batch_size: int = 8,
         query_instruct: str = "",
         passage_instruct: str = "",
+        topk: int = 5,
         model_kwargs: dict | None = None,
     ) -> None:
         """Initialize DPR Entity Linking Model.
@@ -66,16 +68,18 @@ class DPRELModel(BaseELModel):
         self.use_cache = use_cache
         self.normalize = normalize
         self.batch_size = batch_size
+        self.topk = topk
         self.root = os.path.join(root, f"{self.model_name.replace('/', '_')}_dpr_cache")
         if self.use_cache and not os.path.exists(self.root):
             os.makedirs(self.root)
         self.model = SentenceTransformer(
             model_name, trust_remote_code=True, model_kwargs=model_kwargs
         )
+    
         self.query_instruct = query_instruct
         self.passage_instruct = passage_instruct
 
-    def index(self, entity_list: list) -> None:
+    def batch_index(self, entity_list: list) -> torch.Tensor:
         """
         Index a list of entities by encoding them into embeddings and optionally caching the results.
 
@@ -96,18 +100,18 @@ class DPRELModel(BaseELModel):
             - Cache files are stored using the MD5 hash of the concatenated entity list as filename
             - Embeddings are computed on GPU if available, otherwise on CPU
         """
-        self.entity_list = entity_list
         # Get md5 fingerprint of the whole given entity list
         fingerprint = hashlib.md5("".join(entity_list).encode()).hexdigest()
+        print(fingerprint)
         cache_file = f"{self.root}/{fingerprint}.pt"
         if os.path.exists(cache_file):
-            self.entity_embeddings = torch.load(
+            embeddings = torch.load(
                 cache_file,
                 map_location="cuda" if torch.cuda.is_available() else "cpu",
                 weights_only=True,
             )
         else:
-            self.entity_embeddings = self.model.encode(
+            embeddings = self.model.encode(
                 entity_list,
                 device="cuda" if torch.cuda.is_available() else "cpu",
                 convert_to_tensor=True,
@@ -116,8 +120,50 @@ class DPRELModel(BaseELModel):
                 normalize_embeddings=self.normalize,
                 batch_size=self.batch_size,
             )
+        
             if self.use_cache:
-                torch.save(self.entity_embeddings, cache_file)
+                torch.save(embeddings, cache_file)
+        
+        return embeddings
+
+    def multi_batch_index(self, entity_list: list) -> torch.Tensor:
+        fingerprint = hashlib.md5("".join(entity_list).encode()).hexdigest()
+        cache_file = f"{self.root}/{fingerprint}.pt"
+        if os.path.exists(cache_file):
+            embeddings = torch.load(
+                cache_file,
+                map_location="cuda" if torch.cuda.is_available() else "cpu",
+                weights_only=True,
+            )
+        else:
+            pool = self.model.start_multi_process_pool()
+            embeddings = self.model.encode_multi_process(
+                entity_list,
+                pool,
+                normalize_embeddings=self.normalize,
+                show_progress_bar=True,
+                prompt=self.passage_instruct,
+                batch_size=self.batch_size,
+            )
+            util.stop_multi_process_pool(pool)
+            
+            if self.use_cache:
+                torch.save(embeddings, cache_file)
+        return embeddings
+    
+    def index(self, texts: str | list, instruction: str):
+        if isinstance(texts, str): texts = [texts]
+        
+        embeddings = self.model.encode(
+            texts,
+            device="cuda" if torch.cuda.is_available() else "cpu",
+            convert_to_tensor=True,
+            show_progress_bar=True,
+            prompt=instruction,
+            normalize_embeddings=self.normalize,
+            batch_size=self.batch_size,
+        )
+        return embeddings
 
     def __call__(self, ner_entity_list: list, topk: int = 1) -> dict:
         """

@@ -1,0 +1,11 @@
+_target_: gfmrag.graph_index_construction.entity_linking_model.QWENELModel
+model_name: Qwen/Qwen3-Embedding-0.6B
+root: /nfsdata/data/lluo/zicheng/tmp
+use_cache: True
+normalize: True
+batch_size: 32
+query_instruct: "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
+passage_instruct: null
+topk: 5
+tensor_parallel_size: 4
+gpu_memory_utilization: 0.4

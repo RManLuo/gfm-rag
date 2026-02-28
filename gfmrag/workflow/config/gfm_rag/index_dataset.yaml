@@ -8,11 +8,11 @@ defaults:
   - _self_
   - ner_model: llm_ner_model # The NER model to use
   - openie_model: llm_openie_model # The OpenIE model to use
-  - el_model: colbert_el_model # The EL model to use
+  - el_model: qwen_emb # The EL model to use
   - graph_constructor: kg_constructor
-  - sft_constructor: gfm_rag_sft_constructor
+  - sft_constructor: hipporag2_sft_constructor  # test hipporag2_sft_constructor
 
 dataset:
-  root: ./data # data root directory
-  data_name: hotpotqa # data name
+  root: data # data root directory
+  data_name: 2wikimultihopqa_test # data name
   force: False # Whether to force recompute the dataset

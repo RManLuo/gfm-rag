@@ -1,6 +1,6 @@
 _target_: gfmrag.graph_index_construction.graph_constructors.KGConstructor # The KGConstructor class
 open_ie_model: ${openie_model}
-el_model: ${el_model}
+el_model: colbert_el_model # ${el_model}
 root: tmp/kg_construction # Temporary directory for storing intermediate files during KG construction
 num_processes: 10 # Number of processes to use
 cosine_sim_edges: True # Whether to conduct entities resolution using cosine similarity
