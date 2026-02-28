@@ -53,6 +53,7 @@ def test_dpr_el_model() -> None:
     print(linked_entity_list)
     assert isinstance(linked_entity_list, dict)
 
+
 def test_nv_el_model() -> None:
     import json
 
@@ -75,9 +76,7 @@ def test_nv_el_model() -> None:
 
     el_model = instantiate(cfg)
     ner_entity_list = ["what is one of the stars of  The Newcomers known for"]
-    with open(
-        "data/hotpotqa/raw/documents.json"
-    ) as fin:
+    with open("data/hotpotqa/raw/documents.json") as fin:
         documents = json.load(fin)
     docs = [f"{title}\n{text}" for title, text in documents.items()]
     el_model.index(docs)
@@ -85,9 +84,8 @@ def test_nv_el_model() -> None:
     print(linked_entity_list)
     assert isinstance(linked_entity_list, dict)
 
-def test_qwen_el_model() -> None:
-    import json
 
+def test_qwen_el_model() -> None:
     from hydra.utils import instantiate
     from omegaconf import OmegaConf
 
@@ -109,10 +107,16 @@ def test_qwen_el_model() -> None:
 
     el_model = instantiate(cfg)
     import pandas as pd
-    edges = pd.read_csv("data/hotpotqa/processed/stage1/edges.csv", keep_default_na=False)
-    docs = edges[edges["relation"] != "is_mentioned_in"][["source", "relation", "target"]].values.tolist()
+
+    edges = pd.read_csv(
+        "data/hotpotqa/processed/stage1/edges.csv", keep_default_na=False
+    )
+    docs = edges[edges["relation"] != "is_mentioned_in"][
+        ["source", "relation", "target"]
+    ].values.tolist()
     facts = [str(fact) for fact in docs]
-    el_model.batch_index(facts)
+    el_model.batch_index(facts) # type: ignore
+
 
 if __name__ == "__main__":
     # test_colbert_el_model()
