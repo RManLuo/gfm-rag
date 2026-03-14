@@ -233,43 +233,143 @@ class QueryNBFNet(EntityNBFNet):
     """
 
     def bellmanford(self, data, node_features, query, separate_grad=False):
+        import torch.distributed as dist
+
+        dist_context = getattr(data, "dist_context", None)
+        is_dist = dist_context is not None and dist.is_initialized()
+
         size = (data.num_nodes, data.num_nodes)
         edge_weight = torch.ones(data.num_edges, device=query.device, dtype=query.dtype)
 
         hiddens = []
         edge_weights = []
-        layer_input = node_features
 
-        for layer in self.layers:
-            # for visualization
-            if separate_grad:
-                edge_weight = edge_weight.clone().requires_grad_()
+        if is_dist:
+            # ------------------------------------------------------------------
+            # Distributed split-graph inference
+            # ------------------------------------------------------------------
+            # Strategy (mathematically exact):
+            #   1. Each rank owns nodes [local_start, local_end) and the edges
+            #      whose *target* falls in that slice (set by partition_graph_edges).
+            #   2. Before each layer: AllGather local hidden states â†’ full (B,N,D).
+            #   3. Run the layer with the full source states but local-only edges.
+            #      The layer output is correct at local target positions; non-local
+            #      positions contain boundary-only values and are discarded.
+            #   4. Slice to local portion, apply residual, store.
+            #   5. After all layers: AllGather the local concatenated output once
+            #      to reconstruct the full result on every rank.
+            # ------------------------------------------------------------------
+            rank, world_size = dist_context
+            num_nodes = data.num_nodes
+            base_N = (num_nodes + world_size - 1) // world_size  # ceiling division
+            local_start = rank * base_N
+            local_end = min((rank + 1) * base_N, num_nodes)
+            local_N = local_end - local_start
 
-            # Bellman-Ford iteration, we send the original boundary condition in addition to the updated node states
-            hidden = layer(
-                layer_input,
-                query,
-                node_features,
-                data.edge_index,
-                data.edge_type,
-                size,
-                edge_weight,
-            )
-            if self.short_cut and hidden.shape == layer_input.shape:
-                # residual connection here
-                hidden = hidden + layer_input
-            hiddens.append(hidden)
-            edge_weights.append(edge_weight)
-            layer_input = hidden
+            # Collect each rank's actual local_N once (for uneven last partition).
+            local_N_t = torch.tensor(local_N, device=query.device)
+            all_local_N_list = [torch.zeros_like(local_N_t) for _ in range(world_size)]
+            dist.all_gather(all_local_N_list, local_N_t)
+            all_local_N = [int(x.item()) for x in all_local_N_list]
+            max_local_N = max(all_local_N)  # == base_N
 
-        # original query (relation type) embeddings
-        node_query = query.unsqueeze(1).expand(
-            -1, data.num_nodes, -1
-        )  # (batch_size, num_nodes, input_dim)
-        if self.concat_hidden:
-            output = torch.cat(hiddens + [node_query], dim=-1)
+            def _allgather(local_t: torch.Tensor) -> torch.Tensor:
+                """AllGather (B, local_N, D) across ranks into (B, N, D).
+
+                Handles the case where the last rank may have fewer nodes than
+                the others by zero-padding to max_local_N before gathering,
+                then slicing each chunk to its actual size before concatenation.
+                """
+                B, loc_n, D = local_t.shape
+                if loc_n < max_local_N:
+                    pad = local_t.new_zeros(B, max_local_N - loc_n, D)
+                    padded = torch.cat([local_t, pad], dim=1).contiguous()
+                else:
+                    padded = local_t.contiguous()
+                chunks = [torch.zeros_like(padded) for _ in range(world_size)]
+                dist.all_gather(chunks, padded)
+                return torch.cat(
+                    [chunks[r][:, : all_local_N[r], :] for r in range(world_size)],
+                    dim=1,
+                )  # (B, N, D)
+
+            # Local slice of the initial boundary / layer input.
+            local_layer_input = node_features[:, local_start:local_end, :].clone()
+
+            for layer in self.layers:
+                if separate_grad:
+                    edge_weight = edge_weight.clone().requires_grad_()
+
+                # AllGather â†’ full source-node states on each rank.
+                global_input = _allgather(local_layer_input)  # (B, N, D)
+
+                # Layer forward with full input but local-target edges.
+                # hidden[v] is correct for v in [local_start, local_end);
+                # non-local positions contain boundary-only values (discarded).
+                hidden = layer(
+                    global_input,
+                    query,
+                    node_features,  # boundary: full (B, N, D), same on all ranks
+                    data.edge_index,
+                    data.edge_type,
+                    size,
+                    edge_weight,
+                )
+
+                # Slice to local, apply residual, then store local hidden.
+                local_hidden = hidden[:, local_start:local_end, :]  # (B, local_N, D)
+                if self.short_cut and local_hidden.shape == local_layer_input.shape:
+                    local_hidden = local_hidden + local_layer_input
+                hiddens.append(local_hidden)
+                edge_weights.append(edge_weight)
+                local_layer_input = local_hidden
+
+            # Concatenate local hidden slices (+ local node_query) then AllGather.
+            node_query_local = (
+                query.unsqueeze(1).expand(-1, local_N, -1).contiguous()
+            )  # (B, local_N, input_dim)
+            if self.concat_hidden:
+                local_output = torch.cat(hiddens + [node_query_local], dim=-1)
+            else:
+                local_output = torch.cat([hiddens[-1], node_query_local], dim=-1)
+            # local_output: (B, local_N, out_dim)
+
+            output = _allgather(local_output)  # (B, N, out_dim)
+
         else:
-            output = torch.cat([hiddens[-1], node_query], dim=-1)
+            # ------------------------------------------------------------------
+            # Standard single-process path (unchanged)
+            # ------------------------------------------------------------------
+            layer_input = node_features
+            for layer in self.layers:
+                if separate_grad:
+                    edge_weight = edge_weight.clone().requires_grad_()
+
+                # Bellman-Ford iteration, we send the original boundary condition in addition to the updated node states
+                hidden = layer(
+                    layer_input,
+                    query,
+                    node_features,
+                    data.edge_index,
+                    data.edge_type,
+                    size,
+                    edge_weight,
+                )
+                if self.short_cut and hidden.shape == layer_input.shape:
+                    # residual connection here
+                    hidden = hidden + layer_input
+                hiddens.append(hidden)
+                edge_weights.append(edge_weight)
+                layer_input = hidden
+
+            # original query (relation type) embeddings
+            node_query = query.unsqueeze(1).expand(
+                -1, data.num_nodes, -1
+            )  # (batch_size, num_nodes, input_dim)
+            if self.concat_hidden:
+                output = torch.cat(hiddens + [node_query], dim=-1)
+            else:
+                output = torch.cat([hiddens[-1], node_query], dim=-1)
 
         return {
             "node_feature": output,

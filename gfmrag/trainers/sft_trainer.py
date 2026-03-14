@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from gfmrag import utils
+from gfmrag.utils.dist_graph_utils import partition_graph_edges
 from gfmrag.graph_index_datasets.graph_dataset_loader import (
     GraphDataset,
     GraphDatasetLoader,
@@ -88,19 +89,31 @@ class SFTTrainer(BaseTrainer):
         }
 
     def _create_task_dataset(
-        self, dataset: GraphDataset, is_train: bool = True
+        self,
+        dataset: GraphDataset,
+        is_train: bool = True,
+        use_distributed_sampler: bool = True,
     ) -> TaskDataset:
-        """Create a SFT dataset from graph dataset."""
+        """Create a SFT dataset from graph dataset.
+
+        When *use_distributed_sampler* is False every rank iterates the full
+        dataset in the same order.  This is required for split-graph inference
+        where all ranks must process the same query batch simultaneously.
+        """
         data_name = dataset.name
         sft_dataset = dataset.data
         data = sft_dataset.train_data if is_train else sft_dataset.test_data
 
-        sampler = torch.utils.data.DistributedSampler(
-            data,
-            num_replicas=self.world_size,
-            rank=self.rank,
-            shuffle=is_train,
-        )
+        if use_distributed_sampler:
+            sampler: torch.utils.data.Sampler = torch.utils.data.DistributedSampler(
+                data,
+                num_replicas=self.world_size,
+                rank=self.rank,
+                shuffle=is_train,
+            )
+        else:
+            # All ranks share the same sequential sampler.
+            sampler = torch.utils.data.SequentialSampler(data)
 
         batch_size = (
             self.args.train_batch_size if is_train else self.args.eval_batch_size
@@ -179,11 +192,21 @@ class SFTTrainer(BaseTrainer):
         all_metrics = {}
         all_watched_metric = []
 
+        # Split-graph inference requires all ranks to process the same queries,
+        # so we bypass DistributedSampler and use a shared sequential sampler.
+        split_graph = self.args.split_graph_inference and self.world_size > 1
+
         for dataset in self.eval_graph_dataset_loader:
-            sft_dataset = self._create_task_dataset(dataset, is_train=False)
+            sft_dataset = self._create_task_dataset(
+                dataset,
+                is_train=False,
+                use_distributed_sampler=not split_graph,
+            )
 
             data_name = sft_dataset.name
             graph = sft_dataset.graph
+            if split_graph:
+                graph = partition_graph_edges(graph, self.rank, self.world_size)
             data_loader = sft_dataset.data_loader
 
             # Set epoch for sampler
@@ -236,14 +259,16 @@ class SFTTrainer(BaseTrainer):
                 if len(preds) == 0 or len(targets) == 0:
                     continue
 
-                # Gather results across all processes
                 node_pred, node_target = (
                     query_utils.cat(preds),
                     query_utils.cat(targets),
                 )
-                node_pred, node_target = utils.gather_results(
-                    node_pred, node_target, self.rank, self.world_size, self.device
-                )
+                if not split_graph:
+                    # Data-parallel: gather results across ranks (each rank has
+                    # a different subset of test queries).
+                    node_pred, node_target = utils.gather_results(
+                        node_pred, node_target, self.rank, self.world_size, self.device
+                    )
 
                 # Evaluate the metrics for the current node type
                 metrics_by_type[node_type] = utils.evaluate(

@@ -75,6 +75,17 @@ class TrainingArguments:
     training_mode: Literal["ddp", "spmd"] = field(
         default="ddp", metadata={"help": "The distributed training mode."}
     )
+    split_graph_inference: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "When True, partition graph edges across ranks during inference "
+                "and use AllReduce to combine per-rank message-passing contributions. "
+                "Produces identical results to single-GPU inference while enabling "
+                "multi-node execution. Has no effect during training."
+            )
+        },
+    )
     dtype: Literal["float32", "float16", "bfloat16", "auto"] = field(
         default="float32",
         metadata={"help": "The dtype to use for mixed precision training."},
