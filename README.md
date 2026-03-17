@@ -74,7 +74,7 @@ pip install gfmrag
 
 ### Prepare Data
 
-We have provided the testing split and full training data in [here](https://drive.google.com/drive/folders/11iTxDWtECnkGdiCkMlp0Mh2MFqItdvcY?usp=drive_link).
+We have provided the testing split and full training data in [here](https://1drv.ms/f/c/cb4bbdfe5951d1a1/IgDTnyNJiiAPTJKqY1KizEVMAQ1jX5wAf94YMlF-VyLvscI?e=bgp0Yv).
 
 You need to prepare the following files:
 
@@ -312,7 +312,7 @@ torchrun --nproc_per_node=4 --nnodes=2 -m gfmrag.workflow.stage2_qa_finetune
 
 ### Download datasets
 
-We have provided the testing split and full training data in [here](https://drive.google.com/drive/folders/11iTxDWtECnkGdiCkMlp0Mh2MFqItdvcY?usp=drive_link).
+We have provided the testing split and full training data in [here](https://1drv.ms/f/c/cb4bbdfe5951d1a1/IgDTnyNJiiAPTJKqY1KizEVMAQ1jX5wAf94YMlF-VyLvscI?e=bgp0Yv).
 
 Download the datasets and put them under the `data` directory.
 
