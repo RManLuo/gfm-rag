@@ -30,10 +30,6 @@ class BaseELModel(ABC):
         pass
 
     @abstractmethod
-    def batch_index(self, docs: list[Any]) -> Any:
-        pass
-
-    @abstractmethod
     def __call__(self, ner_entity_list: list, topk: int = 1) -> dict:
         """
         Link entities in the given text to the knowledge graph.

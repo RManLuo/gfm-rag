@@ -23,7 +23,7 @@ def get_tmp_dir(cfg: DictConfig) -> str:
     config = OmegaConf.to_container(cfg, resolve=True)
     if "force" in config:
         del config["force"]
-    if "force" in config["el_model"]:
+    if "force" in config.get("el_model", {}):
         del config["el_model"]["force"]
     fingerprint = hashlib.md5(json.dumps(config).encode()).hexdigest()
 

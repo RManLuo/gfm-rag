@@ -1,6 +1,7 @@
 import ast
 import difflib
 import json
+import os
 import re
 from copy import deepcopy
 from typing import Any
@@ -99,12 +100,12 @@ class Fact(BaseModel):
 
 
 class DSPyFilter:
-    def __init__(self, hipporag: Any) -> None:
+    def __init__(self, llm_for_filtering: str = "gpt-4o-mini", retry: int = 5) -> None:
         """
         Initializes the object with the necessary configurations and templates for processing input and output messages.
 
         Parameters:
-            hipporag : An object that provides the global configuration and the LLM model required for inference.
+            llm_for_filtering : An object that provides the LLM model required for filtering facts.
 
         Attributes:
             dspy_file_path : The file path for reranking as specified in the global configuration.
@@ -115,12 +116,12 @@ class DSPyFilter:
             model_name : The name of the language model as specified in the global configuration.
             default_gen_kwargs : A dictionary for storing the default generation keyword arguments.
         """
-        dspy_file_path = "gfmrag/graph_index_construction/sft_constructors/hipporag2/dspy_prompts.json"
+        dspy_file_path = f"{os.path.dirname(__file__)}/dspy_prompts.json"
         self.one_input_template = """[[ ## question ## ]]\n{question}\n\n[[ ## fact_before_filter ## ]]\n{fact_before_filter}\n\nRespond with the corresponding output fields, starting with the field `[[ ## fact_after_filter ## ]]` (must be formatted as a valid Python Fact), and then ending with the marker for `[[ ## completed ## ]]`."""
         self.one_output_template = """[[ ## fact_after_filter ## ]]\n{fact_after_filter}\n\n[[ ## completed ## ]]"""
         self.message_template = self.make_template(dspy_file_path)
-        self.llm_infer_fn = ChatGPT(model_name_or_path="gpt-4o-mini", retry=5)
-        self.model_name = "gpt-4o-mini"
+        self.llm_infer_fn = ChatGPT(model_name_or_path=llm_for_filtering, retry=retry)
+        self.model_name = llm_for_filtering
         self.default_gen_kwargs: dict[str, Any] = {}
 
     def make_template(self, dspy_file_path: str) -> list[dict[str, str]]:

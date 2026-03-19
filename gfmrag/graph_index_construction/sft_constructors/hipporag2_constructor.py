@@ -1,16 +1,20 @@
 import json
 import logging
 import os
+from ast import literal_eval
 from collections import defaultdict
+from multiprocessing.dummy import Pool
+from typing import Any
 
+import faiss
 import numpy as np
 import pandas as pd
+import torch
 
 from gfmrag.graph_index_datasets.graph_index_dataset import GraphIndexDataset
+from gfmrag.text_emb_models import BaseTextEmbModel
 from gfmrag.utils.util import check_all_files_exist
 
-from ..entity_linking_model import BaseELModel
-from ..ner_model import BaseNERModel
 from .base_sft_constructor import BaseSFTConstructor
 from .hipporag2.rerank import DSPyFilter
 
@@ -29,92 +33,72 @@ def min_max_normalize(x: np.ndarray) -> np.ndarray:
     return (x - min_val) / range_val
 
 
-def get_query_instruction(linking_method: str) -> str:
-    instructions = {
-        "ner_to_node": "Given a phrase, retrieve synonymous or relevant phrases that best match this phrase.",
-        "query_to_node": "Given a question, retrieve relevant phrases that are mentioned in this question.",
-        "query_to_fact": "Given a question, retrieve relevant triplet facts that matches this question.",
-        "query_to_sentence": "Given a question, retrieve relevant sentences that best answer the question.",
-        "query_to_passage": "Given a question, retrieve relevant documents that best answer the question.",
-    }
-    default_instruction = (
-        "Given a question, retrieve relevant documents that best answer the question."
-    )
-    return instructions.get(linking_method, default_instruction)
-
-
 class HippoRAG2Constructor(BaseSFTConstructor):
-    """SFT Constructor for building question-answer datasets with entity linking and named entity recognition used for HippoRAG 2.
+    """Construct SFT samples for HippoRAG 2 with embedding retrieval and fact reranking.
 
-    This class processes raw QA datasets by performing Named Entity Recognition (NER) on questions and Entity Linking (EL) to connect identified entities to a knowledge graph (KG) to create start_nodes.
+    The constructor embeds graph nodes, graph facts, questions, and answers with a
+    shared text embedding model. It builds FAISS indices over the selected node
+    types and optionally over facts, retrieves fact candidates for each question,
+    reranks them with `DSPyFilter`, and then derives:
 
-    It uses the supporting documents and answers to create target_nodes.
+    - `start_nodes` from fact-linked entities and optional dense document retrieval
+    - `target_nodes` from answer-to-entity retrieval and supporting documents
 
-    Args:
-        ner_model (BaseNERModel): Model for Named Entity Recognition
-        el_model (BaseELModel): Model for Entity Linking
-        root (str, optional): Root directory for temporary files. Defaults to "tmp/qa_construction"
-        num_processes (int, optional): Number of processes for parallel processing. Defaults to 1
-        force (bool, optional): Whether to force recomputation of cached results. Defaults to False
-
-    Attributes:
-        ner_model: The NER model instance
-        el_model: The EL model instance
-        root: Root directory path
-        num_processes: Number of parallel processes
-        data_name: Name of the current dataset being processed
-        force: Whether to force recompute results
-        DELIMITER: Delimiter used in knowledge graph files
-
-    Methods:
-        from_config: Creates a QAConstructor instance from a configuration
-        prepare_data: Processes raw QA data to add entity information
-
-    The class expects a knowledge graph and document-to-entities mapping to be pre-computed
-    and stored in the processed/stage1 directory of the dataset.
+    The graph files under `processed/stage1` must already exist before this
+    constructor runs.
     """
 
     def __init__(
         self,
-        ner_model: BaseNERModel,
-        el_model: BaseELModel,
+        text_emb_model: BaseTextEmbModel,
         root: str = "tmp/qa_construction",
         num_processes: int = 1,
         topk: int = 5,
         force: bool = False,
+        llm_for_filtering: str = "gpt-4o-mini",
+        retry: int = 5,
         start_type: list | None = None,
         target_type: list | None = None,
     ) -> None:
-        """Initialize the Question Answer Constructor.
-
-        This constructor processes text data through Named Entity Recognition (NER) and Entity Linking (EL) models
-        to generate question-answer pairs.
+        """Initialize the HippoRAG 2 SFT constructor.
 
         Args:
-            ner_model (BaseNERModel): Model for Named Entity Recognition.
-            el_model (BaseELModel): Model for Entity Linking.
-            root (str, optional): Root directory for saving processed data. Defaults to "tmp/qa_construction".
-            num_processes (int, optional): Number of processes for parallel processing. Defaults to 1.
-            force (bool, optional): If True, forces reprocessing of existing data. Defaults to False.
-
-        Attributes:
-            ner_model (BaseNERModel): Initialized NER model instance.
-            el_model (BaseELModel): Initialized EL model instance.
-            root (str): Root directory path.
-            num_processes (int): Number of parallel processes.
-            data_name (None): Name of the dataset, initialized as None.
-            force (bool): Force reprocessing flag.
+            text_emb_model: Embedding model used for nodes, facts, questions, and answers.
+            root: Directory for temporary constructor outputs.
+            num_processes: Worker count for fact reranking.
+            topk: Number of start or target nodes to keep per sample.
+            force: Reserved flag for compatibility with other constructors.
+            llm_for_filtering: Model name used by the fact reranker.
+            retry: Retry count for reranker calls.
+            start_type: Node types to include in `start_nodes`.
+            target_type: Node types to include in `target_nodes`.
         """
-
-        self.ner_model = ner_model
-        self.el_model = el_model
+        self.text_emb_model = text_emb_model
         self.root = root
         self.num_processes = num_processes
         self.data_name = None
         self.topk = topk
+        self.force = force
+        self.llm_for_filtering = llm_for_filtering
+        self.retry = retry
         self.start_type = start_type
         self.target_type = target_type
-        self.rerank_filter = DSPyFilter(self)
+        self.rerank_filter = DSPyFilter(llm_for_filtering, retry)
+
+        self.node_names: list[str] = []
+        self.nodes_by_type: dict[str, list[str]] = {}
+        self.node_texts_by_type: dict[str, list[str]] = {}
+        self.node_embeddings_by_type: dict[str, np.ndarray] = {}
+        self.node_indices_by_type: dict[str, faiss.IndexFlatIP] = {}
+
+        self.document_nodes: list[str] = []
+
+        self.facts: list[tuple[str, str, str]] = []
+        self.fact_texts: list[str] = []
+        self.fact_index: faiss.IndexFlatIP | None = None
+        self.selected_start_types: list[str] = []
+        self.selected_target_types: list[str] = []
+        self.enable_fact_retrieval: bool = False
 
     @property
     def tmp_dir(self) -> str:
@@ -138,79 +122,175 @@ class HippoRAG2Constructor(BaseSFTConstructor):
             os.makedirs(tmp_dir)
         return tmp_dir
 
-    def index(self) -> None:
-        self.passage_embeddings = self.el_model.batch_index(self.docs)
-        self.entities_embeddings = self.el_model.batch_index(self.entities)
-        self.facts_id = [str(fact) for fact in self.facts]
-        self.fact_embeddings = self.el_model.batch_index(self.facts_id)
+    def _encode_texts(self, text: list[str], is_query: bool = False) -> np.ndarray:
+        if len(text) == 0:
+            return np.zeros((0, 0), dtype=np.float32)
 
-    def get_fact_scores(self, query: str) -> np.ndarray:
-        """
-        Retrieves and computes normalized similarity scores between the given query and pre-stored fact embeddings.
-
-        Parameters:
-        query : str
-            The input query text for which similarity scores with fact embeddings
-            need to be computed.
-
-        Returns:
-        numpy.ndarray
-            A normalized array of similarity scores between the query and fact
-            embeddings. The shape of the array is determined by the number of
-            facts.
-
-        Raises:
-        KeyError
-            If no embedding is found for the provided query in the stored query
-            embeddings dictionary.
-        """
-        query_embedding = self.el_model.index(
-            [query],
-            instruction=get_query_instruction("query_to_fact"),  # type: ignore
+        embeddings = self.text_emb_model.encode(
+            text,
+            is_query=is_query,
+            show_progress_bar=False,
         )
+        if isinstance(embeddings, torch.Tensor):
+            emb = embeddings.detach().cpu().numpy().astype(np.float32)
+        else:
+            emb = np.asarray(embeddings, dtype=np.float32)
 
-        # Check if there are any facts
-        if len(self.fact_embeddings) == 0:
-            logger.warning("No facts available for scoring. Returning empty array.")
-            return np.array([])
+        if emb.ndim == 1:
+            emb = emb.reshape(1, -1)
 
+        # Normalize to make inner product equivalent to cosine similarity.
+        faiss.normalize_L2(emb)
+        return emb
+
+    def _build_faiss_index(self, embeddings: np.ndarray) -> faiss.IndexFlatIP | None:
+        if embeddings.size == 0:
+            return None
+        index = faiss.IndexFlatIP(embeddings.shape[1])
+        index.add(embeddings)  # type: ignore[call-arg]
+        return index
+
+    def _safe_parse_attributes(self, attrs: str) -> dict:
+        if not attrs:
+            return {}
         try:
-            query_embedding = query_embedding.to(self.fact_embeddings.device)  # type: ignore
-            query_fact_scores = (
-                self.fact_embeddings @ query_embedding.T
-            )  # shape: (#facts, )
-            query_fact_scores = query_fact_scores.cpu().numpy()
-            query_fact_scores = (
-                np.squeeze(query_fact_scores)
-                if query_fact_scores.ndim == 2
-                else query_fact_scores
+            parsed = literal_eval(attrs)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+
+    def _node_text(self, row: pd.Series) -> str:
+        name = str(row["name"])
+        attrs = self._safe_parse_attributes(str(row.get("attributes", "")))
+        content = attrs.get("content", "")
+        content = str(content).strip() if content is not None else ""
+        if content:
+            return f"{name}\n{content}"
+        return name
+
+    def _resolve_selected_types(
+        self, requested_types: list | None, available_types: list[str], node_group: str
+    ) -> list[str]:
+        """Resolve selected node types with fallback to all available types."""
+        if requested_types is None or len(requested_types) == 0:
+            return available_types
+
+        requested = {str(node_type) for node_type in requested_types}
+        selected = [
+            node_type for node_type in available_types if node_type in requested
+        ]
+
+        if len(selected) == 0:
+            logger.warning(
+                f"No valid {node_group} types matched from {requested_types}. "
+                f"Fallback to all available types: {available_types}."
             )
-            query_fact_scores = min_max_normalize(query_fact_scores)
-            return query_fact_scores
-        except Exception as e:
-            print(e)
-            logger.error(f"Error computing fact scores: {str(e)}")
-            return np.array([])
+            return available_types
+
+        return selected
+
+    def index(self) -> None:
+        self.node_embeddings_by_type = {}
+        self.node_indices_by_type = {}
+        for node_type, node_texts in self.node_texts_by_type.items():
+            node_embeddings = self._encode_texts(node_texts, is_query=False)
+            self.node_embeddings_by_type[node_type] = node_embeddings
+            index = self._build_faiss_index(node_embeddings)
+            if index is not None:
+                self.node_indices_by_type[node_type] = index
+
+        if self.enable_fact_retrieval:
+            fact_embeddings = self._encode_texts(self.fact_texts, is_query=False)
+            self.fact_index = self._build_faiss_index(fact_embeddings)
+        else:
+            self.fact_index = None
+
+    def _search_by_type(
+        self, node_type: str, query_embedding: np.ndarray, top_k: int
+    ) -> tuple[list[str], np.ndarray]:
+        index = self.node_indices_by_type.get(node_type)
+        if index is None or top_k <= 0:
+            return [], np.array([], dtype=np.float32)
+
+        k = min(top_k, index.ntotal)
+        if k <= 0:
+            return [], np.array([], dtype=np.float32)
+
+        scores, local_ids = index.search(query_embedding, k)  # type: ignore[call-arg]
+        scores_1d = np.squeeze(scores).astype(np.float32)
+        local_ids_1d = np.squeeze(local_ids)
+
+        if scores_1d.ndim == 0:
+            scores_1d = np.array([float(scores_1d)], dtype=np.float32)
+            local_ids_1d = np.array([int(local_ids_1d)], dtype=np.int64)
+
+        valid_pairs = [
+            (int(local_id), float(score))
+            for local_id, score in zip(local_ids_1d.tolist(), scores_1d.tolist())
+            if local_id >= 0
+        ]
+        if not valid_pairs:
+            return [], np.array([], dtype=np.float32)
+
+        labels = self.nodes_by_type[node_type]
+        retrieved_labels = [labels[local_id] for local_id, _ in valid_pairs]
+        retrieved_scores = np.array(
+            [score for _, score in valid_pairs], dtype=np.float32
+        )
+        retrieved_scores = min_max_normalize(retrieved_scores)
+        return retrieved_labels, retrieved_scores
+
+    def retrieve_fact_candidates(
+        self, query_embedding: np.ndarray, top_k: int
+    ) -> tuple[list[int], list[tuple[str, str, str]], dict[int, float]]:
+        if self.fact_index is None or len(self.facts) == 0:
+            logger.warning("No facts available for retrieval. Returning empty lists.")
+            return [], [], {}
+
+        k = min(top_k, self.fact_index.ntotal)
+        if k <= 0:
+            return [], [], {}
+
+        scores, ids = self.fact_index.search(query_embedding, k)  # type: ignore[call-arg]
+        scores_1d = np.squeeze(scores).astype(np.float32)
+        ids_1d = np.squeeze(ids)
+
+        if scores_1d.ndim == 0:
+            scores_1d = np.array([float(scores_1d)], dtype=np.float32)
+            ids_1d = np.array([int(ids_1d)], dtype=np.int64)
+
+        valid_pairs = [
+            (int(fact_id), float(score))
+            for fact_id, score in zip(ids_1d.tolist(), scores_1d.tolist())
+            if fact_id >= 0
+        ]
+        if not valid_pairs:
+            return [], [], {}
+
+        candidate_indices = [fact_id for fact_id, _ in valid_pairs]
+        candidate_facts = [self.facts[idx] for idx in candidate_indices]
+        normalized_scores = min_max_normalize(
+            np.array([score for _, score in valid_pairs], dtype=np.float32)
+        )
+        score_map = {
+            fact_id: float(score)
+            for fact_id, score in zip(candidate_indices, normalized_scores.tolist())
+        }
+        return candidate_indices, candidate_facts, score_map
 
     def rerank_facts(
-        self, query: str, query_fact_scores: np.ndarray
+        self,
+        query: str,
+        candidate_fact_indices: list[int],
+        candidate_facts: list[tuple[str, str, str]],
     ) -> tuple[list[int], list[tuple], dict]:
         link_top_k: int = self.topk
 
-        if len(query_fact_scores) == 0 or len(self.facts_id) == 0:
+        if len(candidate_fact_indices) == 0 or len(candidate_facts) == 0:
             logger.warning("No facts available for reranking. Returning empty lists.")
             return [], [], {"facts_before_rerank": [], "facts_after_rerank": []}
 
         try:
-            if len(query_fact_scores) <= link_top_k:
-                candidate_fact_indices = np.argsort(query_fact_scores)[::-1].tolist()
-            else:
-                candidate_fact_indices = np.argsort(query_fact_scores)[-link_top_k:][
-                    ::-1
-                ].tolist()
-
-            candidate_facts = [self.facts[idx] for idx in candidate_fact_indices]
-
             top_k_fact_indices, top_k_facts, reranker_dict = self.rerank_filter(
                 query,
                 candidate_facts,
@@ -233,130 +313,120 @@ class HippoRAG2Constructor(BaseSFTConstructor):
                 {"facts_before_rerank": [], "facts_after_rerank": [], "error": str(e)},
             )
 
-    def dense_passage_retrieval(self, query: str) -> tuple[np.ndarray, np.ndarray]:
-        """
-        Conduct dense passage retrieval to find relevant documents for a query.
+    def dense_passage_retrieval(
+        self, query_embedding: np.ndarray
+    ) -> tuple[list[str], np.ndarray]:
+        """Retrieve top documents for an encoded query from the document index."""
+        docs, scores = self._search_by_type("document", query_embedding, self.topk)
+        return docs, scores
 
-        This function processes a given query using a pre-trained embedding model
-        to generate query embeddings. The similarity scores between the query
-        embedding and passage embeddings are computed using dot product, followed
-        by score normalization. Finally, the function ranks the documents based
-        on their similarity scores and returns the ranked document identifiers
-        and their scores.
+    def dense_entity_retrieval(
+        self, query_embedding: np.ndarray
+    ) -> tuple[list[str], np.ndarray]:
+        entities, scores = self._search_by_type("entity", query_embedding, self.topk)
+        return entities, scores
 
-        Parameters
-        ----------
-        query : str
-            The input query for which relevant passages should be retrieved.
-
-        Returns
-        -------
-        tuple : Tuple[np.ndarray, np.ndarray]
-            A tuple containing two elements:
-            - A list of sorted document identifiers based on their relevance scores.
-            - A numpy array of the normalized similarity scores for the corresponding
-              documents.
-        """
-        query_embedding = self.el_model.index(
-            [query],
-            instruction=get_query_instruction("query_to_passage"),  # type: ignore
-        )
-        query_embedding = query_embedding.to(self.passage_embeddings.device)  # type: ignore
-        query_doc_scores = self.passage_embeddings @ query_embedding.T
-        query_doc_scores = query_doc_scores.cpu().numpy()
-        query_doc_scores = (
-            np.squeeze(query_doc_scores)
-            if query_doc_scores.ndim == 2
-            else query_doc_scores
-        )
-        query_doc_scores = min_max_normalize(query_doc_scores)
-
-        sorted_doc_ids = np.argsort(query_doc_scores)[::-1]
-        sorted_doc_scores = query_doc_scores[sorted_doc_ids.tolist()]
-        return sorted_doc_ids, sorted_doc_scores
-
-    def el_answer(self, ans: str) -> str:
-        ans_embedding = self.el_model.index(
-            [ans],
-            instruction=get_query_instruction("query_to_node"),  # type: ignore
-        )
-        ans_embedding = ans_embedding.to(self.entities_embeddings.device)  # type: ignore
-        ans_ent_scores = self.entities_embeddings @ ans_embedding.T
-        ans_ent_scores = ans_ent_scores.cpu().numpy()
-        ans_ent_scores = (
-            np.squeeze(ans_ent_scores) if ans_ent_scores.ndim == 2 else ans_ent_scores
-        )
-        ans_ent_scores = min_max_normalize(ans_ent_scores)
-
-        sorted_ent_ids = np.argsort(ans_ent_scores)[::-1]
-        return self.entities[sorted_ent_ids[0]]
+    def retrieve_answer_entity(self, answer_embedding: np.ndarray | None) -> str:
+        if answer_embedding is None:
+            return ""
+        entities, _ = self._search_by_type("entity", answer_embedding, 1)
+        if len(entities) == 0:
+            return ""
+        return entities[0]
 
     def prepare_data(self, data_root: str, data_name: str, file: str) -> list[dict]:
-        """
-        Prepares data for question answering by processing raw data, performing Named Entity Recognition (NER),
-        and Entity Linking (EL).
+        """Build HippoRAG 2 training samples from a raw QA file.
 
         Args:
-            data_root (str): Root directory path containing the dataset.
-            data_name (str): Name of the dataset.
-            file (str): Filename of the raw data.
+            data_root: Root directory containing the dataset.
+            data_name: Dataset name.
+            file: Raw QA JSON file name.
 
         Returns:
-            list[dict]: A list of processed data samples. Each sample is a dictionary containing:
-                - Original sample fields
-                - question_entities (list): Linked entities found in the question
-                - supporting_entities (list): Entities from supporting facts
+            A list of samples augmented with `start_type`, `target_type`,
+            `start_nodes`, and `target_nodes`.
 
         Raises:
-            FileNotFoundError: If the required KG file is not found in the processed directory.
-
-        Notes:
-            - Requires a pre-constructed knowledge graph (KG) file in the processed directory
-            - Uses cached NER results if available, otherwise performs NER processing
-            - Performs entity linking on identified entities
-            - Combines question entities with supporting fact entities
+            FileNotFoundError: If the processed graph files are missing.
         """
         # Get dataset information
         self.data_name = data_name  # type: ignore
         raw_path = os.path.join(data_root, data_name, "raw", file)
-        corpus_path = os.path.join(
-            data_root, data_name, "raw", GraphIndexDataset.RAW_DOCUMENT_NAME
-        )
         processed_path = os.path.join(data_root, data_name, "processed", "stage1")
 
         # Load data
         with open(raw_path) as f:
             data = json.load(f)
 
-        # corpus embeddings
-        corpus = json.load(open(corpus_path))
-        self.docs = [f"{title}\n{text}" for title, text in corpus.items()]
-
         # Read nodes.csv to get entities
         nodes = pd.read_csv(
             os.path.join(processed_path, "nodes.csv"), keep_default_na=False
         )
-        # Get nodes with type 'entity'
-        self.entities = nodes[nodes["type"] == "entity"]["name"].tolist()
-        self.nodes = nodes["name"].tolist()
+        nodes["name"] = nodes["name"].astype(str)
+        nodes["type"] = nodes["type"].astype(str)
+        self.node_names = nodes["name"].tolist()
+
+        available_node_types = list(dict.fromkeys(nodes["type"].astype(str).tolist()))
+        self.selected_start_types = self._resolve_selected_types(
+            self.start_type,
+            available_node_types,
+            node_group="start",
+        )
+        self.selected_target_types = self._resolve_selected_types(
+            self.target_type,
+            ["entity", "document"],
+            node_group="target",
+        )
+
+        emb_node_types = set(self.selected_start_types)
+        if "entity" in self.selected_target_types:
+            emb_node_types.add("entity")
+
+        self.nodes_by_type = {}
+        self.node_texts_by_type = {}
+        for node_type, group_df in nodes.groupby("type", sort=False):
+            node_type = str(node_type)
+            if node_type not in emb_node_types:
+                continue
+            node_names = group_df["name"].astype(str).tolist()
+            node_texts = [self._node_text(row) for _, row in group_df.iterrows()]
+            self.nodes_by_type[node_type] = node_names
+            self.node_texts_by_type[node_type] = node_texts
+
+        self.document_nodes = self.nodes_by_type.get("document", [])
+        self.enable_fact_retrieval = "entity" in self.selected_start_types
 
         # Read edges.csv to get triples
         edges = pd.read_csv(
             os.path.join(processed_path, "edges.csv"), keep_default_na=False
         )
-        self.facts = edges[edges["relation"] != "is_mentioned_in"][
-            ["source", "relation", "target"]
-        ].values.tolist()
+        self.facts = [
+            (str(source).lower(), str(relation), str(target).lower())
+            for source, relation, target in edges[
+                edges["relation"] != "is_mentioned_in"
+            ][["source", "relation", "target"]].values.tolist()
+        ]
+        self.fact_texts = [
+            f"{source} [SEP] {relation} [SEP] {target}"
+            for source, relation, target in self.facts
+        ]
 
         self.ent_node_to_chunk_ids = defaultdict(set)
         mention_edges = edges[edges["relation"] == "is_mentioned_in"]
         for _, row in mention_edges.iterrows():
-            source = row["source"]
+            source = str(row["source"]).lower()
             target = row["target"]
             self.ent_node_to_chunk_ids[source].add(target)
 
         # generate embeddings
         self.index()
+
+        queries = [sample["question"] for sample in data]
+        query_embeddings = self._encode_texts(queries, is_query=True)
+        answer_embeddings: np.ndarray | None = None
+        if "entity" in self.selected_target_types:
+            answers = [str(sample.get("answer", "")) for sample in data]
+            answer_embeddings = self._encode_texts(answers, is_query=False)
 
         # Create graph index for each dataset
         raw_graph_files = [
@@ -368,61 +438,130 @@ class HippoRAG2Constructor(BaseSFTConstructor):
                 "Graph file not found. Please run KG construction first"
             )
 
-        # # Prepare final data
-        final_data = []
-        for sample in data:
+        # Precompute query-fact scores sequentially to avoid concurrent embedding inference.
+        prepared_samples: list[dict] = []
+        for idx, sample in enumerate(data):
             query = sample["question"]
-            answer = sample["answer"]
-
-            query_fact_scores = self.get_fact_scores(query)
-            top_k_fact_indices, top_k_facts, _ = self.rerank_facts(
-                query, query_fact_scores
+            query_embedding = query_embeddings[idx : idx + 1]
+            answer_embedding = (
+                answer_embeddings[idx : idx + 1]
+                if answer_embeddings is not None
+                else None
+            )
+            if self.enable_fact_retrieval:
+                candidate_fact_indices, candidate_facts, fact_score_map = (
+                    self.retrieve_fact_candidates(query_embedding, self.topk * 4)
+                )
+            else:
+                candidate_fact_indices, candidate_facts, fact_score_map = ([], [], {})
+            prepared_samples.append(
+                {
+                    "idx": idx,
+                    "sample": sample,
+                    "query": query,
+                    "answer": sample["answer"],
+                    "query_embedding": query_embedding,
+                    "answer_embedding": answer_embedding,
+                    "candidate_fact_indices": candidate_fact_indices,
+                    "candidate_facts": candidate_facts,
+                    "fact_score_map": fact_score_map,
+                }
             )
 
-            if len(top_k_facts) == 0:
-                logger.info("No facts found after reranking, return DPR results")
-                sorted_doc_ids, sorted_doc_scores = self.dense_passage_retrieval(query)
-                top_k_docs = [self.docs[idx] for idx in sorted_doc_ids[: self.topk]]
+        # Run LLM-based reranking in parallel, then consume results sequentially.
+        rerank_results: dict[int, tuple[list[int], list[tuple[str, str, str]]]] = {}
+        max_workers = max(1, self.num_processes)
 
-                question_entities = [
-                    doc.split("\n")[0] for doc in top_k_docs[: self.topk]
-                ]
-                starting_documents = question_entities
+        def _rerank_item(
+            item: dict,
+        ) -> tuple[int, list[int], list[tuple[str, str, str]]]:
+            idx = item["idx"]
+            try:
+                top_k_fact_indices, top_k_facts, _ = self.rerank_facts(
+                    item["query"],
+                    item["candidate_fact_indices"],
+                    item["candidate_facts"],
+                )
+                return idx, top_k_fact_indices, top_k_facts
+            except Exception as e:
+                logger.error(f"Parallel rerank failed for sample index {idx}: {str(e)}")
+                return idx, [], []
+
+        if max_workers == 1:
+            for item in prepared_samples:
+                _, top_k_fact_indices, top_k_facts = _rerank_item(item)
+                rerank_results[item["idx"]] = (top_k_fact_indices, top_k_facts)
+        else:
+            with Pool(processes=max_workers) as pool:
+                for idx, top_k_fact_indices, top_k_facts in pool.map(
+                    _rerank_item, prepared_samples
+                ):
+                    rerank_results[idx] = (top_k_fact_indices, top_k_facts)
+
+        # # Prepare final data
+        final_data = []
+        for item in prepared_samples:
+            sample = item["sample"]
+            query_embedding = item["query_embedding"]
+            answer_embedding = item["answer_embedding"]
+            fact_score_map = item["fact_score_map"]
+            top_k_fact_indices, top_k_facts = rerank_results.get(item["idx"], ([], []))
+            start_entity_nodes: list[str] = []
+            starting_documents: list[str] = []
+            use_start_entity = "entity" in self.selected_start_types
+            use_start_document = "document" in self.selected_start_types
+
+            if len(top_k_facts) == 0:
+                if use_start_document:
+                    logger.info("No facts found after reranking, return DPR results")
+                    top_k_docs, _ = self.dense_passage_retrieval(query_embedding)
+                    starting_documents = top_k_docs[: self.topk]
+
+                if use_start_entity:
+                    top_k_entities, _ = self.dense_entity_retrieval(query_embedding)
+                    start_entity_nodes = top_k_entities[: self.topk]
 
             else:
                 linking_score_map = self.graph_search_with_fact_entities(
-                    query=query,
                     link_top_k=self.topk,
-                    query_fact_scores=query_fact_scores,
+                    fact_score_map=fact_score_map,
                     top_k_facts=top_k_facts,
                     top_k_fact_indices=top_k_fact_indices,
+                    query_embedding=query_embedding,
+                    include_documents=use_start_document,
                     passage_node_weight=0.05,
                 )
 
-                question_entities = []
-                starting_documents = []
+                document_node_set = set(self.document_nodes)
                 start_nodes = list(linking_score_map.keys())
                 for k in start_nodes:
-                    if "\n" in k:
-                        doc = k.split("\n")[0]
-                        starting_documents.append(doc)
-                    else:
-                        question_entities.append(k)
+                    if k in document_node_set and use_start_document:
+                        starting_documents.append(k)
+                    elif use_start_entity:
+                        start_entity_nodes.append(k)
 
-            answer_entities = self.el_answer(answer)
+            answer_entity = self.retrieve_answer_entity(answer_embedding)
             supporting_documents = sample.get("supporting_documents", [])
+
+            start_nodes_out: dict[str, Any] = {}
+            if use_start_entity:
+                start_nodes_out["entity"] = start_entity_nodes[: self.topk]
+            if use_start_document:
+                start_nodes_out["document"] = starting_documents[: self.topk]
+
+            target_nodes_out: dict[str, Any] = {}
+            if "entity" in self.selected_target_types:
+                target_nodes_out["entity"] = answer_entity
+            if "document" in self.selected_target_types:
+                target_nodes_out["document"] = supporting_documents
 
             final_data.append(
                 {
                     **sample,
-                    "start_nodes": {
-                        "entity": question_entities[: self.topk],
-                        "document": starting_documents[: self.topk],
-                    },
-                    "target_nodes": {
-                        "entity": answer_entities,
-                        "document": supporting_documents,
-                    },
+                    "start_type": self.selected_start_types,
+                    "target_type": self.selected_target_types,
+                    "start_nodes": start_nodes_out,
+                    "target_nodes": target_nodes_out,
                 }
             )
 
@@ -430,36 +569,15 @@ class HippoRAG2Constructor(BaseSFTConstructor):
 
     def graph_search_with_fact_entities(
         self,
-        query: str,
         link_top_k: int,
-        query_fact_scores: np.ndarray,
+        fact_score_map: dict[int, float],
         top_k_facts: list[tuple],
         top_k_fact_indices: list[int],
+        query_embedding: np.ndarray,
+        include_documents: bool,
         passage_node_weight: float = 0.05,
     ) -> dict:
-        """
-        Computes document scores based on fact-based similarity and relevance using personalized
-        PageRank (PPR) and dense retrieval models. This function combines the signal from the relevant
-        facts identified with passage similarity and graph-based search for enhanced result ranking.
-
-        Parameters:
-            query (str): The input query string for which similarity and relevance computations
-                need to be performed.
-            link_top_k (int): The number of top phrases to include from the linking score map for
-                downstream processing.
-            query_fact_scores (np.ndarray): An array of scores representing fact-query similarity
-                for each of the provided facts.
-            top_k_facts (List[Tuple]): A list of top-ranked facts, where each fact is represented
-                as a tuple of its subject, predicate, and object.
-            top_k_fact_indices (List[str]): Corresponding indices or identifiers for the top-ranked
-                facts in the query_fact_scores array.
-            passage_node_weight (float): Default weight to scale passage scores in the graph.
-
-        Returns:
-            Tuple[np.ndarray, np.ndarray]: A tuple containing two arrays:
-                - The first array corresponds to document IDs sorted based on their scores.
-                - The second array consists of the PPR scores associated with the sorted document IDs.
-        """
+        """Aggregate fact-linked entity scores and optional dense document scores."""
 
         # Assigning phrase weights based on selected facts from previous steps.
         linking_score_map: dict[
@@ -468,23 +586,19 @@ class HippoRAG2Constructor(BaseSFTConstructor):
         phrase_scores: dict[
             str, list[float]
         ] = {}  # store all fact scores for each phrase regardless of whether they exist in the knowledge graph or not
-        phrase_weights = np.zeros(len(self.nodes))
-        np.zeros(len(self.nodes))
-        number_of_occurs = np.zeros(len(self.nodes))
+        node_to_id = {name: idx for idx, name in enumerate(self.node_names)}
+        phrase_weights = np.zeros(len(self.node_names))
+        number_of_occurs = np.zeros(len(self.node_names))
 
         phrases_and_ids = set()
 
         for rank, f in enumerate(top_k_facts):
             subject_phrase = f[0].lower()
             object_phrase = f[2].lower()
-            fact_score = (
-                query_fact_scores[top_k_fact_indices[rank]]
-                if query_fact_scores.ndim > 0
-                else query_fact_scores
-            )
+            fact_score = fact_score_map.get(top_k_fact_indices[rank], 0.0)
 
             for phrase in [subject_phrase, object_phrase]:
-                phrase_id = self.nodes.index(phrase)
+                phrase_id = node_to_id.get(phrase)
 
                 if phrase_id is not None:
                     weighted_fact_score = fact_score
@@ -497,13 +611,16 @@ class HippoRAG2Constructor(BaseSFTConstructor):
 
                 phrases_and_ids.add((phrase, phrase_id))
 
-        phrase_weights /= number_of_occurs
+        valid_occurs = number_of_occurs > 0
+        phrase_weights[valid_occurs] /= number_of_occurs[valid_occurs]
 
         for phrase, phrase_id in phrases_and_ids:
+            if phrase_id is None:
+                continue
             if phrase not in phrase_scores:
                 phrase_scores[phrase] = []
 
-            phrase_scores[phrase].append(phrase_weights[phrase_id])
+            phrase_scores[phrase].append(float(phrase_weights[phrase_id]))
 
         # calculate average fact score for each phrase
         for phrase, scores in phrase_scores.items():
@@ -517,15 +634,14 @@ class HippoRAG2Constructor(BaseSFTConstructor):
             )
 
         # Get passage scores according to chosen dense retrieval model
-        dpr_sorted_doc_ids, dpr_sorted_doc_scores = self.dense_passage_retrieval(query)
-        normalized_dpr_sorted_scores = min_max_normalize(dpr_sorted_doc_scores)
-
-        for i, dpr_sorted_doc_id in enumerate(dpr_sorted_doc_ids.tolist()):
-            passage_dpr_score = normalized_dpr_sorted_scores[i]
-            passage_node_text = self.docs[dpr_sorted_doc_id]
-            linking_score_map[passage_node_text] = (
-                passage_dpr_score * passage_node_weight
+        if include_documents:
+            dpr_sorted_docs, dpr_sorted_doc_scores = self.dense_passage_retrieval(
+                query_embedding
             )
+
+            for i, doc_name in enumerate(dpr_sorted_docs):
+                passage_dpr_score = dpr_sorted_doc_scores[i]
+                linking_score_map[doc_name] = passage_dpr_score * passage_node_weight
 
         # Recording top 30 facts in linking_score_map
         if len(linking_score_map) > 30:
