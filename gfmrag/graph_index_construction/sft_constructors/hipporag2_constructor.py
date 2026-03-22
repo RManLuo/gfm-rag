@@ -52,6 +52,7 @@ class HippoRAG2Constructor(BaseSFTConstructor):
         self,
         text_emb_model: BaseTextEmbModel,
         root: str = "tmp/qa_construction",
+        enable_filtering: bool = True,
         num_processes: int = 1,
         topk: int = 5,
         force: bool = False,
@@ -65,6 +66,7 @@ class HippoRAG2Constructor(BaseSFTConstructor):
         Args:
             text_emb_model: Embedding model used for nodes, facts, questions, and answers.
             root: Directory for temporary constructor outputs.
+            enable_filtering: Whether to enable filtering of facts using LLM.
             num_processes: Worker count for fact reranking.
             topk: Number of start or target nodes to keep per sample.
             force: Reserved flag for compatibility with other constructors.
@@ -81,9 +83,12 @@ class HippoRAG2Constructor(BaseSFTConstructor):
         self.force = force
         self.llm_for_filtering = llm_for_filtering
         self.retry = retry
+        self.enable_filtering = enable_filtering
         self.start_type = start_type
         self.target_type = target_type
-        self.rerank_filter = DSPyFilter(llm_for_filtering, retry)
+        self.rerank_filter = (
+            DSPyFilter(llm_for_filtering, retry) if enable_filtering else None
+        )
 
         self.node_names: list[str] = []
         self.nodes_by_type: dict[str, list[str]] = {}
@@ -290,6 +295,16 @@ class HippoRAG2Constructor(BaseSFTConstructor):
             logger.warning("No facts available for reranking. Returning empty lists.")
             return [], [], {"facts_before_rerank": [], "facts_after_rerank": []}
 
+        if self.rerank_filter is None:
+            top_k_fact_indices = candidate_fact_indices[:link_top_k]
+            top_k_facts = candidate_facts[:link_top_k]
+            rerank_log = {
+                "facts_before_rerank": candidate_facts,
+                "facts_after_rerank": top_k_facts,
+                "skipped_llm_filtering": True,
+            }
+            return top_k_fact_indices, top_k_facts, rerank_log
+
         try:
             top_k_fact_indices, top_k_facts, reranker_dict = self.rerank_filter(
                 query,
@@ -468,7 +483,7 @@ class HippoRAG2Constructor(BaseSFTConstructor):
                 }
             )
 
-        # Run LLM-based reranking in parallel, then consume results sequentially.
+        # Run optional reranking in parallel, then consume results sequentially.
         rerank_results: dict[int, tuple[list[int], list[tuple[str, str, str]]]] = {}
         max_workers = max(1, self.num_processes)
 
@@ -477,11 +492,15 @@ class HippoRAG2Constructor(BaseSFTConstructor):
         ) -> tuple[int, list[int], list[tuple[str, str, str]]]:
             idx = item["idx"]
             try:
-                top_k_fact_indices, top_k_facts, _ = self.rerank_facts(
-                    item["query"],
-                    item["candidate_fact_indices"],
-                    item["candidate_facts"],
-                )
+                if self.enable_filtering:
+                    top_k_fact_indices, top_k_facts, _ = self.rerank_facts(
+                        item["query"],
+                        item["candidate_fact_indices"],
+                        item["candidate_facts"],
+                    )
+                else:
+                    top_k_fact_indices = item["candidate_fact_indices"][: self.topk]
+                    top_k_facts = item["candidate_facts"][: self.topk]
                 return idx, top_k_fact_indices, top_k_facts
             except Exception as e:
                 logger.error(f"Parallel rerank failed for sample index {idx}: {str(e)}")

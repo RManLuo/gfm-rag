@@ -25,9 +25,6 @@ from transformers.models.auto import AutoTokenizer
 from transformers.utils import logging
 
 from .configuration_nvembed import (
-    BIDIR_MISTRAL_TYPE,
-    LATENT_ATTENTION_TYPE,
-    NVEMBED_TYPE,
     BidirectionalMistralConfig,
     LatentAttentionConfig,
     NVEmbedConfig,
@@ -523,9 +520,9 @@ class NVEmbedModel(PreTrainedModel):
 
 
 ## AutoModel Register
-AutoModel.register(NVEMBED_TYPE, NVEmbedModel)
-AutoModel.register(LATENT_ATTENTION_TYPE, LatentAttentionModel)
-AutoModel.register(BIDIR_MISTRAL_TYPE, BidirectionalMistralModel)
+AutoModel.register(NVEmbedConfig, NVEmbedModel)
+AutoModel.register(LatentAttentionConfig, LatentAttentionModel)
+AutoModel.register(BidirectionalMistralConfig, BidirectionalMistralModel)
 
 ## Register for auto class
 NVEmbedModel.register_for_auto_class("AutoModel")
