@@ -98,6 +98,17 @@ class TrainingArguments:
             )
         },
     )
+    split_graph_partition: Literal["contiguous", "metis"] = field(
+        default="contiguous",
+        metadata={
+            "help": (
+                "Graph partitioning strategy for split-graph modes. "
+                "'contiguous': simple ceil(N/K) node slicing with full AllGather. "
+                "'metis': METIS-based partitioning with boundary-only AllGather "
+                "(requires pymetis). Reduces communication from O(N) to O(boundary)."
+            )
+        },
+    )
     dtype: Literal["float32", "float16", "bfloat16", "auto"] = field(
         default="float32",
         metadata={"help": "The dtype to use for mixed precision training."},

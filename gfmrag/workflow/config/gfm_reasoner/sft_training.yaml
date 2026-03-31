@@ -96,5 +96,6 @@ trainer:
     dtype: ${model.dtype} # Use the same precision type
     split_graph_inference: false
     split_graph_training: false
+    split_graph_partition: contiguous  # contiguous or metis
   metrics: [mrr, hits@1, hits@2, hits@3, hits@5, hits@10, hits@20, recall@2, recall@3, recall@5, recall@10, recall@20] # List of metrics to calculate
   target_types: [document] # The target node types used for metric calculation

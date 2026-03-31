@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from gfmrag import utils
-from gfmrag.utils.dist_graph_utils import partition_graph_edges
+from gfmrag.utils.dist_graph_utils import partition_graph_edges, partition_graph_metis
 from gfmrag.graph_index_datasets.graph_dataset_loader import (
     GraphDataset,
     GraphDatasetLoader,
@@ -135,7 +135,10 @@ class SFTTrainer(BaseTrainer):
 
         graph = sft_dataset.graph.to(self.device)
         if split_graph_train:
-            graph = partition_graph_edges(graph, self.rank, self.world_size)
+            if self.args.split_graph_partition == "metis":
+                graph = partition_graph_metis(graph, self.rank, self.world_size)
+            else:
+                graph = partition_graph_edges(graph, self.rank, self.world_size)
 
         return TaskDataset(
             name=data_name,
@@ -219,7 +222,10 @@ class SFTTrainer(BaseTrainer):
             data_name = sft_dataset.name
             graph = sft_dataset.graph
             if split_graph:
-                graph = partition_graph_edges(graph, self.rank, self.world_size)
+                if self.args.split_graph_partition == "metis":
+                    graph = partition_graph_metis(graph, self.rank, self.world_size)
+                else:
+                    graph = partition_graph_edges(graph, self.rank, self.world_size)
             data_loader = sft_dataset.data_loader
 
             # Set epoch for sampler
