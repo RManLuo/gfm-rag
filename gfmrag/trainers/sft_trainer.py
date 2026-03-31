@@ -97,23 +97,32 @@ class SFTTrainer(BaseTrainer):
         """Create a SFT dataset from graph dataset.
 
         When *use_distributed_sampler* is False every rank iterates the full
-        dataset in the same order.  This is required for split-graph inference
-        where all ranks must process the same query batch simultaneously.
+        dataset in the same order.  This is required for split-graph
+        inference/training where all ranks must process the same query batch
+        simultaneously.
+
+        When split_graph_training is enabled for training, or
+        split_graph_inference is enabled for evaluation, the graph is
+        automatically partitioned across ranks.
         """
         data_name = dataset.name
         sft_dataset = dataset.data
         data = sft_dataset.train_data if is_train else sft_dataset.test_data
 
-        if use_distributed_sampler:
-            sampler: torch.utils.data.Sampler = torch.utils.data.DistributedSampler(
+        # Determine if we should use split-graph mode
+        split_graph_train = is_train and self.args.split_graph_training and self.world_size > 1
+        split_graph = split_graph_train or not use_distributed_sampler
+
+        if split_graph:
+            # All ranks share the same sequential sampler.
+            sampler: torch.utils.data.Sampler = torch.utils.data.SequentialSampler(data)
+        else:
+            sampler = torch.utils.data.DistributedSampler(
                 data,
                 num_replicas=self.world_size,
                 rank=self.rank,
                 shuffle=is_train,
             )
-        else:
-            # All ranks share the same sequential sampler.
-            sampler = torch.utils.data.SequentialSampler(data)
 
         batch_size = (
             self.args.train_batch_size if is_train else self.args.eval_batch_size
@@ -124,9 +133,13 @@ class SFTTrainer(BaseTrainer):
             sampler=sampler,
         )
 
+        graph = sft_dataset.graph.to(self.device)
+        if split_graph_train:
+            graph = partition_graph_edges(graph, self.rank, self.world_size)
+
         return TaskDataset(
             name=data_name,
-            graph=sft_dataset.graph.to(self.device),
+            graph=graph,
             data_loader=data_loader,
         )
 

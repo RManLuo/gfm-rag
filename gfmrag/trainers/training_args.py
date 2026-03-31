@@ -86,6 +86,18 @@ class TrainingArguments:
             )
         },
     )
+    split_graph_training: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "When True, partition graph edges across ranks during training "
+                "and use AllGather to reconstruct hidden states before each layer. "
+                "Enables training on graphs too large to fit on a single GPU. "
+                "All ranks process the same query batch (graph parallelism, not "
+                "data parallelism). Gradients are synchronized via manual AllReduce."
+            )
+        },
+    )
     dtype: Literal["float32", "float16", "bfloat16", "auto"] = field(
         default="float32",
         metadata={"help": "The dtype to use for mixed precision training."},

@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 import torch
+import torch.distributed as dist
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -104,7 +105,7 @@ class BaseTrainer(ABC):
             self.device.type, enabled=self.enable_grad_scaler
         )
 
-        if self.world_size > 1 and self.args.training_mode == "ddp":
+        if self.world_size > 1 and self.args.training_mode == "ddp" and not self.args.split_graph_training:
             self.parallel_model = nn.parallel.DistributedDataParallel(
                 self.model, device_ids=[self.device]
             )
@@ -372,6 +373,14 @@ class BaseTrainer(ABC):
                     # Backward pass
                     loss = step_metrics["loss"]
                     self.scaler.scale(loss).backward()
+
+                    # Split-graph training: manual gradient sync (no DDP wrapper)
+                    if self.args.split_graph_training and self.world_size > 1:
+                        self.scaler.unscale_(self.optimizer)
+                        for param in self.model.parameters():
+                            if param.grad is not None:
+                                dist.all_reduce(param.grad, op=dist.ReduceOp.AVG)
+
                     self.scaler.step(self.optimizer)
                     self.scaler.update()
                     self.optimizer.zero_grad()
