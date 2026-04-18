@@ -1,12 +1,15 @@
+import ast
 import logging
+import os
 
 import pandas as pd
 import torch
 from hydra.utils import instantiate
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 
 from gfmrag import utils
 from gfmrag.graph_index_construction.entity_linking_model import BaseELModel
+from gfmrag.graph_index_construction.graph_constructors import BaseGraphConstructor
 from gfmrag.graph_index_construction.ner_model import BaseNERModel
 from gfmrag.graph_index_datasets import GraphIndexDataset
 from gfmrag.models.base_model import BaseGNNModel
@@ -14,6 +17,8 @@ from gfmrag.text_emb_models import BaseTextEmbModel
 from gfmrag.utils.qa_utils import entities_to_mask
 
 logger = logging.getLogger(__name__)
+
+_STAGE1_GRAPH_NAMES: list[str] = GraphIndexDataset.RAW_GRAPH_NAMES
 
 
 class GFMRetriever:
@@ -168,69 +173,92 @@ class GFMRetriever:
         return graph_retriever_input
 
     @staticmethod
-    def from_config(cfg: DictConfig) -> "GFMRetriever":
-        """
-        Constructs a GFMRetriever instance from a configuration dictionary.
+    def from_index(
+        data_dir: str,
+        data_name: str,
+        model_path: str,
+        ner_model: BaseNERModel,
+        el_model: BaseELModel,
+        graph_constructor: BaseGraphConstructor | None = None,
+        force_reindex: bool = False,
+    ) -> "GFMRetriever":
+        """Construct a GFMRetriever from a data directory.
 
-        This factory method initializes all necessary components for the GFM retrieval system including:
-        - Graph retrieval model
-        - Question-answering dataset
-        - Named Entity Recognition (NER) model
-        - Entity Linking (EL) model
-        - Document ranking and retrieval components
-        - Text embedding model
+        Detects whether processed/stage1/ exists. If not, uses graph_constructor
+        to build it from raw/documents.json. Then loads GraphIndexDataset (stage2),
+        indexes the entity linking model, and assembles the retriever.
 
         Args:
-            cfg (DictConfig): Configuration dictionary containing settings for:
-
-                - graph_retriever: Model path and NER/EL model configurations
-                - dataset: Dataset parameters
-                - Optional entity weight initialization flag
+            data_dir: Root data directory (contains data_name/ subdirectory).
+            data_name: Dataset subdirectory name.
+            model_path: HuggingFace model ID or local path (e.g. "rmanluo/GFM-RAG-8M").
+            ner_model: Instantiated NER model.
+            el_model: Instantiated EL model. index() is called internally.
+            graph_constructor: Required only when stage1/ does not exist.
+            force_reindex: Force rebuild of stage2 processed files.
 
         Returns:
-            GFMRetriever: Fully initialized retriever instance with all components loaded and
-                          moved to appropriate device (CPU/GPU)
+            Fully initialized GFMRetriever.
 
-        Note:
-            Deprecated: This method is broken (node_info is an empty placeholder) and will be
-            replaced by from_index() in the next task. Calling retrieve() on an instance
-            created by this method will fail.
-
-            The configuration must contain valid paths and parameters for all required models
-            and dataset components. Models are automatically moved to available device (CPU/GPU).
+        Raises:
+            FileNotFoundError: If raw/documents.json is missing.
+            ValueError: If stage1/ is missing and graph_constructor is None.
         """
-        import warnings
+        stage1_dir = os.path.join(data_dir, data_name, "processed", "stage1")
+        stage1_files = [os.path.join(stage1_dir, name) for name in _STAGE1_GRAPH_NAMES]
 
-        warnings.warn(
-            "from_config() is deprecated and will be replaced by from_index() in the next task. "
-            "The node_info parameter is a placeholder and retrieve() will fail if called.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        graph_retriever, model_config = utils.load_model_from_pretrained(
-            cfg.graph_retriever.model_path
-        )
+        if not utils.check_all_files_exist(stage1_files):
+            raw_docs = os.path.join(data_dir, data_name, "raw", "documents.json")
+            if not os.path.exists(raw_docs):
+                raise FileNotFoundError(
+                    f"raw/documents.json not found at {raw_docs}. "
+                    "Provide documents.json or pre-built stage1/ CSV files."
+                )
+            if graph_constructor is None:
+                raise ValueError(
+                    "processed/stage1/ not found. Provide a graph_constructor "
+                    "to build the graph from raw/documents.json."
+                )
+            logger.info(f"Building graph index for {data_name}")
+            os.makedirs(stage1_dir, exist_ok=True)
+            graph = graph_constructor.build_graph(data_dir, data_name)
+            pd.DataFrame(graph["nodes"]).to_csv(
+                os.path.join(stage1_dir, "nodes.csv"), index=False
+            )
+            pd.DataFrame(graph["edges"]).to_csv(
+                os.path.join(stage1_dir, "edges.csv"), index=False
+            )
+            pd.DataFrame(graph["relations"]).to_csv(
+                os.path.join(stage1_dir, "relations.csv"), index=False
+            )
+            logger.info(f"Stage1 graph files saved to {stage1_dir}")
+
+        graph_retriever, model_config = utils.load_model_from_pretrained(model_path)
         graph_retriever.eval()
+
+        text_emb_model_cfgs = OmegaConf.create(model_config["text_emb_model_config"])
         qa_data = GraphIndexDataset(
-            **cfg.dataset,
-            text_emb_model_cfgs=OmegaConf.create(model_config["text_emb_model_config"]),
+            root=data_dir,
+            data_name=data_name,
+            text_emb_model_cfgs=text_emb_model_cfgs,
+            force_reload=force_reindex,
         )
+
         device = utils.get_device()
         graph_retriever = graph_retriever.to(device)
-
         qa_data.graph = qa_data.graph.to(device)
-
-        ner_model = instantiate(cfg.graph_retriever.ner_model)
-        el_model = instantiate(cfg.graph_retriever.el_model)
 
         el_model.index(list(qa_data.node2id.keys()))
 
-        text_emb_model = instantiate(
-            OmegaConf.create(model_config["text_emb_model_config"])
+        nodes_csv = os.path.join(stage1_dir, "nodes.csv")
+        nodes_df = pd.read_csv(nodes_csv, keep_default_na=False)
+        nodes_df["attributes"] = nodes_df["attributes"].apply(
+            lambda x: {} if x == "" else ast.literal_eval(x)
         )
+        id_col = "uid" if "uid" in nodes_df.columns else "name"
+        nodes_df = nodes_df.set_index(id_col)
 
-        # node_info is not available via from_config; placeholder until Task 4 replaces this method
-        node_info = pd.DataFrame()
+        text_emb_model = instantiate(text_emb_model_cfgs)
 
         return GFMRetriever(
             qa_data=qa_data,
@@ -238,6 +266,6 @@ class GFMRetriever:
             ner_model=ner_model,
             el_model=el_model,
             graph_retriever=graph_retriever,
-            node_info=node_info,
+            node_info=nodes_df,
             device=device,
         )
