@@ -1,15 +1,105 @@
+import hashlib
+from collections.abc import Iterator
 from pathlib import Path
 
+import pytest
 
-def test_colbert_el_model() -> None:
+
+class FakeLateInteractionTextEmbedding:
+    passage_embed_calls = 0
+
+    def __init__(self, model_name: str, **_: object) -> None:
+        self.model_name = model_name
+
+    def get_embedding_size(self) -> int:
+        return 2
+
+    def passage_embed(self, texts: list[str]) -> Iterator[list[list[float]]]:
+        type(self).passage_embed_calls += 1
+        for text in texts:
+            yield self._embed(text)
+
+    def query_embed(self, texts: list[str]) -> Iterator[list[list[float]]]:
+        for text in texts:
+            yield self._embed(text)
+
+    def _embed(self, text: str) -> list[list[float]]:
+        lookup = {
+            "south chicago community hospital": [[1.0, 0.0], [1.0, 0.0]],
+            "july 13 14  1966": [[0.0, 1.0], [0.0, 1.0]],
+            "trial of richard speck": [[0.8, 0.2], [0.8, 0.2]],
+            "richard speck": [[0.2, 0.8], [0.2, 0.8]],
+        }
+        return lookup.get(text, [[0.5, 0.5], [0.5, 0.5]])
+
+
+def test_colbert_el_model_supports_in_memory_mode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     from hydra.utils import instantiate
     from omegaconf import OmegaConf
+
+    from gfmrag.graph_index_construction.entity_linking_model import colbert_el_model
+
+    monkeypatch.setattr(
+        colbert_el_model,
+        "LateInteractionTextEmbedding",
+        FakeLateInteractionTextEmbedding,
+    )
 
     cfg = OmegaConf.create(
         {
             "_target_": "gfmrag.graph_index_construction.entity_linking_model.ColbertELModel",
             "model_name_or_path": "colbert-ir/colbertv2.0",
-            "root": "tmp",
+            "root": str(tmp_path),
+            "force": False,
+            "use_in_memory": True,
+        }
+    )
+
+    el_model = instantiate(cfg)
+    assert el_model.use_in_memory is True
+    assert not (tmp_path / "colbert").exists()
+
+    entity_list = [
+        "trial of richard speck",
+        "south chicago community hospital",
+        "july 13 14  1966",
+    ]
+    with pytest.raises(
+        AttributeError, match="Index the entities first using index method"
+    ):
+        el_model(["july 13 14  1966"], topk=1)
+
+    el_model.index(entity_list)
+    linked_entity_dict = el_model(["south chicago community hospital"], topk=1)
+    assert linked_entity_dict["south chicago community hospital"][0]["entity"] == (
+        "south chicago community hospital"
+    )
+    assert (
+        linked_entity_dict["south chicago community hospital"][0]["norm_score"] == 1.0
+    )
+    assert not (tmp_path / "colbert").exists()
+
+
+def test_colbert_el_model(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from hydra.utils import instantiate
+    from omegaconf import OmegaConf
+
+    from gfmrag.graph_index_construction.entity_linking_model import colbert_el_model
+
+    FakeLateInteractionTextEmbedding.passage_embed_calls = 0
+    monkeypatch.setattr(
+        colbert_el_model,
+        "LateInteractionTextEmbedding",
+        FakeLateInteractionTextEmbedding,
+    )
+
+    cfg = OmegaConf.create(
+        {
+            "_target_": "gfmrag.graph_index_construction.entity_linking_model.ColbertELModel",
+            "model_name_or_path": "colbert-ir/colbertv2.0",
+            "root": str(tmp_path),
             "force": False,
         }
     )
@@ -56,10 +146,44 @@ def test_colbert_el_model() -> None:
         "headframe",
         "considerable amount of copper",
     ]
+    fingerprint = hashlib.md5("".join(entity_list).encode()).hexdigest()
+    metadata_path = tmp_path / "colbert" / fingerprint / "metadata.json"
+
+    with pytest.raises(
+        AttributeError, match="Index the entities first using index method"
+    ):
+        el_model(ner_entity_list, topk=2)
+
     el_model.index(entity_list)
     linked_entity_dict = el_model(ner_entity_list, topk=2)
-    print(linked_entity_dict)
-    assert isinstance(linked_entity_dict, dict)
+    assert linked_entity_dict["south chicago community hospital"][0]["entity"] == (
+        "south chicago community hospital"
+    )
+    assert linked_entity_dict["july 13 14  1966"][0]["entity"] == "july 13 14  1966"
+    assert (
+        linked_entity_dict["south chicago community hospital"][0]["norm_score"] == 1.0
+    )
+    assert metadata_path.exists()
+    assert FakeLateInteractionTextEmbedding.passage_embed_calls == 1
+
+    el_model.client.close()
+    cached_el_model = instantiate(cfg)
+    cached_el_model.index(entity_list)
+    cached_linked_entity_dict = cached_el_model(ner_entity_list, topk=2)
+    assert (
+        cached_linked_entity_dict["south chicago community hospital"][0]["entity"]
+        == "south chicago community hospital"
+    )
+    assert (
+        cached_linked_entity_dict["july 13 14  1966"][0]["entity"] == "july 13 14  1966"
+    )
+    assert (
+        cached_linked_entity_dict["south chicago community hospital"][0]["norm_score"]
+        == 1.0
+    )
+    assert cached_linked_entity_dict["july 13 14  1966"][0]["norm_score"] == 1.0
+    assert FakeLateInteractionTextEmbedding.passage_embed_calls == 1
+    cached_el_model.client.close()
 
 
 def test_dpr_el_model() -> None:
@@ -157,9 +281,3 @@ def test_nv_el_model() -> None:
     linked_entity_list = el_model(ner_entity_list, topk=5)
     print(linked_entity_list)
     assert isinstance(linked_entity_list, dict)
-
-
-if __name__ == "__main__":
-    test_colbert_el_model()
-    # test_dpr_el_model()
-    # test_nv_el_model()

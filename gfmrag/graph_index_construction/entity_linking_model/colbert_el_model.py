@@ -1,11 +1,13 @@
 import hashlib
-import os
+import json
 import shutil
+from collections.abc import Iterable
+from pathlib import Path
+from typing import Any
 
-from colbert import Indexer, Searcher
-from colbert.data import Queries
-from colbert.infra import ColBERTConfig, Run, RunConfig
-from huggingface_hub import snapshot_download
+import numpy as np
+from fastembed import LateInteractionTextEmbedding
+from qdrant_client import QdrantClient, models
 
 from gfmrag.graph_index_construction.utils import processing_phrases
 
@@ -13,32 +15,6 @@ from .base_model import BaseELModel
 
 
 class ColbertELModel(BaseELModel):
-    """ColBERT-based Entity Linking Model.
-
-    This class implements an entity linking model using ColBERT, a neural information retrieval
-    framework. It indexes a list of entities and performs entity linking by finding the most
-    similar entities in the index for given named entities.
-
-    Attributes:
-        model_name_or_path (str): Path to the ColBERT checkpoint file
-        root (str): Root directory for storing indices
-        doc_index_name (str): Name of document index
-        phrase_index_name (str): Name of phrase index
-        force (bool): Whether to force reindex if index exists
-        entity_list (list): List of entities to be indexed
-
-    Raises:
-        AttributeError: If entity linking is attempted before indexing.
-
-    Examples:
-        >>> model = ColbertELModel("colbert-ir/colbertv2.0")
-        >>> model.index(["entity1", "entity2", "entity3"])
-        >>> results = model(["query1", "query2"], topk=3)
-        >>> print(results)
-        {'paris city': [{'entity': 'entity1', 'score': 0.82, 'norm_score': 1.0},
-                        {'entity': 'entity2', 'score': 0.35, 'norm_score': 0.43}]}
-    """
-
     def __init__(
         self,
         model_name_or_path: str = "colbert-ir/colbertv2.0",
@@ -46,129 +22,155 @@ class ColbertELModel(BaseELModel):
         doc_index_name: str = "nbits_2",
         phrase_index_name: str = "nbits_2",
         force: bool = False,
-        **_: str,
+        use_in_memory: bool = False,
+        **_: Any,
     ) -> None:
-        """
-        Initialize the ColBERT entity linking model.
-
-        This initializes a ColBERT model for entity linking using pre-trained checkpoints and indices.
-
-        Args:
-            model_name_or_path (str, optional): Hugging Face model name or local checkpoint path. Defaults to "colbert-ir/colbertv2.0".
-            root (str, optional): Root directory for storing indices. Defaults to "tmp".
-            doc_index_name (str, optional): Name of the document index. Defaults to "nbits_2".
-            phrase_index_name (str, optional): Name of the phrase index. Defaults to "nbits_2".
-            force (bool, optional): Whether to force recomputation of existing indices. Defaults to False.
-
-        Returns:
-            None
-        """
         self.model_name_or_path = model_name_or_path
         self.root = root
         self.doc_index_name = doc_index_name
         self.phrase_index_name = phrase_index_name
         self.force = force
-        self.checkpoint_path = self._resolve_checkpoint_path(model_name_or_path)
-
-    def _resolve_checkpoint_path(self, model_name_or_path: str) -> str:
-        """Resolve a local ColBERT checkpoint path from a local path or HF repo id."""
-        if os.path.exists(model_name_or_path):
-            return model_name_or_path
-        return snapshot_download(
-            repo_id=model_name_or_path,
-            local_dir=os.path.join(
-                self.root, "hf_cache", model_name_or_path.replace("/", "__")
-            ),
-            local_dir_use_symlinks=False,
+        self.use_in_memory = use_in_memory
+        self.embedding_model = LateInteractionTextEmbedding(
+            model_name=model_name_or_path,
+            lazy_load=True,
         )
+        self.client = QdrantClient(":memory:") if use_in_memory else None
+        self.collection_name = phrase_index_name
+
+    def _get_index_root(self, fingerprint: str) -> Path:
+        return Path(self.root) / "colbert" / fingerprint
+
+    def _get_metadata_path(self, fingerprint: str) -> Path:
+        return self._get_index_root(fingerprint) / "metadata.json"
+
+    def _get_client(self, fingerprint: str) -> QdrantClient:
+        if self.use_in_memory:
+            if self.client is None:
+                self.client = QdrantClient(":memory:")
+            return self.client
+        index_root = self._get_index_root(fingerprint)
+        index_root.mkdir(parents=True, exist_ok=True)
+        return QdrantClient(path=str(index_root))
+
+    def _embedding_size(self) -> int:
+        return int(self.embedding_model.get_embedding_size())
+
+    def _to_multivector(
+        self, embedding: np.ndarray | list[list[float]]
+    ) -> list[list[float]]:
+        if isinstance(embedding, np.ndarray):
+            return embedding.astype(float).tolist()
+        return [[float(value) for value in vector] for vector in embedding]
+
+    def _read_metadata(self, metadata_path: Path) -> dict[str, Any] | None:
+        if not metadata_path.exists():
+            return None
+        with metadata_path.open() as metadata_file:
+            return json.load(metadata_file)
+
+    def _write_metadata(
+        self, metadata_path: Path, fingerprint: str, entity_list: list[str]
+    ) -> None:
+        metadata = {
+            "fingerprint": fingerprint,
+            "model_name_or_path": self.model_name_or_path,
+            "doc_index_name": self.doc_index_name,
+            "phrase_index_name": self.phrase_index_name,
+            "entity_list": entity_list,
+        }
+        with metadata_path.open("w") as metadata_file:
+            json.dump(metadata, metadata_file)
+
+    def _build_points(
+        self, entity_list: list[str], phrases: list[str]
+    ) -> Iterable[models.PointStruct]:
+        for idx, (entity, embedding) in enumerate(
+            zip(entity_list, self.embedding_model.passage_embed(phrases), strict=False)
+        ):
+            yield models.PointStruct(
+                id=idx,
+                vector=self._to_multivector(embedding),
+                payload={"entity": entity},
+            )
 
     def index(self, entity_list: list) -> None:
-        """
-        Index a list of entities using ColBERT for efficient similarity search.
-
-        This method processes and indexes a list of entities using the ColBERT model. It creates
-        a unique index based on the MD5 hash of the entity list and stores it in the specified
-        root directory.
-
-        Args:
-            entity_list (list): List of entity strings to be indexed.
-
-        Returns:
-            None
-
-        Notes:
-            - Creates a unique index directory based on MD5 hash of entities
-            - If force=True, will delete existing index with same fingerprint
-            - Processes entities into phrases before indexing
-            - Sets up ColBERT indexer and searcher with specified configuration
-            - Stores phrase_searcher as instance variable for later use
-        """
         self.entity_list = entity_list
         fingerprint = hashlib.md5("".join(entity_list).encode()).hexdigest()
-        exp_name = f"Entity_index_{fingerprint}"
-        if os.path.exists(f"{self.root}/colbert/{fingerprint}") and self.force:
-            shutil.rmtree(f"{self.root}/colbert/{fingerprint}")
-        phrases = [processing_phrases(p) for p in entity_list]
-        colbert_root = f"{self.root}/colbert/{fingerprint}"
-        with Run().context(RunConfig(nranks=1, experiment=exp_name, root=colbert_root)):
-            config = ColBERTConfig(nbits=2, root=colbert_root)
-            indexer = Indexer(checkpoint=self.checkpoint_path, config=config)
-            indexer.index(
-                name=self.phrase_index_name,
-                collection=phrases,
-                overwrite="reuse" if not self.force else True,
-            )
+        self.fingerprint = fingerprint
+        metadata_path = self._get_metadata_path(fingerprint)
+        index_root = self._get_index_root(fingerprint)
 
-        with Run().context(RunConfig(nranks=1, experiment=exp_name, root=colbert_root)):
-            config = ColBERTConfig(root=colbert_root)
-            self.phrase_searcher = Searcher(
-                index=self.phrase_index_name,
-                config=config,
-                verbose=1,
-            )
+        if not self.use_in_memory and self.force and index_root.exists():
+            shutil.rmtree(index_root)
 
-    def __call__(self, ner_entity_list: list, topk: int = 1) -> dict:
-        """
-        Link entities in the given text to the knowledge graph.
-
-        Args:
-            ner_entity_list (list): list of named entities
-            topk (int): number of linked entities to return
-
-        Returns:
-            dict: dict of linked entities in the knowledge graph
-
-                - key (str): named entity
-                - value (list[dict]): list of linked entities
-
-                    - entity: linked entity
-                    - score: score of the entity
-                    - norm_score: normalized score of the entity
-        """
-
-        try:
-            self.__getattribute__("phrase_searcher")
-        except AttributeError as e:
-            raise AttributeError("Index the entities first using index method") from e
-
-        queries = [processing_phrases(p) for p in ner_entity_list]
-        query_data: dict[int, str] = {i: query for i, query in enumerate(queries)}
-        ranking = self.phrase_searcher.search_all(
-            Queries(path=None, data=query_data), k=topk
+        client = self._get_client(fingerprint)
+        self.client = client
+        metadata = None if self.use_in_memory else self._read_metadata(metadata_path)
+        should_reuse = (
+            not self.force
+            and client.collection_exists(self.collection_name)
+            and metadata is not None
+            and metadata.get("fingerprint") == fingerprint
+            and metadata.get("entity_list") == entity_list
+            and metadata.get("model_name_or_path") == self.model_name_or_path
+            and metadata.get("doc_index_name") == self.doc_index_name
+            and metadata.get("phrase_index_name") == self.phrase_index_name
         )
 
+        if should_reuse:
+            return
+
+        if client.collection_exists(self.collection_name):
+            client.delete_collection(self.collection_name)
+
+        client.create_collection(
+            collection_name=self.collection_name,
+            vectors_config=models.VectorParams(
+                size=self._embedding_size(),
+                distance=models.Distance.COSINE,
+                multivector_config=models.MultiVectorConfig(
+                    comparator=models.MultiVectorComparator.MAX_SIM
+                ),
+            ),
+        )
+
+        phrases = [processing_phrases(p) for p in entity_list]
+        client.upsert(
+            collection_name=self.collection_name,
+            points=list(self._build_points(entity_list, phrases)),
+        )
+
+        if not self.use_in_memory:
+            self._write_metadata(metadata_path, fingerprint, entity_list)
+
+    def __call__(self, ner_entity_list: list, topk: int = 1) -> dict:
+        if self.client is None or not hasattr(self, "entity_list"):
+            raise AttributeError("Index the entities first using index method")
+        if not self.client.collection_exists(self.collection_name):
+            raise AttributeError("Index the entities first using index method")
+
+        queries = [processing_phrases(p) for p in ner_entity_list]
         linked_entity_dict: dict[str, list] = {}
-        for i, query in enumerate(queries):
-            linked_entity_dict[query] = []
-            rank = ranking.data[i]
-            max_score = rank[0][2] if rank else 1.0
-            for phrase_id, _rank, score in rank:
-                linked_entity_dict[query].append(
-                    {
-                        "entity": self.entity_list[phrase_id],
-                        "score": score,
-                        "norm_score": score / max_score if max_score else 0.0,
-                    }
-                )
+
+        for query, embedding in zip(
+            queries, self.embedding_model.query_embed(queries), strict=False
+        ):
+            response = self.client.query_points(
+                collection_name=self.collection_name,
+                query=self._to_multivector(embedding),
+                limit=topk,
+                with_payload=True,
+            )
+            points = response.points
+            max_score = points[0].score if points else 1.0
+            linked_entity_dict[query] = [
+                {
+                    "entity": point.payload["entity"],
+                    "score": point.score,
+                    "norm_score": point.score / max_score if max_score else 0.0,
+                }
+                for point in points
+            ]
 
         return linked_entity_dict
