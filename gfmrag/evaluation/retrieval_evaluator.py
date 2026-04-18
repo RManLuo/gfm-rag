@@ -8,10 +8,13 @@ class RetrievalEvaluator(BaseEvaluator):
         metrics: dict[str, list] = {f"recall@{i}": [] for i in k}
         for pred in self.data:
             gold_docs = pred["supporting_facts"]
+            flat_docs = [
+                doc for docs in pred["retrieved_docs"].values() for doc in docs
+            ]
             sorted_retrieved_docs = sorted(
-                pred["retrieved_docs"], key=lambda x: x["score"], reverse=True
+                flat_docs, key=lambda x: x["score"], reverse=True
             )
-            sorted_retrieved_docs = [doc["title"] for doc in sorted_retrieved_docs]
+            sorted_retrieved_docs = [doc["id"] for doc in sorted_retrieved_docs]
             for i in k:
                 recall = len(set(sorted_retrieved_docs[:i]) & set(gold_docs)) / len(
                     set(gold_docs)
