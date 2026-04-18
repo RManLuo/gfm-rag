@@ -194,10 +194,7 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
             batch_embeddings = [data.embedding for data in response.data]
             all_embeddings.extend(batch_embeddings)
 
-        return torch.tensor(
-            all_embeddings,
-            device="cuda" if torch.cuda.is_available() else "cpu",
-        )
+        return torch.tensor(all_embeddings, device="cpu", dtype=torch.float32)
 
     def embed(self, text: list[str], show_progress_bar: bool = True) -> torch.Tensor:
         """
@@ -211,19 +208,36 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
         Returns:
             torch.Tensor: Tensor containing the embeddings for the input text.
         """
-        if self.truncate_dim is not None and self.truncate_dim > 0:
-            output = self.text_emb_model.embed(
-                text,
-                pooling_params=PoolingParams(dimensions=self.truncate_dim),
-                use_tqdm=show_progress_bar,
-            )
-        else:
-            output = self.text_emb_model.embed(text, use_tqdm=show_progress_bar)
+        all_embeddings = []
+        for i in tqdm(
+            range(0, len(text), self.batch_size), disable=not show_progress_bar
+        ):
+            batch = text[i : min(i + self.batch_size, len(text))]
+            if self.truncate_dim is not None and self.truncate_dim > 0:
+                output = self.text_emb_model.embed(
+                    batch,
+                    pooling_params=PoolingParams(dimensions=self.truncate_dim),
+                    use_tqdm=False,
+                )
+            else:
+                output = self.text_emb_model.embed(batch, use_tqdm=False)
 
-        return torch.tensor(
-            [o.outputs.embedding for o in output],
-            device="cuda" if torch.cuda.is_available() else "cpu",
-        )
+            # Move each batch to CPU immediately to avoid holding the full
+            # embedding matrix on GPU when indexing large fact collections.
+            batch_embeddings = torch.tensor(
+                [o.outputs.embedding for o in output],
+                device="cpu",
+                dtype=torch.float32,
+            )
+            all_embeddings.append(batch_embeddings)
+
+            del output
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+        if not all_embeddings:
+            return torch.empty((0, 0), dtype=torch.float32)
+        return torch.cat(all_embeddings, dim=0)
 
     def encode(
         self, text: list[str], is_query: bool = False, show_progress_bar: bool = True

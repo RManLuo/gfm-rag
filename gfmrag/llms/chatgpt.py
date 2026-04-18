@@ -73,11 +73,7 @@ class ChatGPT(BaseLanguageModel):
         self.model_name = model_name_or_path
         self.maximun_token = get_token_limit(self.model_name)
 
-        client = OpenAI(
-            api_key=os.environ[
-                "OPENAI_API_KEY"
-            ],  # this is also the default, it can be omitted
-        )
+        client = OpenAI()
         self.client = client
 
     def token_len(self, text: str) -> int:

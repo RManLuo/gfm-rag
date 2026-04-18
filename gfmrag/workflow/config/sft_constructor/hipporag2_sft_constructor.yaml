@@ -1,0 +1,11 @@
+_target_: gfmrag.graph_index_construction.sft_constructors.HippoRAG2Constructor # The SFTConstructor class
+root: tmp/qa_construction # Temporary directory for storing intermediate files during SFT construction
+text_emb_model: ${text_emb_model}
+enable_filtering: True # Whether to enable filtering of the constructed QA data using a language model
+num_processes: 1 # Number of processes to use
+topk: 5 # Top-k nodes to be selected for each question for SFT data construction
+llm_for_filtering: gpt-4o-mini # The name of the language model to use for filtering facts
+retry: 5 # Number of retries for LLM inference in case of failure
+force: False # Whether to force recompute the QA data
+start_type: ["entity", "document"]
+target_type: ["entity", "document"]
