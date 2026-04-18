@@ -63,7 +63,7 @@ def retriever(
     # scores: DocA=0.9, DocB=0.1, EntA=0.8, EntB=0.2
     graph_retriever.return_value = torch.tensor([[0.9, 0.1, 0.8, 0.2]])
 
-    return GFMRetriever(  # type: ignore[call-arg]
+    return GFMRetriever(
         qa_data=mock_qa_data,
         text_emb_model=text_emb_model,
         ner_model=ner_model,

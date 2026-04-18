@@ -83,7 +83,9 @@ class GFMRetriever:
         if target_types is None:
             target_types = ["document"]
 
-        from gfmrag.models.ultra import query_utils
+        from gfmrag.models.ultra import (
+            query_utils,  # deferred to avoid circular import at module load
+        )
 
         graph_retriever_input = self.prepare_input_for_graph_retriever(query)
         graph_retriever_input = query_utils.cuda(
@@ -190,9 +192,21 @@ class GFMRetriever:
                           moved to appropriate device (CPU/GPU)
 
         Note:
+            Deprecated: This method is broken (node_info is an empty placeholder) and will be
+            replaced by from_index() in the next task. Calling retrieve() on an instance
+            created by this method will fail.
+
             The configuration must contain valid paths and parameters for all required models
             and dataset components. Models are automatically moved to available device (CPU/GPU).
         """
+        import warnings
+
+        warnings.warn(
+            "from_config() is deprecated and will be replaced by from_index() in the next task. "
+            "The node_info parameter is a placeholder and retrieve() will fail if called.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         graph_retriever, model_config = utils.load_model_from_pretrained(
             cfg.graph_retriever.model_path
         )
