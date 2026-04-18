@@ -1,10 +1,13 @@
+from pathlib import Path
+
+
 def test_colbert_el_model() -> None:
     from hydra.utils import instantiate
     from omegaconf import OmegaConf
 
     cfg = OmegaConf.create(
         {
-            "_target_": "gfmrag.kg_construction.entity_linking_model.ColbertELModel",
+            "_target_": "gfmrag.graph_index_construction.entity_linking_model.ColbertELModel",
             "model_name_or_path": "colbert-ir/colbertv2.0",
             "root": "tmp",
             "force": False,
@@ -65,7 +68,7 @@ def test_dpr_el_model() -> None:
 
     cfg = OmegaConf.create(
         {
-            "_target_": "gfmrag.kg_construction.entity_linking_model.DPRELModel",
+            "_target_": "gfmrag.graph_index_construction.entity_linking_model.DPRELModel",
             "model_name": "BAAI/bge-large-en-v1.5",
             "root": "tmp",
             "use_cache": True,
@@ -121,6 +124,42 @@ def test_dpr_el_model() -> None:
     assert isinstance(linked_entity_list, dict)
 
 
+def test_nv_el_model() -> None:
+    import pytest
+    from hydra.utils import instantiate
+    from omegaconf import OmegaConf
+
+    cfg = OmegaConf.create(
+        {
+            "_target_": "gfmrag.graph_index_construction.entity_linking_model.NVEmbedV2ELModel",
+            "model_name": "nvidia/NV-Embed-v2",
+            "query_instruct": "Instruct: Given a entity, retrieve entities that are semantically equivalent to the given entity\nQuery: ",
+            "passage_instruct": None,
+            "root": "tmp",
+            "use_cache": True,
+            "normalize": True,
+            "topk": 5,
+            "batch_size": 256,
+        }
+    )
+
+    if not Path("data/hotpotqa/raw/documents.json").exists():
+        pytest.skip("data/hotpotqa/raw/documents.json is required for NVEmbed EL test")
+
+    el_model = instantiate(cfg)
+    ner_entity_list = ["what is one of the stars of  The Newcomers known for"]
+    docs = [
+        "The Newcomers\nThe Newcomers is a British television series.",
+        "Milo O'Shea\nMilo O'Shea was an Irish actor and one of the stars of The Newcomers.",
+        "The Newcomers cast\nThe cast includes actors known for film and television roles.",
+    ]
+    el_model.index(docs)
+    linked_entity_list = el_model(ner_entity_list, topk=5)
+    print(linked_entity_list)
+    assert isinstance(linked_entity_list, dict)
+
+
 if __name__ == "__main__":
     test_colbert_el_model()
     # test_dpr_el_model()
+    # test_nv_el_model()

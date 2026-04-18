@@ -3,7 +3,6 @@ name: code-quality
 on:
   pull_request:
   push:
-    branches: [main]
 
 jobs:
   lint-and-test:
@@ -13,7 +12,7 @@ jobs:
       #       check-out repo and set-up python
       #----------------------------------------------
       - name: Check out this repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v4
@@ -42,7 +41,7 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --with dev
+        run: poetry install --no-interaction --no-root --only dev
       #----------------------------------------------
       # Run code quality checks
       #----------------------------------------------
@@ -50,7 +49,7 @@ jobs:
         run: |
           mkdir -p ~/.mypy_cache
           source .venv/bin/activate
-          pre-commit run --all-files
+          pre-commit run --all-files --show-diff-on-failure
       #----------------------------------------------
       # Run unit tests
       #----------------------------------------------

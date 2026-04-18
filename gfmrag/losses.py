@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Literal
 
 import torch
 from torch.nn import functional as F  # noqa:N812
 
-from gfmrag.ultra.variadic import variadic_softmax
+from gfmrag.models.ultra.variadic import variadic_softmax
 
 
 class BaseLoss(ABC):
@@ -96,19 +96,21 @@ class BCELoss(BaseLoss):
         num_positive = is_positive.sum(dim=-1)
         num_negative = is_negative.sum(dim=-1)
 
-        neg_weight = torch.zeros_like(pred)
-        neg_weight[is_positive] = (1 / num_positive.float()).repeat_interleave(
-            num_positive
+        neg_weight = torch.zeros_like(pred, dtype=pred.dtype)
+        neg_weight[is_positive] = (
+            (1 / num_positive).repeat_interleave(num_positive).to(pred.dtype)
         )
 
         if self.adversarial_temperature > 0:
             with torch.no_grad():
                 logit = pred[is_negative] / self.adversarial_temperature
-                neg_weight[is_negative] = variadic_softmax(logit, num_negative)
+                neg_weight[is_negative] = variadic_softmax(logit, num_negative).to(
+                    pred.dtype
+                )
                 # neg_weight[:, 1:] = F.softmax(pred[:, 1:] / cfg.task.adversarial_temperature, dim=-1)
         else:
-            neg_weight[is_negative] = (1 / num_negative.float()).repeat_interleave(
-                num_negative
+            neg_weight[is_negative] = (
+                (1 / num_negative).repeat_interleave(num_negative).to(pred.dtype)
             )
         loss = (loss * neg_weight).sum(dim=-1) / neg_weight.sum(dim=-1)
         loss = loss.mean()
@@ -172,3 +174,100 @@ class ListCELoss(BaseLoss):
         loss = loss.sum(dim=-1) / target_sum
         loss = loss.mean()
         return loss
+
+
+class KLDivLoss(BaseLoss):
+    """Kullback-Leibler Divergence loss function.
+
+    This loss function computes the Kullback-Leibler divergence between two probability distributions.
+    It is often used in variational inference and generative models.
+
+    Args:
+        reduction (Literal["sum", "mean", "batchmean"]): Specifies the reduction method to apply to the loss.
+        *args: Additional positional arguments (unused).
+        **kwargs: Additional keyword arguments (unused).
+
+    Returns:
+        torch.Tensor: Scalar tensor containing the mean KL divergence loss value.
+    """
+
+    def __init__(
+        self,
+        reduction: Literal["sum", "mean", "batchmean"] = "batchmean",
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        if reduction not in ["sum", "mean", "batchmean"]:
+            raise ValueError(
+                f"Invalid reduction mode: {reduction}. Supported modes are 'sum', 'mean', and 'batchmean'."
+            )
+        self.reduction = reduction
+        self.eps = 1e-6  # Small epsilon to avoid log(0)
+
+    def __call__(
+        self, pred: torch.Tensor, target: torch.Tensor, *args: Any, **kwargs: Any
+    ) -> Any:
+        """Compute the KL divergence loss.
+
+        Args:
+            pred (torch.Tensor): Predicted logits tensor.
+            target (torch.Tensor): Target logits tensor.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            torch.Tensor: Scalar loss value averaged over the batch.
+        """
+        pred_prob = F.sigmoid(pred)
+        target_prob = (target + 1) / 2
+        # Ensure prob is not zero to avoid log(0)
+        student_prob = torch.clamp(pred_prob, min=self.eps, max=1 - self.eps)
+        target_prob = torch.clamp(target_prob, min=self.eps, max=1 - self.eps)
+        # Compute the KL divergence loss
+        loss = target_prob * (torch.log(target_prob) - torch.log(student_prob)) + (
+            1 - target_prob
+        ) * (torch.log(1 - target_prob) - torch.log(1 - student_prob))
+
+        if self.reduction == "mean":
+            return loss.mean()
+        elif self.reduction == "sum":
+            return loss.sum()
+        elif self.reduction == "batchmean":
+            return loss.sum() / pred.size(0)
+
+
+class MSELoss(BaseLoss):
+    """Mean Squared Error loss function.
+
+    This loss function computes the mean squared error between predicted and target values.
+    It is commonly used for regression tasks.
+
+    Args:
+        *args: Additional positional arguments (unused).
+        **kwargs: Additional keyword arguments (unused).
+
+    Returns:
+        torch.Tensor: Scalar tensor containing the mean squared error loss value.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+    def __call__(
+        self, pred: torch.Tensor, target: torch.Tensor, *args: Any, **kwargs: Any
+    ) -> Any:
+        """Compute the mean squared error loss.
+
+        Args:
+            pred (torch.Tensor): Predicted values tensor.
+            target (torch.Tensor): Target values tensor.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            torch.Tensor: Scalar loss value averaged over the batch.
+        """
+        # Normalize the pred and target to [0, 1]
+        norm_pred = F.sigmoid(pred)
+        norm_target = (target + 1) / 2
+        return F.mse_loss(norm_pred, norm_target, reduction="mean")

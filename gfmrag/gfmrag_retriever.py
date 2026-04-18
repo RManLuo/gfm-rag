@@ -5,13 +5,12 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
 from gfmrag import utils
-from gfmrag.datasets import QADataset
-from gfmrag.doc_rankers import BaseDocRanker
-from gfmrag.kg_construction.entity_linking_model import BaseELModel
-from gfmrag.kg_construction.ner_model import BaseNERModel
-from gfmrag.models import GNNRetriever
+from gfmrag.graph_index_construction.entity_linking_model import BaseELModel
+from gfmrag.graph_index_construction.ner_model import BaseNERModel
+from gfmrag.graph_index_datasets import GraphIndexDataset
+from gfmrag.models.gfm_rag_v1 import GNNRetriever
+from gfmrag.models.ultra import query_utils
 from gfmrag.text_emb_models import BaseTextEmbModel
-from gfmrag.ultra import query_utils
 from gfmrag.utils.qa_utils import entities_to_mask
 
 logger = logging.getLogger(__name__)
@@ -25,17 +24,16 @@ class GFMRetriever:
     based on a query.
 
     Attributes:
-        qa_data (QADataset): Dataset containing the knowledge graph, documents and mappings
+        qa_data (GraphIndexDataset): Dataset containing the knowledge graph, documents and mappings
         graph (torch.Tensor): Knowledge graph structure
         text_emb_model (BaseTextEmbModel): Model for text embedding
         ner_model (BaseNERModel): Named Entity Recognition model
         el_model (BaseELModel): Entity Linking model
         graph_retriever (GNNRetriever): Graph Neural Network based retriever
-        doc_ranker (BaseDocRanker): Document ranking model
-        doc_retriever (DocumentRetriever): Document retrieval utility
+        doc_retriever (DocumentRetriever): Map nodes id to documents
+        target_type (str): Type of target for retrieval (e.g., "document")
         device (torch.device): Device to run computations on
         num_nodes (int): Number of nodes in the knowledge graph
-        entities_weight (torch.Tensor | None): Optional weights for entities
 
     Examples:
         >>> retriever = GFMRetriever.from_config(cfg)
@@ -44,27 +42,25 @@ class GFMRetriever:
 
     def __init__(
         self,
-        qa_data: QADataset,
+        qa_data: GraphIndexDataset,
         text_emb_model: BaseTextEmbModel,
         ner_model: BaseNERModel,
         el_model: BaseELModel,
         graph_retriever: GNNRetriever,
-        doc_ranker: BaseDocRanker,
         doc_retriever: utils.DocumentRetriever,
-        entities_weight: torch.Tensor | None,
+        target_type: str,
         device: torch.device,
     ) -> None:
         self.qa_data = qa_data
-        self.graph = qa_data.kg
+        self.graph = qa_data.graph
         self.text_emb_model = text_emb_model
         self.ner_model = ner_model
         self.el_model = el_model
         self.graph_retriever = graph_retriever
-        self.doc_ranker = doc_ranker
         self.doc_retriever = doc_retriever
         self.device = device
         self.num_nodes = self.graph.num_nodes
-        self.entities_weight = entities_weight
+        self.target_type = target_type
 
     @torch.no_grad()
     def retrieve(self, query: str, top_k: int) -> list[dict]:
@@ -92,13 +88,11 @@ class GFMRetriever:
         )
 
         # Graph retriever forward pass
-        ent_pred = self.graph_retriever(
-            self.graph, graph_retriever_input, entities_weight=self.entities_weight
-        )
-        doc_pred = self.doc_ranker(ent_pred)[0]  # Ent2docs mapping, batch size is 1
+        pred = self.graph_retriever(self.graph, graph_retriever_input)
+        target_pred = pred[:, self.graph.nodes_by_type[self.target_type]]
 
         # Retrieve the supporting documents
-        retrieved_docs = self.doc_retriever(doc_pred.cpu(), top_k=top_k)
+        retrieved_docs = self.doc_retriever(target_pred.cpu(), top_k=top_k)
 
         return retrieved_docs
 
@@ -119,7 +113,7 @@ class GFMRetriever:
             dict: Dictionary containing processed inputs with keys:
 
                 - question_embeddings: Embedded representation of the query
-                - question_entities_masks: Binary mask tensor indicating entity nodes (shape: 1 x num_nodes)
+                - start_nodes_mask: Binary mask tensor indicating entity nodes (shape: 1 x num_nodes)
 
         Notes:
             - If no entities are detected in query, the full query is used for entity linking
@@ -136,11 +130,11 @@ class GFMRetriever:
             mentioned_entities = [query]
         linked_entities = self.el_model(mentioned_entities, topk=1)
         entity_ids = [
-            self.qa_data.ent2id[ent[0]["entity"]]
+            self.qa_data.node2id[ent[0]["entity"]]
             for ent in linked_entities.values()
-            if ent[0]["entity"] in self.qa_data.ent2id
+            if ent[0]["entity"] in self.qa_data.node2id
         ]
-        question_entities_masks = (
+        start_nodes_mask = (
             entities_to_mask(entity_ids, self.num_nodes).unsqueeze(0).to(self.device)
         )  # 1 x num_nodes
         question_embedding = self.text_emb_model.encode(
@@ -150,7 +144,7 @@ class GFMRetriever:
         )
         graph_retriever_input = {
             "question_embeddings": question_embedding,
-            "question_entities_masks": question_entities_masks,
+            "start_nodes_mask": start_nodes_mask,
         }
         return graph_retriever_input
 
@@ -186,32 +180,26 @@ class GFMRetriever:
             cfg.graph_retriever.model_path
         )
         graph_retriever.eval()
-        qa_data = QADataset(
+        qa_data = GraphIndexDataset(
             **cfg.dataset,
             text_emb_model_cfgs=OmegaConf.create(model_config["text_emb_model_config"]),
         )
         device = utils.get_device()
         graph_retriever = graph_retriever.to(device)
 
-        qa_data.kg = qa_data.kg.to(device)
-        ent2docs = qa_data.ent2docs.to(device)
+        qa_data.graph = qa_data.graph.to(device)
 
         ner_model = instantiate(cfg.graph_retriever.ner_model)
         el_model = instantiate(cfg.graph_retriever.el_model)
 
-        el_model.index(list(qa_data.ent2id.keys()))
+        el_model.index(list(qa_data.node2id.keys()))
 
-        # Create doc ranker
-        doc_ranker = instantiate(cfg.graph_retriever.doc_ranker, ent2doc=ent2docs)
-        doc_retriever = utils.DocumentRetriever(qa_data.doc, qa_data.id2doc)
+        # Map id to name
+        doc_retriever = utils.DocumentRetriever(qa_data.doc, qa_data.id2node)
 
         text_emb_model = instantiate(
             OmegaConf.create(model_config["text_emb_model_config"])
         )
-
-        entities_weight = None
-        if cfg.graph_retriever.init_entities_weight:
-            entities_weight = utils.get_entities_weight(ent2docs)
 
         return GFMRetriever(
             qa_data=qa_data,
@@ -219,8 +207,7 @@ class GFMRetriever:
             ner_model=ner_model,
             el_model=el_model,
             graph_retriever=graph_retriever,
-            doc_ranker=doc_ranker,
             doc_retriever=doc_retriever,
-            entities_weight=entities_weight,
+            target_type=cfg.graph_retriever.target_type,
             device=device,
         )

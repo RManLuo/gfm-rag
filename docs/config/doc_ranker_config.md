@@ -9,7 +9,7 @@
 
 | Parameter  |              Options              |                               Note                                |
 | :--------: | :-------------------------------: | :---------------------------------------------------------------: |
-| `_target_` | `gfmrag.doc_rankers.SimpleRanker` | The class name of [SimpleRanker][gfmrag.doc_rankers.SimpleRanker] |
+| `_target_` | `gfmrag.models.gfm_rag_v1.rankers.SimpleRanker` | The class name of [SimpleRanker][gfmrag.models.gfm_rag_v1.rankers.SimpleRanker] |
 
 ## IDF Ranker
 
@@ -21,7 +21,7 @@
 
 | Parameter  |                Options                 |                                     Note                                     |
 | :--------: | :------------------------------------: | :--------------------------------------------------------------------------: |
-| `_target_` | `gfmrag.doc_rankers.IDFWeightedRanker` | The class name of [IDFWeightedRanker ][gfmrag.doc_rankers.IDFWeightedRanker] |
+| `_target_` | `gfmrag.models.gfm_rag_v1.rankers.IDFWeightedRanker` | The class name of [IDFWeightedRanker ][gfmrag.models.gfm_rag_v1.rankers.IDFWeightedRanker] |
 
 ## Top-k Ranker
 
@@ -33,7 +33,7 @@
 
 | Parameter  |             Options             |                             Note                              |
 | :--------: | :-----------------------------: | :-----------------------------------------------------------: |
-| `_target_` | `gfmrag.doc_rankers.TopKRanker` | The class name of [TopKRanker][gfmrag.doc_rankers.TopKRanker] |
+| `_target_` | `gfmrag.models.gfm_rag_v1.rankers.TopKRanker` | The class name of [TopKRanker][gfmrag.models.gfm_rag_v1.rankers.TopKRanker] |
 |  `top_k`   |             Integer             |        The top-k entities used for document retrieval         |
 
 ## IDF Top-k Ranker
@@ -46,5 +46,5 @@
 
 | Parameter  |                  Options                   |                                        Note                                         |
 | :--------: | :----------------------------------------: | :---------------------------------------------------------------------------------: |
-| `_target_` | `gfmrag.doc_rankers.IDFWeightedTopKRanker` | The class name of [IDFWeightedTopKRanker][gfmrag.doc_rankers.IDFWeightedTopKRanker] |
+| `_target_` | `gfmrag.models.gfm_rag_v1.rankers.IDFWeightedTopKRanker` | The class name of [IDFWeightedTopKRanker][gfmrag.models.gfm_rag_v1.rankers.IDFWeightedTopKRanker] |
 |  `top_k`   |                  Integer                   |                   The top-k entities used for document retrieval                    |

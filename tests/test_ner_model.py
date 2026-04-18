@@ -5,7 +5,7 @@ def test_llm_ner_model() -> None:
 
     cfg = OmegaConf.create(
         {
-            "_target_": "gfmrag.kg_construction.ner_model.LLMNERModel",
+            "_target_": "gfmrag.graph_index_construction.ner_model.LLMNERModel",
             "llm_api": "openai",
             "model_name": "gpt-4o-mini",
         }

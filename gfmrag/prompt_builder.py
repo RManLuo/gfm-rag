@@ -37,18 +37,23 @@ class QAPromptBuilder:
         self.examples = self.cfg.examples
 
     def build_input_prompt(
-        self, question: str, retrieved_docs: list, thoughts: list | None = None
+        self,
+        question: str,
+        retrieved_result: dict[str, list[dict]],
+        thoughts: list | None = None,
     ) -> list:
         prompt = [
             {"role": "system", "content": self.system_prompt},
         ]
-
-        doc_context = "\n".join(
-            [
-                self.doc_prompt.format(title=doc["title"], content=doc["content"])
-                for doc in retrieved_docs
-            ]
-        )
+        context = ""
+        for target_type, retrieved_items in retrieved_result.items():
+            if len(retrieved_items) > 0:
+                target_type_context = f"## Relevant {target_type}:\n\n"
+                target_type_context += "\n\n".join(
+                    "\n".join([f"{key}: {value}" for key, value in item.items()])
+                    for item in retrieved_items
+                )
+                context += target_type_context + "\n\n"
 
         question = self.question_prompt.format(question=question)
         if thoughts is not None:
@@ -65,7 +70,7 @@ class QAPromptBuilder:
         prompt.append(
             {
                 "role": "user",
-                "content": doc_context + "\n" + question,
+                "content": context + question,
             }
         )
 

@@ -53,7 +53,7 @@ For more details, please refer to our [project page](https://rmanluo.github.io/g
 ## Dependencies
 
 - Python 3.12
-- CUDA 12 and above
+- CUDA 12 and above (CUDA 12.6.3 is recommended)
 
 ## Installation
 
@@ -63,7 +63,7 @@ Install packages
 ```bash
 conda create -n gfmrag python=3.12
 conda activate gfmrag
-conda install cuda-toolkit -c nvidia/label/cuda-12.4.1 # Replace with your desired CUDA version
+conda install cuda-toolkit -c nvidia/label/cuda-12.6.3 # Replace with your desired CUDA version
 pip install gfmrag
 ```
 
@@ -148,12 +148,12 @@ Example:
 
 ### Index Dataset
 
-You need to create a KG-index [configuration file](gfmrag/workflow/config/stage1_index_dataset.yaml).
+You need to create a KG-index [configuration file](gfmrag/workflow/config/gfm_rag/index_dataset.yaml).
 
 Details of the configuration parameters are explained in the [KG-index Configuration](https://rmanluo.github.io/gfm-rag/config/kg_index_config/) page.
 
 ```bash
-python -m gfmrag.workflow.stage1_index_dataset
+python -m gfmrag.workflow.index_dataset --config-path config/gfm_rag
 ```
 
 This method performs two main tasks:
@@ -185,7 +185,7 @@ data_name/
 
 ### GFM-RAG Retrieval
 
-You need to create a [configuration file](gfmrag/workflow/config/stage3_qa_ircot_inference.yaml) for inference.
+You need to create a [configuration file](gfmrag/workflow/config/gfm_rag/qa_ircot_inference.yaml) for inference.
 
 > [!NOTE]
 > We have already released the pre-trained model [here](https://huggingface.co/rmanluo/GFM-RAG-8M), which can be used directly for retrieval. The model will be automatically downloaded by specifying it in the configuration.
@@ -214,7 +214,9 @@ logger = logging.getLogger(__name__)
 
 
 @hydra.main(
-    config_path="config", config_name="stage3_qa_ircot_inference", version_base=None
+    config_path="config/gfm_rag",
+    config_name="qa_ircot_inference",
+    version_base=None,
 )
 def main(cfg: DictConfig) -> None:
     output_dir = HydraConfig.get().runtime.output_dir
@@ -288,12 +290,12 @@ An example of the training data:
 ]
 ```
 
-You need to create a [configuration file](gfmrag/workflow/config/stage2_qa_finetune.yaml) for fine-tuning.
+You need to create a [configuration file](gfmrag/workflow/config/gfm_rag/sft_training.yaml) for fine-tuning.
 
 > [!NOTE]
 > We have already released the pre-trained model checkpoint [here](https://huggingface.co/rmanluo/GFM-RAG-8M), which can be used for further finetuning. The model will be automatically downloaded by specifying it in the configuration.
 > ```yaml
-> checkpoint: rmanluo/GFM-RAG-8M
+> load_model_from_pretrained: rmanluo/GFM-RAG-8M
 > ```
 
 Details of the configuration parameters are explained in the [GFM-RAG Fine-tuning Configuration](https://rmanluo.github.io/gfm-rag/config/gfmrag_finetune_config/) page.
@@ -301,11 +303,11 @@ Details of the configuration parameters are explained in the [GFM-RAG Fine-tunin
 You can fine-tune the pre-trained GFM-RAG model on your dataset using the following command:
 
 ```bash
-python -m gfmrag.workflow.stage2_qa_finetune
+python -m gfmrag.workflow.sft_training --config-path config/gfm_rag
 # Multi-GPU training
-torchrun --nproc_per_node=4 -m gfmrag.workflow.stage2_qa_finetune
+torchrun --nproc_per_node=4 -m gfmrag.workflow.sft_training --config-path config/gfm_rag
 # Multi-node Multi-GPU training
-torchrun --nproc_per_node=4 --nnodes=2 -m gfmrag.workflow.stage2_qa_finetune
+torchrun --nproc_per_node=4 --nnodes=2 -m gfmrag.workflow.sft_training --config-path config/gfm_rag
 ```
 
 ## Reproduce Results reported in the paper
@@ -343,35 +345,35 @@ N_GPU=1
 DATA_ROOT="data"
 DATA_NAME_LIST="hotpotqa_test 2wikimultihopqa_test musique_test"
 for DATA_NAME in ${DATA_NAME_LIST}; do
-   python -m gfmrag.workflow.stage1_index_dataset \
+   python -m gfmrag.workflow.index_dataset --config-path config/gfm_rag \
    dataset.root=${DATA_ROOT} \
    dataset.data_name=${DATA_NAME}
 done
 ```
 
-Full script is available at [scripts/stage1_data_index.sh](scripts/stage1_data_index.sh).
+Full script is available at [scripts/gfm-rag/stage1_data_index.sh](scripts/gfm-rag/stage1_data_index.sh).
 
 ### GFM Training
 
 Unsupervised training on the constructed KG.
 
 ```bash
-python -m gfmrag.workflow.stage2_kg_pretrain
+python -m gfmrag.workflow.kgc_training --config-path config/gfm_rag
 # Multi-GPU training
-torchrun --nproc_per_node=4 -m gfmrag.workflow.stage2_kg_pretrain
+torchrun --nproc_per_node=4 -m gfmrag.workflow.kgc_training --config-path config/gfm_rag
 ```
 
-Full script is available at [scripts/stage2_pretrain.sh](scripts/stage2_pretrain.sh).
+Full script is available at [scripts/gfm-rag/stage2_pretrain.sh](scripts/gfm-rag/stage2_pretrain.sh).
 
 Supervised training on the QA dataset.
 
 ```bash
-python -m gfmrag.workflow.stage2_qa_finetune
+python -m gfmrag.workflow.sft_training --config-path config/gfm_rag
 # Multi-GPU training
-torchrun --nproc_per_node=4 -m gfmrag.workflow.stage2_qa_finetune
+torchrun --nproc_per_node=4 -m gfmrag.workflow.sft_training --config-path config/gfm_rag
 ```
 
-Full script is available at [scripts/stage2_finetune.sh](scripts/stage2_finetune.sh).
+Full script is available at [scripts/gfm-rag/stage2_finetune.sh](scripts/gfm-rag/stage2_finetune.sh).
 
 ### Retrieval Evaluation
 
@@ -379,11 +381,12 @@ Full script is available at [scripts/stage2_finetune.sh](scripts/stage2_finetune
 N_GPU=4
 DATA_ROOT="data"
 checkpoints=rmanluo/GFM-RAG-8M # Or the path to your checkpoints
-torchrun --nproc_per_node=${N_GPU} -m gfmrag.workflow.stage2_qa_finetune \
-    train.checkpoint=${checkpoints} \
+torchrun --nproc_per_node=${N_GPU} -m gfmrag.workflow.sft_training --config-path config/gfm_rag \
+    load_model_from_pretrained=${checkpoints} \
     datasets.cfgs.root=${DATA_ROOT} \
     datasets.train_names=[] \
-    train.num_epoch=0
+    trainer.args.do_train=false \
+    trainer.args.eval_batch_size=1
 ```
 
 ### QA Reasoning
@@ -397,29 +400,30 @@ DATA_NAME="hotpotqa" # hotpotqa musique 2wikimultihopqa
 LLM="gpt-4o-mini"
 DOC_TOP_K=5
 N_THREAD=10
-torchrun --nproc_per_node=${N_GPU} -m gfmrag.workflow.stage3_qa_inference \
+python -m gfmrag.workflow.qa_ircot_inference --config-path config/gfm_rag \
     dataset.root=${DATA_ROOT} \
+    llm.model_name_or_path=${LLM} \
     qa_prompt=${DATA_NAME} \
     qa_evaluator=${DATA_NAME} \
-    llm.model_name_or_path=${LLM} \
-    test.n_threads=${N_THREAD} \
+    agent_prompt=${DATA_NAME}_ircot \
     test.top_k=${DOC_TOP_K} \
+    test.max_steps=1 \
     dataset.data_name=${DATA_NAME}_test
 ```
 
 hotpotqa
 ```bash
-torchrun --nproc_per_node=4 -m gfmrag.workflow.stage3_qa_inference dataset.data_name=hotpotqa_test qa_prompt=hotpotqa qa_evaluator=hotpotqa
+python -m gfmrag.workflow.qa_ircot_inference --config-path config/gfm_rag dataset.data_name=hotpotqa_test qa_prompt=hotpotqa qa_evaluator=hotpotqa agent_prompt=hotpotqa_ircot test.max_steps=1
 ```
 
 musique
 ```bash
-torchrun --nproc_per_node=4 -m gfmrag.workflow.stage3_qa_inference dataset.data_name=musique_test qa_prompt=musique qa_evaluator=musique
+python -m gfmrag.workflow.qa_ircot_inference --config-path config/gfm_rag dataset.data_name=musique_test qa_prompt=musique qa_evaluator=musique agent_prompt=musique_ircot test.max_steps=1
 ```
 
 2Wikimultihopqa
 ```bash
-torchrun --nproc_per_node=4 -m gfmrag.workflow.stage3_qa_inference dataset.data_name=2wikimultihopqa_test qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa
+python -m gfmrag.workflow.qa_ircot_inference --config-path config/gfm_rag dataset.data_name=2wikimultihopqa_test qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa agent_prompt=2wikimultihopqa_ircot test.max_steps=1
 ```
 #### Multi Step IRCOT QA Reasoning
 ```bash
@@ -430,7 +434,7 @@ DATA_NAME="hotpotqa" # hotpotqa musique 2wikimultihopqa
 LLM="gpt-4o-mini"
 MAX_STEPS=3
 MAX_SAMPLE=10
-python -m gfmrag.workflow.stage3_qa_ircot_inference \
+python -m gfmrag.workflow.qa_ircot_inference --config-path config/gfm_rag \
     dataset.root=${DATA_ROOT} \
     llm.model_name_or_path=${LLM} \
     qa_prompt=${DATA_NAME} \
@@ -443,17 +447,17 @@ python -m gfmrag.workflow.stage3_qa_ircot_inference \
 
 hotpotqa
 ```bash
-python -m gfmrag.workflow.stage3_qa_ircot_inference qa_prompt=hotpotqa qa_evaluator=hotpotqa agent_prompt=hotpotqa_ircot dataset.data_name=hotpotqa_test test.max_steps=2
+python -m gfmrag.workflow.qa_ircot_inference --config-path config/gfm_rag qa_prompt=hotpotqa qa_evaluator=hotpotqa agent_prompt=hotpotqa_ircot dataset.data_name=hotpotqa_test test.max_steps=2
 ```
 
 musique
 ```bash
-python -m gfmrag.workflow.stage3_qa_ircot_inference qa_prompt=musique qa_evaluator=musique agent_prompt=musique_ircot dataset.data_name=musique_test test.max_steps=4
+python -m gfmrag.workflow.qa_ircot_inference --config-path config/gfm_rag qa_prompt=musique qa_evaluator=musique agent_prompt=musique_ircot dataset.data_name=musique_test test.max_steps=4
 ```
 
 2Wikimultihopqa
 ```bash
-python -m gfmrag.workflow.stage3_qa_ircot_inference qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa agent_prompt=2wikimultihopqa_ircot dataset.data_name=2wikimultihopqa_test test.max_steps=2
+python -m gfmrag.workflow.qa_ircot_inference --config-path config/gfm_rag qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa agent_prompt=2wikimultihopqa_ircot dataset.data_name=2wikimultihopqa_test test.max_steps=2
 ```
 
 ### Path Interpretations

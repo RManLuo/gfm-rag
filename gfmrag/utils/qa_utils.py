@@ -3,7 +3,7 @@
 import torch
 from torch import distributed as dist
 
-from gfmrag.ultra import variadic
+from gfmrag.models.ultra import variadic
 
 
 class DocumentRetriever:
@@ -42,7 +42,7 @@ def entities_to_mask(entities, num_nodes):
 def evaluate(pred, target, metrics):
     ranking, num_pred = pred
     answer_ranking, num_hard = target
-
+    answer_ranking = answer_ranking + 1
     metric = {}
     for _metric in metrics:
         if _metric == "mrr":
@@ -50,7 +50,7 @@ def evaluate(pred, target, metrics):
             query_score = variadic.variadic_mean(answer_score, num_hard)
         elif _metric.startswith("recall@"):
             threshold = int(_metric[7:])
-            answer_score = (ranking <= threshold).float()
+            answer_score = (answer_ranking <= threshold).float()
             query_score = (
                 variadic.variadic_sum(answer_score, num_hard) / num_hard.float()
             )

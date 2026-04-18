@@ -1,4 +1,4 @@
-_target_: gfmrag.kg_construction.entity_linking_model.NVEmbedV2ELModel
+_target_: gfmrag.graph_index_construction.entity_linking_model.NVEmbedV2ELModel
 model_name: nvidia/NV-Embed-v2
 root: tmp
 use_cache: True

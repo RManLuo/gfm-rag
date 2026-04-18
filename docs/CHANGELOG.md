@@ -11,7 +11,6 @@
 
 ## 0.2.1
 - Fix `colbert-ai` dependency with new version of `torch`.
-
 ## 0.2.0
 - A new version of [GFM-RAG (2025-06-03)](https://huggingface.co/rmanluo/GFM-RAG-8M/commit/62cf6398c5875af1c4e04bbb35e4c3b21904d4ac) which is pre-trained on 286 KGs.
 

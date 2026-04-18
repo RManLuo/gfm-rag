@@ -1,5 +1,6 @@
 import torch
 from sentence_transformers import SentenceTransformer
+from tqdm import tqdm
 
 
 class BaseTextEmbModel:
@@ -85,12 +86,28 @@ class BaseTextEmbModel:
             >>> embeddings = text_emb_model.encode(text)
         """
 
-        return self.text_emb_model.encode(
-            text,
-            device="cuda" if torch.cuda.is_available() else "cpu",
-            normalize_embeddings=self.normalize,
-            batch_size=self.batch_size,
-            prompt=self.query_instruct if is_query else self.passage_instruct,
-            show_progress_bar=show_progress_bar,
-            convert_to_tensor=True,
-        )
+        if len(text) == 0:
+            return torch.empty((0, 0), dtype=torch.float32)
+
+        prompt = self.query_instruct if is_query else self.passage_instruct
+        all_embeddings = []
+        for i in tqdm(
+            range(0, len(text), self.batch_size), disable=not show_progress_bar
+        ):
+            batch = text[i : min(i + self.batch_size, len(text))]
+            batch_embeddings = self.text_emb_model.encode(
+                batch,
+                device="cuda" if torch.cuda.is_available() else "cpu",
+                normalize_embeddings=self.normalize,
+                batch_size=self.batch_size,
+                prompt=prompt,
+                show_progress_bar=False,
+                convert_to_tensor=True,
+            ).float()
+            all_embeddings.append(batch_embeddings.cpu())
+
+            del batch_embeddings
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+        return torch.cat(all_embeddings, dim=0)

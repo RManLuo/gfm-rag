@@ -1,0 +1,26 @@
+hydra:
+  run:
+    dir: outputs/qa_inference/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  searchpath:
+    - pkg://gfmrag.workflow.config
+
+defaults:
+  - _self_
+  - qa_prompt: hotpotqa
+  - qa_evaluator: hotpotqa
+
+seed: 1024
+
+llm:
+  _target_: gfmrag.llms.ChatGPT
+  model_name_or_path: gpt-4o-mini
+  retry: 5
+
+test:
+  n_sample: -1 # Number of samples to test, -1 means all samples
+  top_k: 5
+  n_threads: 5
+  target_types: [document] # Node types to consider for retrieval
+  retrieved_result_path: null
+  node_path: null
+  prediction_result_path: null

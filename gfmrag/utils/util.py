@@ -11,8 +11,8 @@ def save_model_to_pretrained(
     model: torch.nn.Module, cfg: DictConfig, path: str
 ) -> None:
     os.makedirs(path, exist_ok=True)
-    model_config = OmegaConf.to_container(cfg.model)
-    model_config["rel_emb_dim"] = model.rel_emb_dim
+    model_config = OmegaConf.to_container(cfg.model, resolve=True)
+    model_config["feat_dim"] = model.feat_dim
     config = {
         "text_emb_model_config": OmegaConf.to_container(
             cfg.datasets.cfgs.text_emb_model_cfgs
@@ -62,6 +62,27 @@ def init_multi_dataset(cfg: DictConfig, world_size: int, rank: int) -> list:
     for i, data_name in enumerate(data_name_list):
         if i % world_size == rank:
             dataset = dataset_cls(**cfg.datasets.cfgs, data_name=data_name)
+            if dataset.graph.x is not None:
+                assert (
+                    len(dataset.graph.x) == dataset.graph.num_nodes
+                )  # Check if the number of nodes matches the feature dimension
+                assert (
+                    dataset.graph.x.shape[1] == dataset.feat_dim
+                )  # Check if the feature dimension matches
+            if dataset.graph.rel_attr is not None:
+                assert (
+                    len(dataset.graph.rel_attr) == dataset.graph.num_relations
+                )  # Check if the number of relations matches
+                assert (
+                    dataset.graph.rel_attr.shape[1] == dataset.feat_dim
+                )  # Check if the feature dimension matches
+            if dataset.graph.edge_attr is not None:
+                assert (
+                    len(dataset.graph.edge_attr) == dataset.graph.num_edges
+                )  # Check if the number of edges matches
+                assert (
+                    dataset.graph.edge_attr.shape[1] == dataset.feat_dim
+                )  # Check if the feature dimension matches
             feat_dim_list.append(dataset.feat_dim)
     # Gather the feat_dim from all processes
     if world_size > 1:
@@ -75,9 +96,14 @@ def init_multi_dataset(cfg: DictConfig, world_size: int, rank: int) -> list:
     return all_feat_dim_list
 
 
-def get_entities_weight(ent2docs: torch.Tensor) -> torch.Tensor:
-    frequency = torch.sparse.sum(ent2docs, dim=-1).to_dense()
-    weights = 1 / frequency
-    # Masked zero weights
-    weights[frequency == 0] = 0
-    return weights
+def check_all_files_exist(file_paths: list) -> bool:
+    """
+    Check if all files in the list exist.
+
+    Args:
+        file_paths (list): List of file paths to check.
+
+    Returns:
+        bool: True if all files exist, False otherwise.
+    """
+    return all(os.path.exists(file_path) for file_path in file_paths)

@@ -6,9 +6,11 @@ checkpoints/
 tmp
 .env
 saved_models/
+data
 data_full
 logs/
 *.ipynb
 dist/*
 site/
 .DS_Store
+/wandb/

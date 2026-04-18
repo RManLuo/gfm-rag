@@ -53,7 +53,7 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --with dev,doc
+        run: poetry install --no-interaction --no-root --only doc
 
       - name: mkdocs latest build
         shell: bash

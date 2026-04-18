@@ -1,0 +1,19 @@
+hydra:
+  run:
+    dir: outputs/kg_construction/${now:%Y-%m-%d}/${now:%H-%M-%S} # Output directory
+  searchpath:
+    - pkg://gfmrag.workflow.config
+
+defaults:
+  - _self_
+  - ner_model: llm_ner_model # The NER model to use
+  - openie_model: llm_openie_model # The OpenIE model to use
+  - el_model: colbert_el_model # The default EL model to use
+  - text_emb_model: qwen3_8b # The text embedding model used by hipporag2 SFT constructor
+  - graph_constructor: kg_constructor # The graph constructor to use
+  - sft_constructor: hipporag2_sft_constructor # The SFT constructor to use
+
+dataset:
+  root: ./data # data root directory
+  data_name: hotpotqa # data name
+  force: False # Whether to force recompute the dataset
