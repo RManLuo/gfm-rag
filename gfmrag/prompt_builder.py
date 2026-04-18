@@ -15,13 +15,13 @@ class QAPromptBuilder:
             - examples: List of few-shot examples (optional)
 
     Methods:
-        build_input_prompt(question, retrieved_docs, thoughts=None):
+        build_input_prompt(question, retrieved_result, thoughts=None):
             Builds a formatted prompt list for the Q&A system.
 
             Args:
                 question (str): The input question to be answered
-                retrieved_docs (list): List of dictionaries containing document information
-                    with 'title' and 'content' keys
+                retrieved_result (dict[str, list[dict]]): Retrieved nodes keyed by target type.
+                    Each entry contains dicts with keys: id, type, attributes, score.
                 thoughts (list, optional): Additional thought process or reasoning steps
 
             Returns:
