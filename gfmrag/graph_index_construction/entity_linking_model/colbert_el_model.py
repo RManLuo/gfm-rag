@@ -13,6 +13,9 @@ from gfmrag.graph_index_construction.utils import processing_phrases
 
 from .base_model import BaseELModel
 
+BACKEND_MARKER = "fastembed_qdrant_multivector"
+SCHEMA_VERSION = 1
+
 
 class ColbertELModel(BaseELModel):
     def __init__(
@@ -25,6 +28,13 @@ class ColbertELModel(BaseELModel):
         use_in_memory: bool = False,
         **_: Any,
     ) -> None:
+        model_path = Path(model_name_or_path).expanduser()
+        if model_path.exists():
+            raise ValueError(
+                "Local model paths are not supported by ColbertELModel with "
+                "the FastEmbed backend. Provide a supported FastEmbed model id "
+                "such as `colbert-ir/colbertv2.0` instead of a local checkpoint path."
+            )
         self.model_name_or_path = model_name_or_path
         self.root = root
         self.doc_index_name = doc_index_name
@@ -54,7 +64,7 @@ class ColbertELModel(BaseELModel):
         return QdrantClient(path=str(index_root))
 
     def _embedding_size(self) -> int:
-        return int(self.embedding_model.get_embedding_size())
+        return int(self.embedding_model.get_embedding_size(self.model_name_or_path))
 
     def _to_multivector(
         self, embedding: np.ndarray | list[list[float]]
@@ -69,18 +79,36 @@ class ColbertELModel(BaseELModel):
         with metadata_path.open() as metadata_file:
             return json.load(metadata_file)
 
-    def _write_metadata(
-        self, metadata_path: Path, fingerprint: str, entity_list: list[str]
-    ) -> None:
-        metadata = {
+    def _write_metadata(self, metadata_path: Path, metadata: dict[str, Any]) -> None:
+        with metadata_path.open("w") as metadata_file:
+            json.dump(metadata, metadata_file)
+
+    def _processed_phrases(self, entity_list: list[str]) -> list[str]:
+        return [processing_phrases(p) for p in entity_list]
+
+    def _processed_phrases_hash(self, phrases: list[str]) -> str:
+        return hashlib.md5(
+            json.dumps(phrases, separators=(",", ":")).encode()
+        ).hexdigest()
+
+    def _build_metadata(
+        self,
+        fingerprint: str,
+        entity_list: list[str],
+        phrases: list[str],
+        embedding_dimension: int,
+    ) -> dict[str, Any]:
+        return {
+            "backend": BACKEND_MARKER,
+            "schema_version": SCHEMA_VERSION,
             "fingerprint": fingerprint,
             "model_name_or_path": self.model_name_or_path,
             "doc_index_name": self.doc_index_name,
             "phrase_index_name": self.phrase_index_name,
             "entity_list": entity_list,
+            "processed_phrases_hash": self._processed_phrases_hash(phrases),
+            "embedding_dimension": embedding_dimension,
         }
-        with metadata_path.open("w") as metadata_file:
-            json.dump(metadata, metadata_file)
 
     def _build_points(
         self, entity_list: list[str], phrases: list[str]
@@ -98,6 +126,11 @@ class ColbertELModel(BaseELModel):
         self.entity_list = entity_list
         fingerprint = hashlib.md5("".join(entity_list).encode()).hexdigest()
         self.fingerprint = fingerprint
+        phrases = self._processed_phrases(entity_list)
+        embedding_dimension = self._embedding_size()
+        expected_metadata = self._build_metadata(
+            fingerprint, entity_list, phrases, embedding_dimension
+        )
         metadata_path = self._get_metadata_path(fingerprint)
         index_root = self._get_index_root(fingerprint)
 
@@ -111,11 +144,7 @@ class ColbertELModel(BaseELModel):
             not self.force
             and client.collection_exists(self.collection_name)
             and metadata is not None
-            and metadata.get("fingerprint") == fingerprint
-            and metadata.get("entity_list") == entity_list
-            and metadata.get("model_name_or_path") == self.model_name_or_path
-            and metadata.get("doc_index_name") == self.doc_index_name
-            and metadata.get("phrase_index_name") == self.phrase_index_name
+            and metadata == expected_metadata
         )
 
         if should_reuse:
@@ -127,7 +156,7 @@ class ColbertELModel(BaseELModel):
         client.create_collection(
             collection_name=self.collection_name,
             vectors_config=models.VectorParams(
-                size=self._embedding_size(),
+                size=embedding_dimension,
                 distance=models.Distance.COSINE,
                 multivector_config=models.MultiVectorConfig(
                     comparator=models.MultiVectorComparator.MAX_SIM
@@ -135,14 +164,13 @@ class ColbertELModel(BaseELModel):
             ),
         )
 
-        phrases = [processing_phrases(p) for p in entity_list]
         client.upsert(
             collection_name=self.collection_name,
             points=list(self._build_points(entity_list, phrases)),
         )
 
         if not self.use_in_memory:
-            self._write_metadata(metadata_path, fingerprint, entity_list)
+            self._write_metadata(metadata_path, expected_metadata)
 
     def __call__(self, ner_entity_list: list, topk: int = 1) -> dict:
         if self.client is None or not hasattr(self, "entity_list"):

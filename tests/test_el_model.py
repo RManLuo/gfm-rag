@@ -1,17 +1,22 @@
 import hashlib
+import json
 from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 
+from gfmrag.graph_index_construction.utils import processing_phrases
+
 
 class FakeLateInteractionTextEmbedding:
     passage_embed_calls = 0
+    last_embedding_size_model_name: str | None = None
 
     def __init__(self, model_name: str, **_: object) -> None:
         self.model_name = model_name
 
-    def get_embedding_size(self) -> int:
+    def get_embedding_size(self, model_name: str) -> int:
+        type(self).last_embedding_size_model_name = model_name
         return 2
 
     def passage_embed(self, texts: list[str]) -> Iterator[list[list[float]]]:
@@ -33,19 +38,16 @@ class FakeLateInteractionTextEmbedding:
         return lookup.get(text, [[0.5, 0.5], [0.5, 0.5]])
 
 
+def processed_phrases_hash(entity_list: list[str]) -> str:
+    phrases = [processing_phrases(entity) for entity in entity_list]
+    return hashlib.md5(json.dumps(phrases, separators=(",", ":")).encode()).hexdigest()
+
+
 def test_colbert_el_model_supports_in_memory_mode(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
 ) -> None:
     from hydra.utils import instantiate
     from omegaconf import OmegaConf
-
-    from gfmrag.graph_index_construction.entity_linking_model import colbert_el_model
-
-    monkeypatch.setattr(
-        colbert_el_model,
-        "LateInteractionTextEmbedding",
-        FakeLateInteractionTextEmbedding,
-    )
 
     cfg = OmegaConf.create(
         {
@@ -64,12 +66,12 @@ def test_colbert_el_model_supports_in_memory_mode(
     entity_list = [
         "trial of richard speck",
         "south chicago community hospital",
-        "july 13 14  1966",
+        "july 13 14 1966",
     ]
     with pytest.raises(
         AttributeError, match="Index the entities first using index method"
     ):
-        el_model(["july 13 14  1966"], topk=1)
+        el_model(["july 13 14 1966"], topk=1)
 
     el_model.index(entity_list)
     linked_entity_dict = el_model(["south chicago community hospital"], topk=1)
@@ -89,6 +91,7 @@ def test_colbert_el_model(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     from gfmrag.graph_index_construction.entity_linking_model import colbert_el_model
 
     FakeLateInteractionTextEmbedding.passage_embed_calls = 0
+    FakeLateInteractionTextEmbedding.last_embedding_size_model_name = None
     monkeypatch.setattr(
         colbert_el_model,
         "LateInteractionTextEmbedding",
@@ -165,6 +168,16 @@ def test_colbert_el_model(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     )
     assert metadata_path.exists()
     assert FakeLateInteractionTextEmbedding.passage_embed_calls == 1
+    assert (
+        FakeLateInteractionTextEmbedding.last_embedding_size_model_name
+        == "colbert-ir/colbertv2.0"
+    )
+
+    metadata = json.loads(metadata_path.read_text())
+    assert metadata["backend"] == "fastembed_qdrant_multivector"
+    assert metadata["schema_version"] == 1
+    assert metadata["embedding_dimension"] == 2
+    assert metadata["processed_phrases_hash"] == processed_phrases_hash(entity_list)
 
     el_model.client.close()
     cached_el_model = instantiate(cfg)
@@ -183,6 +196,53 @@ def test_colbert_el_model(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     )
     assert cached_linked_entity_dict["july 13 14  1966"][0]["norm_score"] == 1.0
     assert FakeLateInteractionTextEmbedding.passage_embed_calls == 1
+    cached_el_model.client.close()
+
+
+def test_colbert_el_model_rebuilds_when_metadata_is_stale(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from hydra.utils import instantiate
+    from omegaconf import OmegaConf
+
+    from gfmrag.graph_index_construction.entity_linking_model import colbert_el_model
+
+    FakeLateInteractionTextEmbedding.passage_embed_calls = 0
+    monkeypatch.setattr(
+        colbert_el_model,
+        "LateInteractionTextEmbedding",
+        FakeLateInteractionTextEmbedding,
+    )
+
+    cfg = OmegaConf.create(
+        {
+            "_target_": "gfmrag.graph_index_construction.entity_linking_model.ColbertELModel",
+            "model_name_or_path": "colbert-ir/colbertv2.0",
+            "root": str(tmp_path),
+            "force": False,
+        }
+    )
+
+    entity_list = [
+        "trial of richard speck",
+        "south chicago community hospital",
+        "july 13 14  1966",
+    ]
+    fingerprint = hashlib.md5("".join(entity_list).encode()).hexdigest()
+    metadata_path = tmp_path / "colbert" / fingerprint / "metadata.json"
+
+    el_model = instantiate(cfg)
+    el_model.index(entity_list)
+    el_model.client.close()
+    assert FakeLateInteractionTextEmbedding.passage_embed_calls == 1
+
+    metadata = json.loads(metadata_path.read_text())
+    metadata["processed_phrases_hash"] = "stale"
+    metadata_path.write_text(json.dumps(metadata))
+
+    cached_el_model = instantiate(cfg)
+    cached_el_model.index(entity_list)
+    assert FakeLateInteractionTextEmbedding.passage_embed_calls == 2
     cached_el_model.client.close()
 
 
