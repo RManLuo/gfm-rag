@@ -117,7 +117,7 @@ def test_from_index_raises_without_stage1_and_constructor(tmp_path: Any) -> None
     (tmp_path / "my_data" / "raw" / "documents.json").write_text("[]")
 
     with pytest.raises(ValueError, match="graph_constructor"):
-        GFMRetriever.from_index(  # type: ignore[attr-defined]
+        GFMRetriever.from_index(
             data_dir=str(tmp_path),
             data_name="my_data",
             model_path="fake/model",
@@ -133,7 +133,7 @@ def test_from_index_raises_without_raw_documents(tmp_path: Any) -> None:
     # stage1 absent + graph_constructor present: only missing documents.json should trigger FileNotFoundError
 
     with pytest.raises(FileNotFoundError):
-        GFMRetriever.from_index(  # type: ignore[attr-defined]
+        GFMRetriever.from_index(
             data_dir=str(tmp_path),
             data_name="my_data",
             model_path="fake/model",
@@ -189,7 +189,7 @@ def test_from_index_with_existing_stage1(tmp_path: Any) -> None:
         ),
         patch("gfmrag.gfmrag_retriever.instantiate", return_value=MagicMock()),
     ):
-        retriever = GFMRetriever.from_index(  # type: ignore[attr-defined]
+        retriever = GFMRetriever.from_index(
             data_dir=str(tmp_path),
             data_name="my_data",
             model_path="fake/model",
@@ -244,7 +244,7 @@ def test_from_index_calls_graph_constructor_when_no_stage1(tmp_path: Any) -> Non
         ),
         patch("gfmrag.gfmrag_retriever.instantiate", return_value=MagicMock()),
     ):
-        GFMRetriever.from_index(  # type: ignore[attr-defined]
+        GFMRetriever.from_index(
             data_dir=str(tmp_path),
             data_name="my_data",
             model_path="fake/model",

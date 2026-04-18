@@ -18,6 +18,8 @@ from gfmrag.utils.qa_utils import entities_to_mask
 
 logger = logging.getLogger(__name__)
 
+# Captured at import time so that patching GraphIndexDataset in tests
+# does not affect stage1 file list resolution.
 _STAGE1_GRAPH_NAMES: list[str] = GraphIndexDataset.RAW_GRAPH_NAMES
 
 
