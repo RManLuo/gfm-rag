@@ -2,6 +2,7 @@ import hashlib
 import json
 import shutil
 from collections.abc import Iterable
+from itertools import islice
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,8 @@ from .base_model import BaseELModel
 
 BACKEND_MARKER = "fastembed_qdrant_multivector"
 SCHEMA_VERSION = 1
+UPLOAD_BATCH_SIZE = 64
+QUERY_BATCH_SIZE = 64
 
 
 class ColbertELModel(BaseELModel):
@@ -122,6 +125,15 @@ class ColbertELModel(BaseELModel):
                 payload={"entity": entity},
             )
 
+    def _batched(
+        self,
+        values: Iterable[tuple[str, np.ndarray | list[list[float]]]],
+        batch_size: int,
+    ) -> Iterable[list[tuple[str, np.ndarray | list[list[float]]]]]:
+        iterator = iter(values)
+        while batch := list(islice(iterator, batch_size)):
+            yield batch
+
     def index(self, entity_list: list) -> None:
         self.entity_list = entity_list
         fingerprint = hashlib.md5("".join(entity_list).encode()).hexdigest()
@@ -164,9 +176,11 @@ class ColbertELModel(BaseELModel):
             ),
         )
 
-        client.upsert(
+        client.upload_points(
             collection_name=self.collection_name,
-            points=list(self._build_points(entity_list, phrases)),
+            points=self._build_points(entity_list, phrases),
+            batch_size=UPLOAD_BATCH_SIZE,
+            wait=True,
         )
 
         if not self.use_in_memory:
@@ -180,25 +194,31 @@ class ColbertELModel(BaseELModel):
 
         queries = [processing_phrases(p) for p in ner_entity_list]
         linked_entity_dict: dict[str, list] = {}
-
-        for query, embedding in zip(
+        query_pairs = zip(
             queries, self.embedding_model.query_embed(queries), strict=False
-        ):
-            response = self.client.query_points(
+        )
+        for query_batch in self._batched(query_pairs, QUERY_BATCH_SIZE):
+            responses = self.client.query_batch_points(
                 collection_name=self.collection_name,
-                query=self._to_multivector(embedding),
-                limit=topk,
-                with_payload=True,
+                requests=[
+                    models.QueryRequest(
+                        query=self._to_multivector(embedding),
+                        limit=topk,
+                        with_payload=True,
+                    )
+                    for _, embedding in query_batch
+                ],
             )
-            points = response.points
-            max_score = points[0].score if points else 1.0
-            linked_entity_dict[query] = [
-                {
-                    "entity": point.payload["entity"],
-                    "score": point.score,
-                    "norm_score": point.score / max_score if max_score else 0.0,
-                }
-                for point in points
-            ]
+            for (query, _), response in zip(query_batch, responses, strict=False):
+                points = response.points
+                max_score = points[0].score if points else 1.0
+                linked_entity_dict[query] = [
+                    {
+                        "entity": point.payload["entity"],
+                        "score": point.score,
+                        "norm_score": point.score / max_score if max_score else 0.0,
+                    }
+                    for point in points
+                ]
 
         return linked_entity_dict

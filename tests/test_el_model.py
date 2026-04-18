@@ -1,7 +1,9 @@
 import hashlib
 import json
 from collections.abc import Iterator
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -36,6 +38,91 @@ class FakeLateInteractionTextEmbedding:
             "richard speck": [[0.2, 0.8], [0.2, 0.8]],
         }
         return lookup.get(text, [[0.5, 0.5], [0.5, 0.5]])
+
+
+@dataclass
+class FakeScoredPoint:
+    payload: dict[str, str]
+    score: float
+
+
+@dataclass
+class FakeQueryResponse:
+    points: list[FakeScoredPoint]
+
+
+class FakeQdrantClient:
+    def __init__(self, *_: object, **__: object) -> None:
+        self._collection_exists = False
+        self.points: list[Any] = []
+        self.upload_points_calls = 0
+        self.query_batch_points_calls = 0
+        self.upload_batch_size: int | None = None
+
+    def collection_exists(self, _: str) -> bool:
+        return self._collection_exists
+
+    def create_collection(self, **_: object) -> None:
+        self._collection_exists = True
+
+    def delete_collection(self, _: str) -> None:
+        self._collection_exists = False
+        self.points = []
+
+    def upload_points(
+        self,
+        collection_name: str,
+        points: Iterator[Any],
+        batch_size: int = 64,
+        **_: object,
+    ) -> None:
+        assert collection_name
+        if isinstance(points, list):
+            raise AssertionError("points should be streamed, not materialized")
+        self._collection_exists = True
+        self.upload_points_calls += 1
+        self.upload_batch_size = batch_size
+        self.points = list(points)
+
+    def query_points(self, **_: object) -> None:
+        raise AssertionError("query_points should not be used")
+
+    def query_batch_points(
+        self, collection_name: str, requests: list[Any], **_: object
+    ) -> list[FakeQueryResponse]:
+        assert collection_name
+        self.query_batch_points_calls += 1
+        responses: list[FakeQueryResponse] = []
+        for request in requests:
+            query = request.query
+            scored_points = [
+                FakeScoredPoint(
+                    payload=point.payload,
+                    score=self._score(query, point.vector),
+                )
+                for point in self.points
+            ]
+            scored_points.sort(key=lambda point: point.score, reverse=True)
+            limit = request.limit if request.limit is not None else len(scored_points)
+            responses.append(FakeQueryResponse(points=scored_points[:limit]))
+        return responses
+
+    def close(self) -> None:
+        return None
+
+    def _score(self, query: list[list[float]], vector: list[list[float]]) -> float:
+        score = 0.0
+        for query_token in query:
+            score += max(
+                sum(
+                    query_dim * vector_dim
+                    for query_dim, vector_dim in zip(
+                        query_token, vector_token, strict=False
+                    )
+                )
+                for vector_token in vector
+            )
+        return score
 
 
 def processed_phrases_hash(entity_list: list[str]) -> str:
@@ -82,6 +169,51 @@ def test_colbert_el_model_supports_in_memory_mode(
         linked_entity_dict["south chicago community hospital"][0]["norm_score"] == 1.0
     )
     assert not (tmp_path / "colbert").exists()
+
+
+def test_colbert_el_model_uses_batched_qdrant_operations(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from hydra.utils import instantiate
+    from omegaconf import OmegaConf
+
+    from gfmrag.graph_index_construction.entity_linking_model import colbert_el_model
+
+    monkeypatch.setattr(
+        colbert_el_model,
+        "LateInteractionTextEmbedding",
+        FakeLateInteractionTextEmbedding,
+    )
+    monkeypatch.setattr(colbert_el_model, "QdrantClient", FakeQdrantClient)
+
+    cfg = OmegaConf.create(
+        {
+            "_target_": "gfmrag.graph_index_construction.entity_linking_model.ColbertELModel",
+            "model_name_or_path": "colbert-ir/colbertv2.0",
+            "root": str(tmp_path),
+            "force": False,
+            "use_in_memory": True,
+        }
+    )
+
+    el_model = instantiate(cfg)
+    entity_list = [
+        "trial of richard speck",
+        "south chicago community hospital",
+        "july 13 14  1966",
+    ]
+    el_model.index(entity_list)
+    linked_entity_dict = el_model(
+        ["south chicago community hospital", "july 13 14  1966"], topk=2
+    )
+
+    assert el_model.client.upload_points_calls == 1
+    assert el_model.client.upload_batch_size == 64
+    assert el_model.client.query_batch_points_calls == 1
+    assert linked_entity_dict["south chicago community hospital"][0]["entity"] == (
+        "south chicago community hospital"
+    )
+    assert linked_entity_dict["july 13 14  1966"][0]["entity"] == "july 13 14  1966"
 
 
 def test_colbert_el_model(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
