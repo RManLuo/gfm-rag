@@ -58,20 +58,18 @@ def agent_reasoning(
 
         new_ret_docs = gfmrag_retriever.retrieve(response, top_k=cfg.test.top_k)
 
-        retrieved_docs_dict = {doc["title"]: doc for doc in retrieved_docs}
-        for doc in new_ret_docs:
-            if doc["title"] in retrieved_docs_dict:
-                if doc["norm_score"] > retrieved_docs_dict[doc["title"]]["norm_score"]:
-                    retrieved_docs_dict[doc["title"]]["score"] = doc["score"]
-                    retrieved_docs_dict[doc["title"]]["norm_score"] = doc["norm_score"]
-            else:
-                retrieved_docs_dict[doc["title"]] = doc
-        # Sort the retrieved docs by score
-        retrieved_docs = sorted(
-            retrieved_docs_dict.values(), key=lambda x: x["norm_score"], reverse=True
-        )
-        # Only keep the top k
-        retrieved_docs = retrieved_docs[: cfg.test.top_k]
+        # Merge new_ret_docs into retrieved_docs, dedup by id, keep highest score
+        for target_type, new_docs in new_ret_docs.items():
+            existing = {d["id"]: d for d in retrieved_docs.get(target_type, [])}
+            for doc in new_docs:
+                if (
+                    doc["id"] not in existing
+                    or doc["score"] > existing[doc["id"]]["score"]
+                ):
+                    existing[doc["id"]] = doc
+            retrieved_docs[target_type] = sorted(
+                existing.values(), key=lambda x: x["score"], reverse=True
+            )[: cfg.test.top_k]
 
     final_response = " ".join(thoughts)
     return {"response": final_response, "retrieved_docs": retrieved_docs, "logs": logs}
@@ -86,7 +84,15 @@ def main(cfg: DictConfig) -> None:
     logger.info(f"Current working directory: {os.getcwd()}")
     logger.info(f"Output directory: {output_dir}")
 
-    gfmrag_retriever = GFMRetriever.from_config(cfg)
+    ner_model = instantiate(cfg.graph_retriever.ner_model)
+    el_model = instantiate(cfg.graph_retriever.el_model)
+    gfmrag_retriever = GFMRetriever.from_index(
+        data_dir=cfg.dataset.cfgs.root,
+        data_name=cfg.dataset.cfgs.data_name,
+        model_path=cfg.graph_retriever.model_path,
+        ner_model=ner_model,
+        el_model=el_model,
+    )
     llm = instantiate(cfg.llm)
     agent_prompt_builder = QAPromptBuilder(cfg.agent_prompt)
     qa_prompt_builder = QAPromptBuilder(cfg.qa_prompt)
