@@ -4,6 +4,7 @@
 - Final version for GFM-RAG and prepare for the G-reasoner release.
 - Update the data download [link](https://1drv.ms/f/c/cb4bbdfe5951d1a1/IgDTnyNJiiAPTJKqY1KizEVMAQ1jX5wAf94YMlF-VyLvscI?e=bgp0Yv) and include the zero-shot datasets (Test/Extended Datasets) for evaluation.
 - Fix bugs and enhance the OpenIE with the new Ollama backend [#31](https://github.com/RManLuo/gfm-rag/pull/31).
+- Replace the `ColbertELModel` runtime backend with `Qdrant + FastEmbed`, including in-memory Qdrant mode for ColBERT entity linking.
 
 ## 0.2.2
 - Fix: load model from pre-trained with different architectures

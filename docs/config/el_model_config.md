@@ -1,7 +1,9 @@
 
 ## Colbert EL Model Configuration
 
-An example of a Colbert EL model configuration file is shown below:
+`ColbertELModel` now uses a FastEmbed-backed Qdrant index. The supported remote model path should be a FastEmbed model id such as `colbert-ir/colbertv2.0`; local model paths are not the default path for this backend.
+
+An example Colbert EL model configuration file is shown below:
 
 !!! example "colbertv2.0"
 
@@ -9,12 +11,24 @@ An example of a Colbert EL model configuration file is shown below:
     --8<-- "gfmrag/workflow/config/el_model/colbert_el_model.yaml"
     ```
 
+```yaml
+_target_: gfmrag.graph_index_construction.entity_linking_model.ColbertELModel
+model_name_or_path: colbert-ir/colbertv2.0
+root: tmp
+phrase_index_name: nbits_2
+force: false
+use_in_memory: false
+```
+
+`use_in_memory: true` switches the backend to `QdrantClient(":memory:")`. In that mode, no persistent cache files are written, and the index is only reused within the current process.
+
 |      Parameter      |                           Options                            |                                               Note                                               |
 | :-----------------: | :----------------------------------------------------------: | :----------------------------------------------------------------------------------------------: |
 |     `_target_`      | `gfmrag.graph_index_construction.entity_linking_model.ColbertELModel` | The class name of [Colbert EL model][gfmrag.graph_index_construction.entity_linking_model.ColbertELModel] |
-|  `model_name_or_path`  |                             None                             |                                 The Hugging Face model name or local model path.                                 |
+|  `model_name_or_path`  |                             None                             |                          A supported FastEmbed model id such as `colbert-ir/colbertv2.0`.                           |
 |       `root`        |                             None                             |                                 The root directory of the model.                                 |
 | `force` |                     `True`, `False`                          | Whether to force re-indexing the entities. If set to `True`, it will delete the existing index and re-index the entities. |
+| `use_in_memory` |                     `True`, `False`                          | Whether to use `QdrantClient(":memory:")` instead of the persistent cache under `root/colbert/{fingerprint}`. |
 
 Please refer to [ColbertELModel][gfmrag.graph_index_construction.entity_linking_model.ColbertELModel] for details on the other parameters.
 
