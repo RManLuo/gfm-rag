@@ -4931,6 +4931,48 @@ pyyaml = "*"
 extra = ["pygments (>=2.19.1)"]
 
 [[package]]
+name = "pymetis"
+version = "2025.2.2"
+description = "A graph partitioning package"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "pymetis-2025.2.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:d0b18c77d68f348a9870d039f8bd1e0c207276cedb18a63fe176cb4f72967837"},
+    {file = "pymetis-2025.2.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c5756c0d082ac9637337f1c25d1ddd10d4c7226bf27097b251e05d16fe006287"},
+    {file = "pymetis-2025.2.2-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8195db2a4d217a8a20e6126dd765d636e68164b8cdea66e1f14a798a89403c39"},
+    {file = "pymetis-2025.2.2-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:8c85bd6ca25838652f5ee26887d198c3bd3de78ad3c8269080515fc74a00dc67"},
+    {file = "pymetis-2025.2.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:8f18b10aaeff4a8a86a4d57ff8dfd106a3dfbcd0027da083cefa4f4a8f130a15"},
+    {file = "pymetis-2025.2.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:a3b2695e826ec500689f75d701f3b0bbffaea60b8dca3dcccceb7d3f1ac81974"},
+    {file = "pymetis-2025.2.2-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8b283cfc1e45bd5ec237d0db9bce72f05ed54556ef3a7b13f7f642287d22cb48"},
+    {file = "pymetis-2025.2.2-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:f8e7723bb3e0dda6ae7f3e54217f22c6ffe2aad78575bafb47ec311b863fc02c"},
+    {file = "pymetis-2025.2.2-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:fccafb50056dc93e22effe14abadb87921d0314741ff0a4d6208df5c42ffdb68"},
+    {file = "pymetis-2025.2.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:b2758f36952c9fcf864838b6d01b5eab067f5f35ce80721f8d185276e97fe640"},
+    {file = "pymetis-2025.2.2-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e355cd0de2ee17e50f8022970727c7edc98a56136f2db6d623c632b6e7150a96"},
+    {file = "pymetis-2025.2.2-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:904d190253492bb48c0dd2e179adb590c4a94e8bbeacbdfe82d0b21a29ccda7f"},
+    {file = "pymetis-2025.2.2-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:6b0b2a38ced17850553982c8b18d9cd33afba91ac246ce0bdb3d6d8e569bd7e9"},
+    {file = "pymetis-2025.2.2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:38a4880968203263bfe709105a808ad8f5e0993c962e04639c3a5b36f60bc134"},
+    {file = "pymetis-2025.2.2-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:08f9f603cc5328ee9b747d1cd6ced23a17ff99c1bcd17f20dfced92186e1d127"},
+    {file = "pymetis-2025.2.2-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:896db1f37907335e4e60c39cc2bd5b66e3aebd52e04b092d8d1d2a4bcffba114"},
+    {file = "pymetis-2025.2.2-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:c070460ba8b96e2a5d3bfdf1337983d29db9ee3448cbc2c5e8a2fbd8cc65479c"},
+    {file = "pymetis-2025.2.2-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:c9a7b93c5a4745bc5abe7316f7542a16a964906394dc32267318315f2804b43c"},
+    {file = "pymetis-2025.2.2-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b7c93735a8bc200a0f00b3efa6dcc51d9ee1500b48b7852b3a19372e33f04b37"},
+    {file = "pymetis-2025.2.2-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:48650250a56611497e0c39c4e52539a5ee1b5349a930d7d7815a0224c85b2706"},
+    {file = "pymetis-2025.2.2-cp314-cp314t-macosx_10_15_x86_64.whl", hash = "sha256:9b0c4ff5e36156dd3d157304634c96642cf909a982ee8f778684a6201952466e"},
+    {file = "pymetis-2025.2.2-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:fc42996ef8b95078693698074883114f62c0209341f32face33ac6327599d3ad"},
+    {file = "pymetis-2025.2.2-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:db8169f36fb042a560e33bb80e15ec91f39f009518ed2fdd4784a457207cd644"},
+    {file = "pymetis-2025.2.2-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:301c0e6556b37c3321ce190a5638f5ae2110341d6e3e2e5a2141687de06a5e51"},
+    {file = "pymetis-2025.2.2.tar.gz", hash = "sha256:79c6d56c30c6f3df7cc755617cbadcfc252a175ce4e5a59982edad0f1ab71c99"},
+]
+
+[package.dependencies]
+typing-extensions = ">=4.5"
+
+[package.extras]
+doc = ["furo", "sphinx (>=4)", "sphinx-copybutton"]
+test = ["meshpy", "numpy", "pytest", "ruff", "typos"]
+
+[[package]]
 name = "pyparsing"
 version = "3.2.4"
 description = "pyparsing - Classes and methods to define and execute parsing grammars"
@@ -8070,4 +8112,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "7271811583f9838b0be4696a7197a75cb9bd764ceac1f9e0ae8ad9858f65ecb1"
+content-hash = "fcd2371d9ad130166bbf32a63cdf43dc6f005bb9411103ef9f29ca400893646c"

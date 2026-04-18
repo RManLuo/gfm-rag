@@ -11,7 +11,6 @@ Requires: pymetis (pip install pymetis)
 """
 
 import argparse
-import json
 from pathlib import Path
 
 import torch
@@ -36,7 +35,9 @@ def load_graph(dataset_dir: Path) -> torch.Tensor | None:
     return None
 
 
-def contiguous_partition(num_nodes: int, edge_index: torch.Tensor, world_size: int):
+def contiguous_partition(
+    num_nodes: int, edge_index: torch.Tensor, world_size: int
+) -> list[dict[str, int]]:
     """Partition using contiguous node slicing (PR #19/20 strategy).
 
     Returns per-rank stats: (local_edges, boundary_sources, local_N).
@@ -44,12 +45,12 @@ def contiguous_partition(num_nodes: int, edge_index: torch.Tensor, world_size: i
     # edge_index[0] = destination (target), edge_index[1] = source (rspmm convention)
     dst = edge_index[0]
     src = edge_index[1]
-    base_N = (num_nodes + world_size - 1) // world_size
+    base_n = (num_nodes + world_size - 1) // world_size
 
-    stats = []
+    stats: list[dict[str, int]] = []
     for rank in range(world_size):
-        local_start = rank * base_N
-        local_end = min((rank + 1) * base_N, num_nodes)
+        local_start = rank * base_n
+        local_end = min((rank + 1) * base_n, num_nodes)
 
         # Edges whose target falls in this rank's slice
         mask = (dst >= local_start) & (dst < local_end)
@@ -71,7 +72,9 @@ def contiguous_partition(num_nodes: int, edge_index: torch.Tensor, world_size: i
     return stats
 
 
-def metis_partition(num_nodes: int, edge_index: torch.Tensor, world_size: int):
+def metis_partition(
+    num_nodes: int, edge_index: torch.Tensor, world_size: int
+) -> list[dict[str, int]] | None:
     """Partition using METIS graph partitioning.
 
     Returns per-rank stats: (local_edges, boundary_sources, local_N).
@@ -83,7 +86,7 @@ def metis_partition(num_nodes: int, edge_index: torch.Tensor, world_size: int):
     src = edge_index[1].numpy()
     dst = edge_index[0].numpy()
 
-    adjacency = [[] for _ in range(num_nodes)]
+    adjacency: list[list[int]] = [[] for _ in range(num_nodes)]
     for s, d in zip(src, dst):
         adjacency[s].append(d)
         adjacency[d].append(s)
@@ -98,7 +101,7 @@ def metis_partition(num_nodes: int, edge_index: torch.Tensor, world_size: int):
     for rank in range(world_size):
         local_nodes = (node2part == rank).nonzero(as_tuple=True)[0]
         local_node_set = set(local_nodes.tolist())
-        local_N = len(local_node_set)
+        local_n = len(local_node_set)
 
         # Edges whose target is in this partition
         target_mask = node2part[dst] == rank
@@ -112,7 +115,7 @@ def metis_partition(num_nodes: int, edge_index: torch.Tensor, world_size: int):
         stats.append(
             {
                 "rank": rank,
-                "local_N": local_N,
+                "local_N": local_n,
                 "local_edges": local_edge_count,
                 "boundary_sources": boundary_sources,
             }
@@ -120,7 +123,14 @@ def metis_partition(num_nodes: int, edge_index: torch.Tensor, world_size: int):
     return stats
 
 
-def print_stats(dataset_name, num_nodes, num_edges, partition_stats, method, world_size):
+def print_stats(
+    dataset_name: str,
+    num_nodes: int,
+    num_edges: int,
+    partition_stats: list[dict[str, int]],
+    method: str,
+    world_size: int,
+) -> None:
     """Print a formatted table of partition stats."""
     avg_boundary = sum(s["boundary_sources"] for s in partition_stats) / len(
         partition_stats
@@ -142,10 +152,12 @@ def print_stats(dataset_name, num_nodes, num_edges, partition_stats, method, wor
     )
 
     # Memory estimates (bf16, B=8, D=1024, L=6 layers)
-    B, D, L = 8, 1024, 6
+    batch_size, hidden_dim, num_layers = 8, 1024, 6
     bytes_per_elem = 2  # bf16
-    current_comm = L * B * num_nodes * D * bytes_per_elem
-    boundary_comm = L * B * int(avg_boundary) * D * bytes_per_elem
+    current_comm = num_layers * batch_size * num_nodes * hidden_dim * bytes_per_elem
+    boundary_comm = (
+        num_layers * batch_size * int(avg_boundary) * hidden_dim * bytes_per_elem
+    )
     print(
         f"    Comm/fwd (bf16, B=8, D=1024, L=6): "
         f"current={current_comm / 1e9:.2f} GB, "
@@ -153,7 +165,7 @@ def print_stats(dataset_name, num_nodes, num_edges, partition_stats, method, wor
     )
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--root",
@@ -164,7 +176,12 @@ def main():
     parser.add_argument(
         "--datasets",
         nargs="+",
-        default=["hotpotqa_test", "hotpotqa_train0", "musique_test", "2wikimultihopqa_test"],
+        default=[
+            "hotpotqa_test",
+            "hotpotqa_train0",
+            "musique_test",
+            "2wikimultihopqa_test",
+        ],
     )
     parser.add_argument(
         "--world-sizes",
@@ -180,7 +197,7 @@ def main():
         dataset_dir = root / dataset_name
         graph = load_graph(dataset_dir)
         if graph is None:
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Dataset: {dataset_name} — SKIPPED (no graph.pt)")
             continue
 
@@ -189,7 +206,7 @@ def main():
         edge_index = graph.edge_index
         avg_degree = num_edges / num_nodes
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Dataset: {dataset_name}")
         print(f"  Nodes: {num_nodes:,}")
         print(f"  Edges: {num_edges:,}")
@@ -201,14 +218,23 @@ def main():
                 continue
 
             # Contiguous partition
-            stats = contiguous_partition(num_nodes, edge_index, ws)
-            print_stats(dataset_name, num_nodes, num_edges, stats, "Contiguous", ws)
+            contiguous_stats = contiguous_partition(num_nodes, edge_index, ws)
+            print_stats(
+                dataset_name,
+                num_nodes,
+                num_edges,
+                contiguous_stats,
+                "Contiguous",
+                ws,
+            )
 
             # METIS partition
             if HAS_METIS:
-                stats = metis_partition(num_nodes, edge_index, ws)
-                if stats:
-                    print_stats(dataset_name, num_nodes, num_edges, stats, "METIS", ws)
+                metis_stats = metis_partition(num_nodes, edge_index, ws)
+                if metis_stats:
+                    print_stats(
+                        dataset_name, num_nodes, num_edges, metis_stats, "METIS", ws
+                    )
             else:
                 print(f"\n  METIS partition, K={ws}: SKIPPED (pymetis not installed)")
 

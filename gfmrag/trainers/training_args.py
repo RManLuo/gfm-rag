@@ -71,10 +71,7 @@ class TrainingArguments:
         },
     )
 
-    # Training mode
-    training_mode: Literal["ddp", "spmd"] = field(
-        default="ddp", metadata={"help": "The distributed training mode."}
-    )
+    # Split-graph training and inference
     split_graph_inference: bool = field(
         default=False,
         metadata={

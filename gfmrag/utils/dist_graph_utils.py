@@ -38,8 +38,8 @@ def partition_graph_metis(graph: Data, rank: int, world_size: int) -> Data:
     src = edge_index[1].cpu()
 
     # --- METIS partitioning (rank 0 computes, broadcasts to all) ---
-    def _compute_metis():
-        adjacency = [[] for _ in range(num_nodes)]
+    def _compute_metis() -> list[int]:
+        adjacency: list[list[int]] = [[] for _ in range(num_nodes)]
         for s, d in zip(src.tolist(), dst.tolist()):
             adjacency[s].append(d)
             adjacency[d].append(s)
@@ -61,7 +61,7 @@ def partition_graph_metis(graph: Data, rank: int, world_size: int) -> Data:
 
     # --- Identify local nodes and local edges ---
     local_nodes = (node2part == rank).nonzero(as_tuple=True)[0]  # global IDs
-    local_N = local_nodes.shape[0]
+    local_n = local_nodes.shape[0]
 
     # Edges whose target is owned by this rank
     target_part = node2part[dst]
@@ -74,14 +74,14 @@ def partition_graph_metis(graph: Data, rank: int, world_size: int) -> Data:
     src_part = node2part[local_src]
     remote_src_mask = src_part != rank
     boundary_nodes = local_src[remote_src_mask].unique().sort().values  # global IDs
-    boundary_N = boundary_nodes.shape[0]
+    boundary_n = boundary_nodes.shape[0]
 
     # --- Build compact index mapping: [local_nodes | boundary_nodes] ---
     # global_id -> compact_id
-    compact_size = local_N + boundary_N
+    compact_size = local_n + boundary_n
     global_to_compact = torch.full((num_nodes,), -1, dtype=torch.long)
-    global_to_compact[local_nodes] = torch.arange(local_N)
-    global_to_compact[boundary_nodes] = torch.arange(local_N, compact_size)
+    global_to_compact[local_nodes] = torch.arange(local_n)
+    global_to_compact[boundary_nodes] = torch.arange(local_n, compact_size)
 
     # Remap edge indices to compact space
     compact_dst = global_to_compact[local_dst]
@@ -135,9 +135,9 @@ def partition_graph_edges(graph: Data, rank: int, world_size: int) -> Data:
     This is mathematically identical to single-process inference.
     """
     num_nodes: int = graph.num_nodes  # type: ignore[assignment]
-    base_N = (num_nodes + world_size - 1) // world_size  # ceiling division
-    local_start = rank * base_N
-    local_end = min((rank + 1) * base_N, num_nodes)
+    base_n = (num_nodes + world_size - 1) // world_size  # ceiling division
+    local_start = rank * base_n
+    local_end = min((rank + 1) * base_n, num_nodes)
 
     edge_index: torch.Tensor = graph.edge_index  # type: ignore[assignment]
     edge_type: torch.Tensor = graph.edge_type  # type: ignore[assignment]

@@ -105,7 +105,7 @@ class BaseTrainer(ABC):
             self.device.type, enabled=self.enable_grad_scaler
         )
 
-        if self.world_size > 1 and self.args.training_mode == "ddp" and not self.args.split_graph_training:
+        if self.world_size > 1 and not self.args.split_graph_training:
             self.parallel_model = nn.parallel.DistributedDataParallel(
                 self.model, device_ids=[self.device]
             )

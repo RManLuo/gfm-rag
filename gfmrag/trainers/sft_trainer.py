@@ -10,13 +10,13 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from gfmrag import utils
-from gfmrag.utils.dist_graph_utils import partition_graph_edges, partition_graph_metis
 from gfmrag.graph_index_datasets.graph_dataset_loader import (
     GraphDataset,
     GraphDatasetLoader,
 )
 from gfmrag.losses import BaseLoss
 from gfmrag.models.ultra import query_utils
+from gfmrag.utils.dist_graph_utils import partition_graph_edges, partition_graph_metis
 
 from .base_trainer import BaseTrainer, TaskDataset
 from .training_args import TrainingArguments
@@ -110,7 +110,9 @@ class SFTTrainer(BaseTrainer):
         data = sft_dataset.train_data if is_train else sft_dataset.test_data
 
         # Determine if we should use split-graph mode
-        split_graph_train = is_train and self.args.split_graph_training and self.world_size > 1
+        split_graph_train = (
+            is_train and self.args.split_graph_training and self.world_size > 1
+        )
         split_graph = split_graph_train or not use_distributed_sampler
 
         if split_graph:
