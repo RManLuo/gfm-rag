@@ -130,6 +130,7 @@ def test_from_index_raises_without_raw_documents(tmp_path: Any) -> None:
     from gfmrag.gfmrag_retriever import GFMRetriever
 
     (tmp_path / "my_data").mkdir(parents=True)
+    # stage1 absent + graph_constructor present: only missing documents.json should trigger FileNotFoundError
 
     with pytest.raises(FileNotFoundError):
         GFMRetriever.from_index(  # type: ignore[attr-defined]
