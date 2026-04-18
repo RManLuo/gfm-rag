@@ -1,5 +1,6 @@
 import logging
 
+import pandas as pd
 import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
@@ -8,8 +9,7 @@ from gfmrag import utils
 from gfmrag.graph_index_construction.entity_linking_model import BaseELModel
 from gfmrag.graph_index_construction.ner_model import BaseNERModel
 from gfmrag.graph_index_datasets import GraphIndexDataset
-from gfmrag.models.gfm_rag_v1 import GNNRetriever
-from gfmrag.models.ultra import query_utils
+from gfmrag.models.base_model import BaseGNNModel
 from gfmrag.text_emb_models import BaseTextEmbModel
 from gfmrag.utils.qa_utils import entities_to_mask
 
@@ -19,25 +19,26 @@ logger = logging.getLogger(__name__)
 class GFMRetriever:
     """Graph Foundation Model (GFM) Retriever for document retrieval.
 
-    This class implements a document retrieval system that combines named entity recognition,
-    entity linking, graph neural networks, and document ranking to retrieve relevant documents
-    based on a query.
-
     Attributes:
-        qa_data (GraphIndexDataset): Dataset containing the knowledge graph, documents and mappings
-        graph (torch.Tensor): Knowledge graph structure
-        text_emb_model (BaseTextEmbModel): Model for text embedding
-        ner_model (BaseNERModel): Named Entity Recognition model
-        el_model (BaseELModel): Entity Linking model
-        graph_retriever (GNNRetriever): Graph Neural Network based retriever
-        doc_retriever (DocumentRetriever): Map nodes id to documents
-        target_type (str): Type of target for retrieval (e.g., "document")
-        device (torch.device): Device to run computations on
-        num_nodes (int): Number of nodes in the knowledge graph
+        qa_data (GraphIndexDataset): Dataset containing the knowledge graph and mappings.
+        graph: Knowledge graph structure.
+        text_emb_model (BaseTextEmbModel): Model for text embedding.
+        ner_model (BaseNERModel): Named Entity Recognition model.
+        el_model (BaseELModel): Entity Linking model.
+        graph_retriever (BaseGNNModel): GNN-based retriever (GNNRetriever or GraphReasoner).
+        node_info (pd.DataFrame): Node attributes from nodes.csv, indexed by node name/uid.
+        device (torch.device): Device to run computations on.
+        num_nodes (int): Number of nodes in the knowledge graph.
 
     Examples:
-        >>> retriever = GFMRetriever.from_config(cfg)
-        >>> docs = retriever.retrieve("Who is the president of France?", top_k=5)
+        >>> retriever = GFMRetriever.from_index(
+        ...     data_dir="./data",
+        ...     data_name="my_dataset",
+        ...     model_path="rmanluo/GFM-RAG-8M",
+        ...     ner_model=ner_model,
+        ...     el_model=el_model,
+        ... )
+        >>> results = retriever.retrieve("Who is the president of France?", top_k=5)
     """
 
     def __init__(
@@ -46,9 +47,8 @@ class GFMRetriever:
         text_emb_model: BaseTextEmbModel,
         ner_model: BaseNERModel,
         el_model: BaseELModel,
-        graph_retriever: GNNRetriever,
-        doc_retriever: utils.DocumentRetriever,
-        target_type: str,
+        graph_retriever: BaseGNNModel,
+        node_info: pd.DataFrame,
         device: torch.device,
     ) -> None:
         self.qa_data = qa_data
@@ -57,44 +57,61 @@ class GFMRetriever:
         self.ner_model = ner_model
         self.el_model = el_model
         self.graph_retriever = graph_retriever
-        self.doc_retriever = doc_retriever
+        self.node_info = node_info
         self.device = device
         self.num_nodes = self.graph.num_nodes
-        self.target_type = target_type
 
     @torch.no_grad()
-    def retrieve(self, query: str, top_k: int) -> list[dict]:
-        """
-        Retrieve documents from the corpus based on the given query.
-
-        1. Prepares the query input for the graph retriever
-        2. Executes the graph retriever forward pass to get entity predictions
-        3. Ranks documents based on entity predictions
-        4. Retrieves the top-k supporting documents
+    def retrieve(
+        self,
+        query: str,
+        top_k: int,
+        target_types: list[str] | None = None,
+    ) -> dict[str, list[dict]]:
+        """Retrieve nodes from the graph based on the given query.
 
         Args:
-            query (str): input query
-            top_k (int): number of documents to retrieve
+            query (str): Input query text.
+            top_k (int): Number of results to return per target type.
+            target_types (list[str] | None): Node types to retrieve. Each type must exist
+                in graph.nodes_by_type. Defaults to ["document"].
 
         Returns:
-            list[dict]: A list of retrieved documents, where each document is represented as a dictionary
-                        containing document metadata and content
+            dict[str, list[dict]]: Results keyed by target type. Each entry contains
+                dicts with keys: id, type, attributes, score.
         """
+        if target_types is None:
+            target_types = ["document"]
 
-        # Prepare input for deep graph retriever
+        from gfmrag.models.ultra import query_utils
+
         graph_retriever_input = self.prepare_input_for_graph_retriever(query)
         graph_retriever_input = query_utils.cuda(
             graph_retriever_input, device=self.device
         )
 
-        # Graph retriever forward pass
-        pred = self.graph_retriever(self.graph, graph_retriever_input)
-        target_pred = pred[:, self.graph.nodes_by_type[self.target_type]]
+        pred = self.graph_retriever(self.graph, graph_retriever_input)  # 1 x num_nodes
 
-        # Retrieve the supporting documents
-        retrieved_docs = self.doc_retriever(target_pred.cpu(), top_k=top_k)
-
-        return retrieved_docs
+        results: dict[str, list[dict]] = {}
+        for target_type in target_types:
+            node_ids = self.graph.nodes_by_type[
+                target_type
+            ]  # raises KeyError if missing
+            type_pred = pred[:, node_ids].squeeze(0)
+            topk = torch.topk(type_pred, k=min(top_k, len(node_ids)))
+            original_ids = node_ids[topk.indices]
+            results[target_type] = [
+                {
+                    "id": self.qa_data.id2node[nid.item()],
+                    "type": target_type,
+                    "attributes": self.node_info.loc[
+                        self.qa_data.id2node[nid.item()], "attributes"
+                    ],
+                    "score": score.item(),
+                }
+                for nid, score in zip(original_ids, topk.values)
+            ]
+        return results
 
     def prepare_input_for_graph_retriever(self, query: str) -> dict:
         """
@@ -194,12 +211,12 @@ class GFMRetriever:
 
         el_model.index(list(qa_data.node2id.keys()))
 
-        # Map id to name
-        doc_retriever = utils.DocumentRetriever(qa_data.doc, qa_data.id2node)
-
         text_emb_model = instantiate(
             OmegaConf.create(model_config["text_emb_model_config"])
         )
+
+        # node_info is not available via from_config; placeholder until Task 4 replaces this method
+        node_info = pd.DataFrame()
 
         return GFMRetriever(
             qa_data=qa_data,
@@ -207,7 +224,6 @@ class GFMRetriever:
             ner_model=ner_model,
             el_model=el_model,
             graph_retriever=graph_retriever,
-            doc_retriever=doc_retriever,
-            target_type=cfg.graph_retriever.target_type,
+            node_info=node_info,
             device=device,
         )
