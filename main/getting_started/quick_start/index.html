@@ -648,6 +648,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#path-a-start-from-raw-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Path A: Start From Raw Documents
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#1-create-a-minimal-dataset" class="md-nav__link">
     <span class="md-ellipsis">
       1. Create A Minimal Dataset
@@ -680,6 +689,39 @@
       4. Know The Default Dependencies
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#path-b-bring-your-own-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      Path B: Bring Your Own Graph
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Path B: Bring Your Own Graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-place-pre-built-graph-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Place Pre-built Graph Files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-initialize-gfmretriever-and-retrieve" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Initialize GFMRetriever and Retrieve
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -975,6 +1017,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#path-a-start-from-raw-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Path A: Start From Raw Documents
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#1-create-a-minimal-dataset" class="md-nav__link">
     <span class="md-ellipsis">
       1. Create A Minimal Dataset
@@ -1011,6 +1062,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#path-b-bring-your-own-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      Path B: Bring Your Own Graph
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Path B: Bring Your Own Graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-place-pre-built-graph-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Place Pre-built Graph Files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-initialize-gfmretriever-and-retrieve" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Initialize GFMRetriever and Retrieve
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       Next Steps
@@ -1040,6 +1124,15 @@
 
 <h1 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h1>
 <p>This page shows the shortest path from a raw dataset to document retrieval with the current API.</p>
+<p>GFM-RAG provides a <strong>unified graph interface</strong>: if you already have a graph that conforms to the three-file format (<code>nodes.csv</code> / <code>relations.csv</code> / <code>edges.csv</code>), you can <strong>skip the index-building step entirely</strong> and use it directly for retrieval and reasoning — regardless of how the graph was constructed.</p>
+<p>There are two starting points:</p>
+<ul>
+<li><strong>Path A — Start from raw documents</strong> (steps 1–3 below): provide <code>raw/documents.json</code> and let <code>GFMRetriever.from_index(...)</code> build the graph automatically.</li>
+<li><strong>Path B — Bring your own graph</strong> (step 1b below): place pre-built graph files under <code>processed/stage1/</code> and <code>GFMRetriever.from_index(...)</code> will load them directly without rebuilding.</li>
+</ul>
+<p>See <a href="../../workflow/data_format/">Data Format</a> for the full schema of both paths.</p>
+<hr />
+<h2 id="path-a-start-from-raw-documents">Path A: Start From Raw Documents<a class="headerlink" href="#path-a-start-from-raw-documents" title="Permanent link">&para;</a></h2>
 <h2 id="1-create-a-minimal-dataset">1. Create A Minimal Dataset<a class="headerlink" href="#1-create-a-minimal-dataset" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><span class="filename">Text Only</span><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><a href="#__codelineno-0-1"><span class="linenos" data-linenos="1 "></span></a>data/
 <a id="__codelineno-0-2" name="__codelineno-0-2"></a><a href="#__codelineno-0-2"><span class="linenos" data-linenos="2 "></span></a>└── toy_raw/
@@ -1100,6 +1193,63 @@
 <li><code>el_model: colbert_el_model</code></li>
 </ul>
 <p>The default NER and OpenIE path uses API-backed components, so make sure the required credentials and services are available before running the example.</p>
+<hr />
+<h2 id="path-b-bring-your-own-graph">Path B: Bring Your Own Graph<a class="headerlink" href="#path-b-bring-your-own-graph" title="Permanent link">&para;</a></h2>
+<p>If you already have a graph — for example, an existing Knowledge Graph, a graph produced by another pipeline, or a graph you built manually — you can use it directly <strong>without running the index-building step</strong>, as long as it conforms to the GFM-RAG graph format.</p>
+<h3 id="1-place-pre-built-graph-files">1. Place Pre-built Graph Files<a class="headerlink" href="#1-place-pre-built-graph-files" title="Permanent link">&para;</a></h3>
+<p>Create the following directory structure and populate it with your graph files:</p>
+<div class="language-text highlight"><span class="filename">Text Only</span><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1"></a><a href="#__codelineno-5-1"><span class="linenos" data-linenos="1 "></span></a>data/
+<a id="__codelineno-5-2" name="__codelineno-5-2"></a><a href="#__codelineno-5-2"><span class="linenos" data-linenos="2 "></span></a>└── my_dataset/
+<a id="__codelineno-5-3" name="__codelineno-5-3"></a><a href="#__codelineno-5-3"><span class="linenos" data-linenos="3 "></span></a>    └── processed/
+<a id="__codelineno-5-4" name="__codelineno-5-4"></a><a href="#__codelineno-5-4"><span class="linenos" data-linenos="4 "></span></a>        └── stage1/
+<a id="__codelineno-5-5" name="__codelineno-5-5"></a><a href="#__codelineno-5-5"><span class="linenos" data-linenos="5 "></span></a>            ├── nodes.csv
+<a id="__codelineno-5-6" name="__codelineno-5-6"></a><a href="#__codelineno-5-6"><span class="linenos" data-linenos="6 "></span></a>            ├── relations.csv
+<a id="__codelineno-5-7" name="__codelineno-5-7"></a><a href="#__codelineno-5-7"><span class="linenos" data-linenos="7 "></span></a>            ├── edges.csv
+<a id="__codelineno-5-8" name="__codelineno-5-8"></a><a href="#__codelineno-5-8"><span class="linenos" data-linenos="8 "></span></a>            └── test.json   (optional)
+</code></pre></div>
+<p>The three CSV files define the graph:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>nodes.csv</code></td>
+<td>Node name, type (<code>entity</code> / <code>document</code> / <code>summary</code>), and optional attributes</td>
+</tr>
+<tr>
+<td><code>relations.csv</code></td>
+<td>Relation name and optional attributes</td>
+</tr>
+<tr>
+<td><code>edges.csv</code></td>
+<td>Edges as <code>(source, relation, target)</code> triples with optional attributes</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../../workflow/data_format/">Data Format</a> for the full schema and examples.</p>
+<h3 id="2-initialize-gfmretriever-and-retrieve">2. Initialize <code>GFMRetriever</code> and Retrieve<a class="headerlink" href="#2-initialize-gfmretriever-and-retrieve" title="Permanent link">&para;</a></h3>
+<p><code>GFMRetriever.from_index(...)</code> detects that <code>processed/stage1/</code> already exists and loads the graph directly — no rebuild occurs.</p>
+<div class="language-python highlight"><span class="filename">Python</span><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1"></a><a href="#__codelineno-6-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="kn">from</span><span class="w"> </span><span class="nn">gfmrag</span><span class="w"> </span><span class="kn">import</span> <span class="n">GFMRetriever</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2"></a><a href="#__codelineno-6-2"><span class="linenos" data-linenos=" 2 "></span></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3"></a><a href="#__codelineno-6-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="n">retriever</span> <span class="o">=</span> <span class="n">GFMRetriever</span><span class="o">.</span><span class="n">from_index</span><span class="p">(</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4"></a><a href="#__codelineno-6-4"><span class="linenos" data-linenos=" 4 "></span></a>    <span class="n">data_dir</span><span class="o">=</span><span class="s2">&quot;./data&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5"></a><a href="#__codelineno-6-5"><span class="linenos" data-linenos=" 5 "></span></a>    <span class="n">data_name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6"></a><a href="#__codelineno-6-6"><span class="linenos" data-linenos=" 6 "></span></a>    <span class="n">model_path</span><span class="o">=</span><span class="s2">&quot;rmanluo/G-reasoner-34M&quot;</span><span class="p">,</span>  <span class="c1"># or rmanluo/GFM-RAG-8M</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7"></a><a href="#__codelineno-6-7"><span class="linenos" data-linenos=" 7 "></span></a><span class="p">)</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8"></a><a href="#__codelineno-6-8"><span class="linenos" data-linenos=" 8 "></span></a>
+<a id="__codelineno-6-9" name="__codelineno-6-9"></a><a href="#__codelineno-6-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="n">results</span> <span class="o">=</span> <span class="n">retriever</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">&quot;Your query here&quot;</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10"></a><a href="#__codelineno-6-10"><span class="linenos" data-linenos="10 "></span></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11"></a><a href="#__codelineno-6-11"><span class="linenos" data-linenos="11 "></span></a><span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;document&quot;</span><span class="p">]:</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12"></a><a href="#__codelineno-6-12"><span class="linenos" data-linenos="12 "></span></a>    <span class="nb">print</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">])</span>
+</code></pre></div>
+<blockquote>
+<p><strong>Note:</strong> When using a pre-built graph you do not need to pass <code>ner_model</code>, <code>el_model</code>, or <code>graph_constructor</code> — those are only required when building the graph from raw documents.</p>
+</blockquote>
+<hr />
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Read <a href="../../workflow/data_format/">Workflow: Data Format</a> for the full dataset and stage1 schema.</li>
