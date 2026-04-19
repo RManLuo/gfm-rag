@@ -409,7 +409,7 @@ class GraphIndexDataset:
         edges_df["r"] = edges_df["relation"].map(rel2id)
 
         # Filter out rows with missing node or relation IDs
-        valid_edges_df = edges_df.dropna(subset=["u", "v", "r"])
+        valid_edges_df = edges_df.dropna(subset=["u", "v", "r"]).copy()
 
         # Log skipped edges
         skipped_edges = edges_df[edges_df[["u", "v", "r"]].isnull().any(axis=1)]
@@ -696,9 +696,12 @@ class GraphIndexDataset:
 
     def save_config(self) -> None:
         """Save the configuration of the dataset to a JSON file."""
+        text_emb_model_cfgs = OmegaConf.to_container(
+            self.text_emb_model_cfgs, resolve=True
+        )
         config = self.__class__.export_config_dict(
             {
-                "text_emb_model_cfgs": self.text_emb_model_cfgs,
+                "text_emb_model_cfgs": text_emb_model_cfgs,
                 **{
                     key: getattr(self, key, None)
                     for key in self.__class__.FINGER_PRINT_ATTRS

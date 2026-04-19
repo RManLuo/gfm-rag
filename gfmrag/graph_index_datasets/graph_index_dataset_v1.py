@@ -160,7 +160,7 @@ class GraphIndexDatasetV1(GraphIndexDataset):
         edges_df["r"] = edges_df["relation"].map(rel2id)
 
         # Filter out rows with missing node or relation IDs
-        valid_edges_df = edges_df.dropna(subset=["u", "v", "r"])
+        valid_edges_df = edges_df.dropna(subset=["u", "v", "r"]).copy()
 
         # Log skipped edges
         skipped_edges = edges_df[edges_df[["u", "v", "r"]].isnull().any(axis=1)]
