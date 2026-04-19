@@ -1,0 +1,1786 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://rmanluo.github.io/gfm-rag/main/experiment/gfm_rag/">
+      
+      
+        <link rel="prev" href="../overview/">
+      
+      
+        <link rel="next" href="../g_reasoner/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.19">
+    
+    
+      
+        <title>GFM-RAG Reproduction - GFM-RAG</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#gfm-rag-reproduction" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="GFM-RAG" class="md-header__button md-logo" aria-label="GFM-RAG" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            GFM-RAG
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              GFM-RAG Reproduction
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-2.69L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/RManLuo/gfm-rag" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gfm-rag
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../install/" class="md-tabs__link">
+          
+  
+  
+  Installation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/quick_start/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../workflow/data_format/" class="md-tabs__link">
+          
+  
+  
+  Workflow
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../overview/" class="md-tabs__link">
+          
+  
+  
+  Experiment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../config/" class="md-tabs__link">
+          
+  
+  
+  Config
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/graph_indexer/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../DEVELOPING/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="GFM-RAG" class="md-nav__button md-logo" aria-label="GFM-RAG" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+
+    </a>
+    GFM-RAG
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/RManLuo/gfm-rag" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gfm-rag
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../.." class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../install/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../getting_started/quick_start/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../workflow/data_format/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    Workflow
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Experiment
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Experiment
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    GFM-RAG Reproduction
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    GFM-RAG Reproduction
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Goal
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataset-download" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataset Download
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scripts-to-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scripts To Run
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-1-build-graph-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stage 1: Build Graph Index
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stage 1: Build Graph Index">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#index-test-datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Index Test Datasets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-indexing-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default Indexing Components
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-2a-kg-pre-training-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stage 2a: KG Pre-training (Optional)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-2b-supervised-fine-tuning-retrieval-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stage 2b: Supervised Fine-tuning + Retrieval Evaluation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stage 2b: Supervised Fine-tuning + Retrieval Evaluation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fine-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fine-tuning
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieval-evaluation-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retrieval Evaluation Only
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-3a-single-step-qa-reasoning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stage 3a: Single-Step QA Reasoning
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stage 3a: Single-Step QA Reasoning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-dataset-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Per-dataset Commands
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-3b-multi-step-ircot-qa-reasoning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stage 3b: Multi-Step IRCoT QA Reasoning
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stage 3b: Multi-Step IRCoT QA Reasoning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-dataset-commands_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Per-dataset Commands
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#path-interpretation-visualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Path Interpretation / Visualization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expected-outputs-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Expected Outputs Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../g_reasoner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    G-reasoner Reproduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../config/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    Config
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../api/graph_indexer/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../DEVELOPING/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Goal
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataset-download" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataset Download
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scripts-to-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scripts To Run
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-1-build-graph-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stage 1: Build Graph Index
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stage 1: Build Graph Index">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#index-test-datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Index Test Datasets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-indexing-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default Indexing Components
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-2a-kg-pre-training-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stage 2a: KG Pre-training (Optional)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-2b-supervised-fine-tuning-retrieval-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stage 2b: Supervised Fine-tuning + Retrieval Evaluation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stage 2b: Supervised Fine-tuning + Retrieval Evaluation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fine-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fine-tuning
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieval-evaluation-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retrieval Evaluation Only
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-3a-single-step-qa-reasoning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stage 3a: Single-Step QA Reasoning
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stage 3a: Single-Step QA Reasoning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-dataset-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Per-dataset Commands
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-3b-multi-step-ircot-qa-reasoning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stage 3b: Multi-Step IRCoT QA Reasoning
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stage 3b: Multi-Step IRCoT QA Reasoning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-dataset-commands_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Per-dataset Commands
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#path-interpretation-visualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Path Interpretation / Visualization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expected-outputs-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Expected Outputs Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="gfm-rag-reproduction">GFM-RAG Reproduction<a class="headerlink" href="#gfm-rag-reproduction" title="Permanent link">&para;</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Compatibility Notice</p>
+<p>The original GFM-RAG paper results were produced with the <code>v1.0.0</code> codebase. While we have made every effort to maintain backward compatibility, if you need exact reproduction, please use the <a href="https://github.com/RManLuo/gfm-rag/tree/gfm-rag">gfm-rag branch</a>.</p>
+</div>
+<h2 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h2>
+<p>Reproduce the paper results for <a href="https://www.arxiv.org/abs/2502.01113">GFM-RAG</a> using the maintained shell scripts under <code>scripts/gfm-rag/</code>. The workflow consists of three stages: graph indexing, GFM training (pre-training + fine-tuning), and QA evaluation.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Environment setup from <a href="../../install/">Install</a></li>
+<li>OpenAI API key set in the environment (<code>OPENAI_API_KEY</code>) — used by the NER and OpenIE models during indexing</li>
+<li>Datasets placed under <code>data/</code> (see <a href="../../workflow/data_format/">Data Format</a>)</li>
+<li>Sufficient GPU memory: Stage 2 scripts default to 8 GPUs</li>
+</ul>
+<h2 id="dataset-download">Dataset Download<a class="headerlink" href="#dataset-download" title="Permanent link">&para;</a></h2>
+<p>Download the testing split and full training data from <a href="https://1drv.ms/f/c/cb4bbdfe5951d1a1/IgDTnyNJiiAPTJKqY1KizEVMAQ1jX5wAf94YMlF-VyLvscI?e=bgp0Yv">OneDrive</a> and place them under the <code>data/</code> directory:</p>
+<div class="admonition note">
+<p class="admonition-title">Dataset Format</p>
+<p>If you are on the <code>v2.0.0</code> branch, you need to download the <code>GFM-RAG_training_new_graph_format.zip</code> file.</p>
+</div>
+<div class="language-text highlight"><span class="filename">Text Only</span><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><a href="#__codelineno-0-1"><span class="linenos" data-linenos=" 1 "></span></a>data/
+<a id="__codelineno-0-2" name="__codelineno-0-2"></a><a href="#__codelineno-0-2"><span class="linenos" data-linenos=" 2 "></span></a>├── 2wikimultihopqa_test/
+<a id="__codelineno-0-3" name="__codelineno-0-3"></a><a href="#__codelineno-0-3"><span class="linenos" data-linenos=" 3 "></span></a>│   ├── processed/stage1/    # Pre-built graph index (provided)
+<a id="__codelineno-0-4" name="__codelineno-0-4"></a><a href="#__codelineno-0-4"><span class="linenos" data-linenos=" 4 "></span></a>│   └── raw/
+<a id="__codelineno-0-5" name="__codelineno-0-5"></a><a href="#__codelineno-0-5"><span class="linenos" data-linenos=" 5 "></span></a>├── hotpotqa_test/
+<a id="__codelineno-0-6" name="__codelineno-0-6"></a><a href="#__codelineno-0-6"><span class="linenos" data-linenos=" 6 "></span></a>│   ├── processed/stage1/    # Pre-built graph index (provided)
+<a id="__codelineno-0-7" name="__codelineno-0-7"></a><a href="#__codelineno-0-7"><span class="linenos" data-linenos=" 7 "></span></a>│   └── raw/
+<a id="__codelineno-0-8" name="__codelineno-0-8"></a><a href="#__codelineno-0-8"><span class="linenos" data-linenos=" 8 "></span></a>├── hotpotqa_train_example/
+<a id="__codelineno-0-9" name="__codelineno-0-9"></a><a href="#__codelineno-0-9"><span class="linenos" data-linenos=" 9 "></span></a>│   ├── processed/stage1/
+<a id="__codelineno-0-10" name="__codelineno-0-10"></a><a href="#__codelineno-0-10"><span class="linenos" data-linenos="10 "></span></a>│   └── raw/
+<a id="__codelineno-0-11" name="__codelineno-0-11"></a><a href="#__codelineno-0-11"><span class="linenos" data-linenos="11 "></span></a>└── musique_test/
+<a id="__codelineno-0-12" name="__codelineno-0-12"></a><a href="#__codelineno-0-12"><span class="linenos" data-linenos="12 "></span></a>    ├── processed/stage1/    # Pre-built graph index (provided)
+<a id="__codelineno-0-13" name="__codelineno-0-13"></a><a href="#__codelineno-0-13"><span class="linenos" data-linenos="13 "></span></a>    └── raw/
+</code></pre></div>
+<blockquote>
+<p>The <code>processed/stage1/</code> directories for the test sets are pre-built and provided in the download. You only need to run Stage 1 if you are indexing training data or a custom dataset.</p>
+</blockquote>
+<h2 id="scripts-to-run">Scripts To Run<a class="headerlink" href="#scripts-to-run" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Script</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>scripts/gfm-rag/stage1_data_index.sh</code></td>
+<td>Build graph index from raw documents</td>
+</tr>
+<tr>
+<td>2a</td>
+<td><code>scripts/gfm-rag/stage2_pretrain.sh</code></td>
+<td>Unsupervised KG pre-training (optional)</td>
+</tr>
+<tr>
+<td>2b</td>
+<td><code>scripts/gfm-rag/stage2_finetune.sh</code></td>
+<td>Supervised fine-tuning + retrieval evaluation</td>
+</tr>
+<tr>
+<td>3a</td>
+<td><code>scripts/gfm-rag/stage3_qa_inference.sh</code></td>
+<td>Batch QA from saved retrieval results</td>
+</tr>
+<tr>
+<td>3b</td>
+<td><code>scripts/gfm-rag/stage3_qa_ircot_inference.sh</code></td>
+<td>Multi-step IRCoT QA reasoning</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="stage-1-build-graph-index">Stage 1: Build Graph Index<a class="headerlink" href="#stage-1-build-graph-index" title="Permanent link">&para;</a></h2>
+<p>This stage extracts entities and relations from raw documents using LLM-based NER and OpenIE, then constructs a knowledge graph.</p>
+<p><strong>Output</strong>: <code>data/&lt;data_name&gt;/processed/stage1/</code> containing <code>nodes.csv</code>, <code>relations.csv</code>, <code>edges.csv</code>, <code>train.json</code>, <code>test.json</code>.</p>
+<h3 id="index-test-datasets">Index Test Datasets<a class="headerlink" href="#index-test-datasets" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><a href="#__codelineno-1-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/gfm-rag/stage1_data_index.sh
+</code></pre></div>
+<p>The script runs indexing for all three test sets and all training data shards (20 shards × 3 datasets):</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><a href="#__codelineno-2-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="c1"># Test datasets (single GPU, no training data needed)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2"></a><a href="#__codelineno-2-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">N_GPU</span><span class="o">=</span><span class="m">1</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3"></a><a href="#__codelineno-2-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4"></a><a href="#__codelineno-2-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">DATA_NAME_LIST</span><span class="o">=</span><span class="s2">&quot;hotpotqa_test 2wikimultihopqa_test musique_test&quot;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5"></a><a href="#__codelineno-2-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="k">for</span><span class="w"> </span>DATA_NAME<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="si">${</span><span class="nv">DATA_NAME_LIST</span><span class="si">}</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6"></a><a href="#__codelineno-2-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="w">   </span><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.index_dataset<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7"></a><a href="#__codelineno-2-7"><span class="linenos" data-linenos=" 7 "></span></a><span class="w">   </span>dataset.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8"></a><a href="#__codelineno-2-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="w">   </span>dataset.data_name<span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9"></a><a href="#__codelineno-2-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="k">done</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10"></a><a href="#__codelineno-2-10"><span class="linenos" data-linenos="10 "></span></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11"></a><a href="#__codelineno-2-11"><span class="linenos" data-linenos="11 "></span></a><span class="c1"># Training data shards (hotpotqa_train0 … hotpotqa_train19, etc.)</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12"></a><a href="#__codelineno-2-12"><span class="linenos" data-linenos="12 "></span></a><span class="nv">DATA_NAME_LIST</span><span class="o">=</span><span class="s2">&quot;hotpotqa_train musique_train 2wikimultihopqa_train&quot;</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13"></a><a href="#__codelineno-2-13"><span class="linenos" data-linenos="13 "></span></a><span class="nv">START_N</span><span class="o">=</span><span class="m">0</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14"></a><a href="#__codelineno-2-14"><span class="linenos" data-linenos="14 "></span></a><span class="nv">END_N</span><span class="o">=</span><span class="m">19</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15"></a><a href="#__codelineno-2-15"><span class="linenos" data-linenos="15 "></span></a><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>seq<span class="w"> </span><span class="si">${</span><span class="nv">START_N</span><span class="si">}</span><span class="w"> </span><span class="si">${</span><span class="nv">END_N</span><span class="si">}</span><span class="k">)</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16"></a><a href="#__codelineno-2-16"><span class="linenos" data-linenos="16 "></span></a><span class="w">   </span><span class="k">for</span><span class="w"> </span>DATA_NAME<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="si">${</span><span class="nv">DATA_NAME_LIST</span><span class="si">}</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17"></a><a href="#__codelineno-2-17"><span class="linenos" data-linenos="17 "></span></a><span class="w">      </span><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.index_dataset<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18"></a><a href="#__codelineno-2-18"><span class="linenos" data-linenos="18 "></span></a><span class="w">      </span>dataset.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19"></a><a href="#__codelineno-2-19"><span class="linenos" data-linenos="19 "></span></a><span class="w">      </span>dataset.data_name<span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}${</span><span class="nv">i</span><span class="si">}</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20"></a><a href="#__codelineno-2-20"><span class="linenos" data-linenos="20 "></span></a><span class="w">   </span><span class="k">done</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21"></a><a href="#__codelineno-2-21"><span class="linenos" data-linenos="21 "></span></a><span class="k">done</span>
+</code></pre></div>
+<blockquote>
+<p>The pre-built test set indexes are included in the download — you can skip indexing test sets and go directly to Stage 2 fine-tuning or Stage 3 evaluation.</p>
+</blockquote>
+<h3 id="default-indexing-components">Default Indexing Components<a class="headerlink" href="#default-indexing-components" title="Permanent link">&para;</a></h3>
+<p>The default config uses:</p>
+<ul>
+<li><strong>NER</strong>: LLM-based (<code>llm_ner_model</code>, GPT-4o-mini via OpenAI API)</li>
+<li><strong>Entity Linking</strong>: ColBERT with Qdrant vector DB backend (<code>colbert_el_model</code>)</li>
+<li><strong>OpenIE</strong>: LLM-based (<code>llm_openie_model</code>, GPT-4o-mini)</li>
+<li><strong>Graph Constructor</strong>: KG constructor (<code>kg_constructor</code>)</li>
+</ul>
+<p>To override a component:</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><a href="#__codelineno-3-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.index_dataset<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2"></a><a href="#__codelineno-3-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>dataset.root<span class="o">=</span>data<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3"></a><a href="#__codelineno-3-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span>hotpotqa_test<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4"></a><a href="#__codelineno-3-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span><span class="nv">ner_model</span><span class="o">=</span>llm_ner_model<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5"></a><a href="#__codelineno-3-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span><span class="nv">el_model</span><span class="o">=</span>colbert_el_model
+</code></pre></div>
+<hr />
+<h2 id="stage-2a-kg-pre-training-optional">Stage 2a: KG Pre-training (Optional)<a class="headerlink" href="#stage-2a-kg-pre-training-optional" title="Permanent link">&para;</a></h2>
+<p>Unsupervised pre-training on the constructed knowledge graphs. Skip this step if you are loading the released checkpoint (<code>rmanluo/GFM-RAG-8M</code>).</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a><a href="#__codelineno-4-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/gfm-rag/stage2_pretrain.sh
+</code></pre></div>
+<p>Equivalent command (8 GPUs, 1 epoch, 30,000 steps per epoch):</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1"></a><a href="#__codelineno-5-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">N_GPU</span><span class="o">=</span><span class="m">8</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2"></a><a href="#__codelineno-5-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3"></a><a href="#__codelineno-5-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="c1"># Builds a comma-separated list: hotpotqa_train0,...,2wikimultihopqa_train19</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4"></a><a href="#__codelineno-5-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>torchrun<span class="w"> </span>--nproc-per-node<span class="o">=</span><span class="si">${</span><span class="nv">N_GPU</span><span class="si">}</span><span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.kgc_training<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5"></a><a href="#__codelineno-5-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="w">    </span>datasets.train_names<span class="o">=[</span><span class="si">${</span><span class="nv">TRAIN_DATA_NAME_LIST</span><span class="si">}</span><span class="o">]</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6"></a><a href="#__codelineno-5-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="w">    </span>datasets.cfgs.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7"></a><a href="#__codelineno-5-7"><span class="linenos" data-linenos=" 7 "></span></a><span class="w">    </span>trainer.fast_test<span class="o">=</span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8"></a><a href="#__codelineno-5-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="w">    </span>trainer.args.num_epoch<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9"></a><a href="#__codelineno-5-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="w">    </span>trainer.args.max_steps_per_epoch<span class="o">=</span><span class="m">30000</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10"></a><a href="#__codelineno-5-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">    </span>trainer.args.train_batch_size<span class="o">=</span><span class="m">4</span>
+</code></pre></div>
+<p><strong>Output</strong>: Model checkpoint under <code>outputs/kg_pretrain/&lt;date&gt;/&lt;time&gt;/</code>.</p>
+<hr />
+<h2 id="stage-2b-supervised-fine-tuning-retrieval-evaluation">Stage 2b: Supervised Fine-tuning + Retrieval Evaluation<a class="headerlink" href="#stage-2b-supervised-fine-tuning-retrieval-evaluation" title="Permanent link">&para;</a></h2>
+<h3 id="fine-tuning">Fine-tuning<a class="headerlink" href="#fine-tuning" title="Permanent link">&para;</a></h3>
+<p>Fine-tune on the QA datasets. This is required to reproduce the reported retrieval numbers.</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1"></a><a href="#__codelineno-6-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/gfm-rag/stage2_finetune.sh
+</code></pre></div>
+<p>Equivalent command (8 GPUs, 15 epochs):</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1"></a><a href="#__codelineno-7-1"><span class="linenos" data-linenos="1 "></span></a><span class="nv">N_GPU</span><span class="o">=</span><span class="m">8</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2"></a><a href="#__codelineno-7-2"><span class="linenos" data-linenos="2 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3"></a><a href="#__codelineno-7-3"><span class="linenos" data-linenos="3 "></span></a><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>torchrun<span class="w"> </span>--nproc_per_node<span class="o">=</span><span class="si">${</span><span class="nv">N_GPU</span><span class="si">}</span><span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.sft_training<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4"></a><a href="#__codelineno-7-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>datasets.train_names<span class="o">=[</span><span class="si">${</span><span class="nv">TRAIN_DATA_NAME_LIST</span><span class="si">}</span><span class="o">]</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5"></a><a href="#__codelineno-7-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span>datasets.cfgs.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6"></a><a href="#__codelineno-7-6"><span class="linenos" data-linenos="6 "></span></a><span class="w">    </span>trainer.args.num_epoch<span class="o">=</span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7"></a><a href="#__codelineno-7-7"><span class="linenos" data-linenos="7 "></span></a><span class="w">    </span>trainer.args.train_batch_size<span class="o">=</span><span class="m">4</span>
+</code></pre></div>
+<p><strong>Output</strong>: Checkpoint and per-dataset retrieval predictions under <code>outputs/qa_finetune/&lt;date&gt;/&lt;time&gt;/</code>.</p>
+<h3 id="retrieval-evaluation-only">Retrieval Evaluation Only<a class="headerlink" href="#retrieval-evaluation-only" title="Permanent link">&para;</a></h3>
+<p>To evaluate a pre-trained checkpoint (e.g., <code>rmanluo/GFM-RAG-8M</code>) without training:</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1"></a><a href="#__codelineno-8-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">N_GPU</span><span class="o">=</span><span class="m">4</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2"></a><a href="#__codelineno-8-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3"></a><a href="#__codelineno-8-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">CHECKPOINT</span><span class="o">=</span><span class="s2">&quot;rmanluo/GFM-RAG-8M&quot;</span><span class="w">  </span><span class="c1"># or path to local checkpoint</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4"></a><a href="#__codelineno-8-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>torchrun<span class="w"> </span>--nproc_per_node<span class="o">=</span><span class="si">${</span><span class="nv">N_GPU</span><span class="si">}</span><span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.sft_training<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5"></a><a href="#__codelineno-8-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="w">    </span><span class="nv">load_model_from_pretrained</span><span class="o">=</span><span class="si">${</span><span class="nv">CHECKPOINT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6"></a><a href="#__codelineno-8-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="w">    </span>datasets.cfgs.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7"></a><a href="#__codelineno-8-7"><span class="linenos" data-linenos=" 7 "></span></a><span class="w">    </span>datasets.train_names<span class="o">=[]</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8"></a><a href="#__codelineno-8-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="w">    </span>+trainer.args.eval_batch_size<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9"></a><a href="#__codelineno-8-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="w">    </span>trainer.args.do_train<span class="o">=</span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10"></a><a href="#__codelineno-8-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">    </span>trainer.args.do_eval<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11"></a><a href="#__codelineno-8-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">    </span>trainer.args.do_predict<span class="o">=</span><span class="nb">true</span>
+</code></pre></div>
+<p><strong>Output</strong>: <code>predictions_&lt;data_name&gt;.json</code> files under <code>outputs/qa_finetune/&lt;date&gt;/&lt;time&gt;/</code>.</p>
+<hr />
+<h2 id="stage-3a-single-step-qa-reasoning">Stage 3a: Single-Step QA Reasoning<a class="headerlink" href="#stage-3a-single-step-qa-reasoning" title="Permanent link">&para;</a></h2>
+<p>Reads the retrieval predictions from Stage 2 and generates answers with an LLM in one shot.</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1"></a><a href="#__codelineno-9-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/gfm-rag/stage3_qa_inference.sh
+</code></pre></div>
+<p>The script expects two paths produced by Stage 2:</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1"></a><a href="#__codelineno-10-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">DATA_NAME</span><span class="o">=</span><span class="s2">&quot;hotpotqa&quot;</span><span class="w">   </span><span class="c1"># hotpotqa | musique | 2wikimultihopqa</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2"></a><a href="#__codelineno-10-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">LLM</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3"></a><a href="#__codelineno-10-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">RETRIEVED_RESULT_PATH</span><span class="o">=</span><span class="s2">&quot;outputs/qa_finetune/latest/predictions_</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="s2">_test.json&quot;</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4"></a><a href="#__codelineno-10-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">NODE_PATH</span><span class="o">=</span><span class="s2">&quot;data/</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="s2">_test/processed/stage1/nodes.csv&quot;</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5"></a><a href="#__codelineno-10-5"><span class="linenos" data-linenos=" 5 "></span></a>
+<a id="__codelineno-10-6" name="__codelineno-10-6"></a><a href="#__codelineno-10-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7"></a><a href="#__codelineno-10-7"><span class="linenos" data-linenos=" 7 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8"></a><a href="#__codelineno-10-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="w">    </span><span class="nv">qa_evaluator</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9"></a><a href="#__codelineno-10-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="w">    </span>llm.model_name_or_path<span class="o">=</span><span class="si">${</span><span class="nv">LLM</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10"></a><a href="#__codelineno-10-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">    </span>test.n_threads<span class="o">=</span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11"></a><a href="#__codelineno-10-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">    </span>test.top_k<span class="o">=</span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12"></a><a href="#__codelineno-10-12"><span class="linenos" data-linenos="12 "></span></a><span class="w">    </span>test.target_types<span class="o">=[</span>document<span class="o">]</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13"></a><a href="#__codelineno-10-13"><span class="linenos" data-linenos="13 "></span></a><span class="w">    </span>test.retrieved_result_path<span class="o">=</span><span class="si">${</span><span class="nv">RETRIEVED_RESULT_PATH</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14"></a><a href="#__codelineno-10-14"><span class="linenos" data-linenos="14 "></span></a><span class="w">    </span>test.node_path<span class="o">=</span><span class="si">${</span><span class="nv">NODE_PATH</span><span class="si">}</span>
+</code></pre></div>
+<h3 id="per-dataset-commands">Per-dataset Commands<a class="headerlink" href="#per-dataset-commands" title="Permanent link">&para;</a></h3>
+<p><strong>HotpotQA</strong>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1"></a><a href="#__codelineno-11-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2"></a><a href="#__codelineno-11-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>hotpotqa<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>hotpotqa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3"></a><a href="#__codelineno-11-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span>test.retrieved_result_path<span class="o">=</span>outputs/qa_finetune/latest/predictions_hotpotqa_test.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4"></a><a href="#__codelineno-11-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>test.node_path<span class="o">=</span>data/hotpotqa_test/processed/stage1/nodes.csv
+</code></pre></div></p>
+<p><strong>MuSiQue</strong>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1"></a><a href="#__codelineno-12-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2"></a><a href="#__codelineno-12-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>musique<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>musique<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3"></a><a href="#__codelineno-12-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span>test.retrieved_result_path<span class="o">=</span>outputs/qa_finetune/latest/predictions_musique_test.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4"></a><a href="#__codelineno-12-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>test.node_path<span class="o">=</span>data/musique_test/processed/stage1/nodes.csv
+</code></pre></div></p>
+<p><strong>2WikiMultihopQA</strong>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1"></a><a href="#__codelineno-13-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2"></a><a href="#__codelineno-13-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>2wikimultihopqa<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>2wikimultihopqa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3"></a><a href="#__codelineno-13-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span>test.retrieved_result_path<span class="o">=</span>outputs/qa_finetune/latest/predictions_2wikimultihopqa_test.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4"></a><a href="#__codelineno-13-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>test.node_path<span class="o">=</span>data/2wikimultihopqa_test/processed/stage1/nodes.csv
+</code></pre></div></p>
+<p><strong>Output</strong>: <code>outputs/qa_inference/&lt;date&gt;/&lt;time&gt;/prediction.jsonl</code></p>
+<hr />
+<h2 id="stage-3b-multi-step-ircot-qa-reasoning">Stage 3b: Multi-Step IRCoT QA Reasoning<a class="headerlink" href="#stage-3b-multi-step-ircot-qa-reasoning" title="Permanent link">&para;</a></h2>
+<p>Runs iterative retrieval and reasoning (IRCoT) using the GFM-RAG retriever and an LLM agent. Unlike Stage 3a, this stage performs retrieval online and does not require pre-computed retrieval results.</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1"></a><a href="#__codelineno-14-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/gfm-rag/stage3_qa_ircot_inference.sh
+</code></pre></div>
+<p>Equivalent command:</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1"></a><a href="#__codelineno-15-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">DATA_NAME</span><span class="o">=</span><span class="s2">&quot;hotpotqa&quot;</span><span class="w">   </span><span class="c1"># hotpotqa | musique | 2wikimultihopqa</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2"></a><a href="#__codelineno-15-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">LLM</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3"></a><a href="#__codelineno-15-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">MODEL_PATH</span><span class="o">=</span><span class="s2">&quot;rmanluo/GFM-RAG-8M&quot;</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4"></a><a href="#__codelineno-15-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">MAX_STEPS</span><span class="o">=</span><span class="m">3</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5"></a><a href="#__codelineno-15-5"><span class="linenos" data-linenos=" 5 "></span></a>
+<a id="__codelineno-15-6" name="__codelineno-15-6"></a><a href="#__codelineno-15-6"><span class="linenos" data-linenos=" 6 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa_ircot_inference<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7"></a><a href="#__codelineno-15-7"><span class="linenos" data-linenos=" 7 "></span></a><span class="w">    </span>dataset.root<span class="o">=</span>data<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8"></a><a href="#__codelineno-15-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span>_test<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9"></a><a href="#__codelineno-15-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="w">    </span>graph_retriever.model_path<span class="o">=</span><span class="si">${</span><span class="nv">MODEL_PATH</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10"></a><a href="#__codelineno-15-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">    </span>llm.model_name_or_path<span class="o">=</span><span class="si">${</span><span class="nv">LLM</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11"></a><a href="#__codelineno-15-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12"></a><a href="#__codelineno-15-12"><span class="linenos" data-linenos="12 "></span></a><span class="w">    </span><span class="nv">qa_evaluator</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13"></a><a href="#__codelineno-15-13"><span class="linenos" data-linenos="13 "></span></a><span class="w">    </span><span class="nv">agent_prompt</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span>_ircot<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14"></a><a href="#__codelineno-15-14"><span class="linenos" data-linenos="14 "></span></a><span class="w">    </span>test.max_steps<span class="o">=</span><span class="si">${</span><span class="nv">MAX_STEPS</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15"></a><a href="#__codelineno-15-15"><span class="linenos" data-linenos="15 "></span></a><span class="w">    </span>test.max_test_samples<span class="o">=</span>-1
+</code></pre></div>
+<h3 id="per-dataset-commands_1">Per-dataset Commands<a class="headerlink" href="#per-dataset-commands_1" title="Permanent link">&para;</a></h3>
+<p><strong>HotpotQA</strong> (2 reasoning steps)
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1"></a><a href="#__codelineno-16-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa_ircot_inference<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2"></a><a href="#__codelineno-16-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>hotpotqa<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>hotpotqa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3"></a><a href="#__codelineno-16-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span><span class="nv">agent_prompt</span><span class="o">=</span>hotpotqa_ircot<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4"></a><a href="#__codelineno-16-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span>hotpotqa_test<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5"></a><a href="#__codelineno-16-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span>test.max_steps<span class="o">=</span><span class="m">2</span>
+</code></pre></div></p>
+<p><strong>MuSiQue</strong> (4 reasoning steps)
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1"></a><a href="#__codelineno-17-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa_ircot_inference<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2"></a><a href="#__codelineno-17-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>musique<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>musique<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3"></a><a href="#__codelineno-17-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span><span class="nv">agent_prompt</span><span class="o">=</span>musique_ircot<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4"></a><a href="#__codelineno-17-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span>musique_test<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5"></a><a href="#__codelineno-17-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span>test.max_steps<span class="o">=</span><span class="m">4</span>
+</code></pre></div></p>
+<p><strong>2WikiMultihopQA</strong> (2 reasoning steps)
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1"></a><a href="#__codelineno-18-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa_ircot_inference<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2"></a><a href="#__codelineno-18-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>2wikimultihopqa<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>2wikimultihopqa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3"></a><a href="#__codelineno-18-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span><span class="nv">agent_prompt</span><span class="o">=</span>2wikimultihopqa_ircot<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4"></a><a href="#__codelineno-18-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span>2wikimultihopqa_test<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5"></a><a href="#__codelineno-18-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span>test.max_steps<span class="o">=</span><span class="m">2</span>
+</code></pre></div></p>
+<p><strong>Output</strong>: <code>outputs/qa_agent_inference/&lt;data_name&gt;/&lt;date&gt;/&lt;time&gt;/prediction.jsonl</code></p>
+<hr />
+<h2 id="path-interpretation-visualization">Path Interpretation / Visualization<a class="headerlink" href="#path-interpretation-visualization" title="Permanent link">&para;</a></h2>
+<p>Visualize the reasoning paths found by the GFM retriever over the knowledge graph:</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1"></a><a href="#__codelineno-19-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.experiments.visualize_path<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2"></a><a href="#__codelineno-19-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span>hotpotqa_test
+</code></pre></div>
+<hr />
+<h2 id="expected-outputs-summary">Expected Outputs Summary<a class="headerlink" href="#expected-outputs-summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Output Location</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stage 1</td>
+<td><code>data/&lt;data_name&gt;/processed/stage1/</code></td>
+<td><code>nodes.csv</code>, <code>relations.csv</code>, <code>edges.csv</code>, <code>train.json</code>, <code>test.json</code></td>
+</tr>
+<tr>
+<td>Stage 2 (train)</td>
+<td><code>outputs/qa_finetune/&lt;date&gt;/&lt;time&gt;/</code></td>
+<td>Model checkpoints, training logs</td>
+</tr>
+<tr>
+<td>Stage 2 (eval)</td>
+<td><code>outputs/qa_finetune/&lt;date&gt;/&lt;time&gt;/</code></td>
+<td><code>predictions_&lt;data_name&gt;.json</code> per dataset</td>
+</tr>
+<tr>
+<td>Stage 3a</td>
+<td><code>outputs/qa_inference/&lt;date&gt;/&lt;time&gt;/</code></td>
+<td><code>prediction.jsonl</code> with answers and scores</td>
+</tr>
+<tr>
+<td>Stage 3b</td>
+<td><code>outputs/qa_agent_inference/&lt;data_name&gt;/&lt;date&gt;/&lt;time&gt;/</code></td>
+<td><code>prediction.jsonl</code> with answers and scores</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Pre-built indexes</strong>: The test set <code>processed/stage1/</code> directories are included in the provided download. You do not need to run Stage 1 for test sets.</li>
+<li><strong>Released checkpoint</strong>: <code>rmanluo/GFM-RAG-8M</code> can be loaded directly for retrieval evaluation and IRCoT inference, skipping Stage 2 training.</li>
+<li><strong>Stage 2 produces Stage 3a inputs</strong>: The QA script requires <code>predictions_&lt;data_name&gt;.json</code> from Stage 2 and a matching <code>nodes.csv</code> from <code>processed/stage1/</code>. The path <code>outputs/qa_finetune/latest/</code> is a symlink to the most recent run.</li>
+<li><strong>HYDRA_FULL_ERROR=1</strong>: Set this variable to get full Python tracebacks instead of truncated Hydra error messages, which is useful for debugging.</li>
+<li><strong>Multi-GPU training</strong>: Stage 2 scripts use <code>torchrun</code>. Adjust <code>--nproc_per_node</code> to match your GPU count. Stage 3 scripts use a single process.</li>
+<li><strong>LLM API costs</strong>: Stage 1 and Stage 3 call the OpenAI API (GPT-4o-mini by default). Set <code>llm.model_name_or_path</code> to change the model.</li>
+<li>For general usage outside these reproduction scripts, see the <a href="../../workflow/data_format/">Workflow</a> pages.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../overview/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Overview
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../g_reasoner/" class="md-footer__link md-footer__link--next" aria-label="Next: G-reasoner Reproduction">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                G-reasoner Reproduction
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tabs", "navigation.tracking", "navigation.sections", "navigation.expand", "navigation.prune", "navigation.path", "navigation.tabs.sticky", "toc.follow", "navigation.top", "search.suggest", "search.highlight", "search.share", "navigation.footer", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
