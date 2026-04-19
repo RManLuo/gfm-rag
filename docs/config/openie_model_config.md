@@ -1,3 +1,5 @@
+# OpenIE Model Configuration
+
 ## LLM OpenIE Model Configuration
 
 An example of a LLM OpenIE model configuration file is shown below:

@@ -15,31 +15,15 @@ HF_TOKEN = os.getenv("HF_TOKEN")
 
 
 class HfCausalModel(BaseLanguageModel):
-    """A class for handling Hugging Face causal language models with various configurations.
-
-    This class provides functionality to load and use Hugging Face's causal language models
-    with different precision types, quantization options, and attention implementations.
+    """Hugging Face causal language-model wrapper.
 
     Args:
-        model_name_or_path : str
-            The name or path of the pre-trained model to load
-        maximun_token : int, optional
-            Maximum number of tokens for the model input, by default 4096
-        max_new_tokens : int, optional
-            Maximum number of new tokens to generate, by default 1024
-        dtype : str, optional
-            Data type for model computation ('fp32', 'fp16', or 'bf16'), by default 'bf16'
-        quant : str or None, optional
-            Quantization option (None, '4bit', or '8bit'), by default None
-        attn_implementation : str, optional
-            Attention implementation method ('eager', 'sdpa', or 'flash_attention_2'),
-            by default 'flash_attention_2'
-
-    Methods:
-        token_len(text: str) -> int
-            Returns the number of tokens in the input text
-        generate_sentence(llm_input: Union[str, list], system_input: str = "") -> Union[str, Exception]
-            Generates text based on the input prompt or message list
+        model_name_or_path: Pretrained model name or local path.
+        maximun_token: Maximum number of input tokens.
+        max_new_tokens: Maximum number of generated tokens.
+        dtype: Runtime dtype name.
+        quant: Optional quantization mode.
+        attn_implementation: Attention backend name.
     """
 
     DTYPE = {"fp32": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}
@@ -88,31 +72,14 @@ class HfCausalModel(BaseLanguageModel):
     def generate_sentence(
         self, llm_input: str | list, system_input: str = ""
     ) -> str | Exception:
-        """
-        Generate sentence by using a Language Model.
-
-        This method processes input (either a string or a list of messages) and generates text using the configured language model.
-        If a system prompt is provided along with a string input, it will be included in the message structure.
+        """Generate text from a prompt string or a chat message list.
 
         Args:
-            llm_input (Union[str, list]): Input for the language model. Can be either a string containing the prompt,
-                or a list of message dictionaries with 'role' and 'content' keys.
-            system_input (str, optional): System prompt to be prepended to the input. Only used when llm_input is a string.
-                Defaults to empty string.
+            llm_input: Prompt string or chat message list.
+            system_input: Optional system prompt used with string input.
 
-            Union[str, Exception]: Generated text output from the language model if successful,
-                or the Exception object if generation fails.
-
-        Examples:
-            >>> # Using string input with system prompt
-            >>> model.generate_sentence("Tell me a joke", system_input="Be funny")
-
-            >>> # Using message list input
-            >>> messages = [
-            ...     {"role": "system", "content": "Be helpful"},
-            ...     {"role": "user", "content": "Tell me a joke"}
-            ... ]
-            >>> model.generate_sentence(messages)
+        Returns:
+            Generated text, or the raised exception instance when generation fails.
         """
         # If the input is a list, it is assumed that the input is a list of messages
         if isinstance(llm_input, list):

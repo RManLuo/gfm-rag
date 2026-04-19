@@ -1,1 +1,0 @@
-::: gfmrag.KGIndexer

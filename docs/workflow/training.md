@@ -1,156 +1,87 @@
-# GFM-RAG Training
+# Training
 
-You can further fine-tune the pre-trained GFM-RAG model on your own dataset to improve the performance of the model on your specific domain.
+This page covers the current supervised training path for graph retrievers.
 
-## Data Preparation
-Please follow the instructions in the [Data Preparation](data_preparation.md) to prepare your dataset in the following structure:
-Make sure to have the `train.json` to perform the fine-tuning.
+## What This Step Does
 
-```
-data_name/
-├── raw/
-│   ├── dataset_corpus.json
-│   ├── train.json
-│   └── test.json # (optional)
-└── processed/
-    └── stage1/
-        ├── kg.txt
-        ├── document2entities.json
-        ├── train.json
-        └── test.json # (optional)
-```
+`gfmrag.workflow.sft_training` trains or evaluates a retriever on graph-index datasets that already have stage1 files and processed QA data. It can also load an existing checkpoint and emit retrieval predictions for downstream QA.
 
-## GFM Fine-tuning
+## When You Need It
 
-During fine-tuning, the GFM model will be trained on the query-documents pairs `train.json` from the labeled dataset to learn complex relationships for retrieval.
+Use this page when you want to:
 
-It can be conducted on your own dataset to improve the performance of the model on your specific domain.
+- fine-tune on your own datasets
+- run retrieval evaluation from a pre-trained checkpoint
+- generate `predictions_<data_name>.json` files for later QA
 
-An example of the training data:
+If you have not prepared the data yet, start with [Data Format](data_format.md) and [Index](index.md).
 
-```json
-[
-	{
-		"id": "5abc553a554299700f9d7871",
-		"question": "Kyle Ezell is a professor at what School of Architecture building at Ohio State?",
-		"answer": "Knowlton Hall",
-		"supporting_facts": [
-			"Knowlton Hall",
-			"Kyle Ezell"
-		],
-		"question_entities": [
-			"kyle ezell",
-			"architectural association school of architecture",
-			"ohio state"
-		],
-		"supporting_entities": [
-			"10 million donation",
-			"2004",
-			"architecture",
-			"austin e  knowlton",
-			"austin e  knowlton school of architecture",
-			"bachelor s in architectural engineering",
-			"city and regional planning",
-			"columbus  ohio  united states",
-			"ives hall",
-			"july 2002",
-			"knowlton hall",
-			"ksa",
-		]
-	},
-    ...
-]
-```
+## Inputs
 
-!!! NOTE
-	We have already released the [pre-trained model checkpoint](https://huggingface.co/rmanluo/GFM-RAG-8M), which can be used for further finetuning. The model will be automatically downloaded by specifying it in the configuration.
-	```yaml
-	checkpoint: rmanluo/GFM-RAG-8M
-	```
+- A dataset root under `datasets.cfgs.root`
+- One or more indexed datasets with `processed/stage1/`
+- Training names in `datasets.train_names`
+- Validation names in `datasets.valid_names`
+- A training config, usually [`gfmrag/workflow/config/gfm_rag/sft_training.yaml`](https://github.com/RManLuo/gfm-rag/blob/main/gfmrag/workflow/config/gfm_rag/sft_training.yaml)
 
-You need to create a configuration file for fine-tuning.
+## Outputs
 
-??? example "gfmrag/workflow/config/stage2_qa_finetune.yaml"
+Hydra writes runs under `outputs/qa_finetune/<date>/<time>/`.
 
-    ```yaml title="gfmrag/workflow/config/stage2_qa_finetune.yaml"
-    --8<-- "gfmrag/workflow/config/stage2_qa_finetune.yaml"
-    ```
+Common outputs include:
 
-Details of the configuration parameters are explained in the [GFM-RAG Fine-tuning Configuration][gfm-rag-fine-tuning-configuration] page.
+- checkpoints managed by the trainer
+- `pretrained/` when `save_pretrained=true`
+- `predictions_<data_name>.json` when `trainer.args.do_predict=true`
 
+## Minimal Example
 
-You can fine-tune the pre-trained GFM-RAG model on your dataset using the following command:
-
-??? example "gfmrag/workflow/stage2_qa_finetune.py"
-
-	<!-- blacken-docs:off -->
-    ```python title="gfmrag/workflow/stage2_qa_finetune.py"
-    --8<-- "gfmrag/workflow/stage2_qa_finetune.py"
-    ```
-	<!-- blacken-docs:on -->
+Single-node fine-tuning:
 
 ```bash
-python -m gfmrag.workflow.stage2_qa_finetune
-# Multi-GPU training
-torchrun --nproc_per_node=4 gfmrag.workflow.stage2_qa_finetune
-# Multi-node Multi-GPU training
-torchrun --nproc_per_node=4 --nnodes=2 gfmrag.workflow.stage2_qa_finetune
+python -m gfmrag.workflow.sft_training \
+  datasets.cfgs.root=./data \
+  datasets.train_names=[hotpotqa_train_example] \
+  datasets.valid_names=[hotpotqa_test]
 ```
 
-You can overwrite the configuration like this:
+Multi-GPU fine-tuning:
 
 ```bash
-python -m gfmrag.workflow.stage2_qa_finetune train.batch_size=4
+torchrun --nproc_per_node=4 -m gfmrag.workflow.sft_training \
+  datasets.cfgs.root=./data \
+  datasets.train_names=[hotpotqa_train0,hotpotqa_train1] \
+  datasets.valid_names=[hotpotqa_test,musique_test,2wikimultihopqa_test]
 ```
 
-## GFM Pre-training
-
-During pre-training, the GFM model will sample triples from the KG-index `kg.txt` to construct synthetic queries and target entities for training.
-
-!!! tip
-	It is only recommended to conduct pre-training when you want to train the model from scratch or when you have a large amount of unlabeled data.
-
-!!! tip
-    It is recommended to conduct [fine-tuning][gfm-fine-tuning] after the pre-training to empower the model with the ability to understand user queries and retrieve relevant documents.
-
-An example of the KG-index:
-
-```txt
-fred gehrke,was,american football player
-fred gehrke,was,executive
-fred gehrke,played for,cleveland   los angeles rams
-```
-
-You need to create a configuration file for pre-training.
-
-??? example "gfmrag/workflow/config/stage2_kg_pretrain.yaml"
-
-    ```yaml title="gfmrag/workflow/config/stage2_kg_pretrain.yaml"
-    --8<-- "gfmrag/workflow/config/stage2_kg_pretrain.yaml"
-    ```
-
-Details of the configuration parameters are explained in the [GFM-RAG Pre-training Config][gfm-rag-pre-training-configuration] page.
-
-You can pre-train the GFM-RAG model on your dataset using the following command:
-
-??? example "gfmrag/workflow/stage2_kg_pretrain.py"
-
-	<!-- blacken-docs:off -->
-    ```python title="gfmrag/workflow/stage2_kg_pretrain.py"
-    --8<--"gfmrag/workflow/stage2_kg_pretrain.py"
-    ```
-	<!-- blacken-docs:on -->
+Retrieval evaluation from a pre-trained checkpoint:
 
 ```bash
-python -m gfmrag.workflow.stage2_kg_pretrain
-# Multi-GPU training
-torchrun --nproc_per_node=4 gfmrag.workflow.stage2_kg_pretrain
-# Multi-node Multi-GPU training
-torchrun --nproc_per_node=4 --nnodes=2 gfmrag.workflow.stage2_kg_pretrain
+torchrun --nproc_per_node=4 -m gfmrag.workflow.sft_training \
+  load_model_from_pretrained=rmanluo/GFM-RAG-8M \
+  datasets.cfgs.root=./data \
+  datasets.train_names=[] \
+  trainer.args.do_train=false \
+  trainer.args.do_eval=true \
+  trainer.args.do_predict=true \
+  +trainer.args.eval_batch_size=1
 ```
 
-You can overwrite the configuration like this:
+## Key Configs
 
-```bash
-python -m gfmrag.workflow.stage2_kg_pretrain train.batch_size=4
-```
+- [`gfmrag/workflow/config/gfm_rag/sft_training.yaml`](https://github.com/RManLuo/gfm-rag/blob/main/gfmrag/workflow/config/gfm_rag/sft_training.yaml)
+- [GFM-RAG Fine-tuning Config](../config/gfmrag_finetune_config.md)
+- [Text Embedding Config](../config/text_embedding_config.md)
+- [Document Ranker Config](../config/doc_ranker_config.md)
+- [Wandb Config](../config/wandb_config.md)
+
+## Common Pitfalls
+
+- `datasets.init_datasets=false` requires `datasets.feat_dim` to be set.
+- `load_model_from_pretrained` overwrites the model configuration with the checkpoint config.
+- Prediction files are only written when `trainer.args.do_predict=true`.
+- The downstream QA script expects both the retrieval output file and the dataset `nodes.csv`.
+
+## Related Legacy Workflows
+
+The repository still contains older documentation pages discussing legacy stage-named training modules. Those are no longer the primary training path and are intentionally not used as the main tutorial flow.

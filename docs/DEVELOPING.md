@@ -1,105 +1,82 @@
 # GFM-RAG Development
 
-# Requirements
+This page is for contributors maintaining the repository and documentation site.
 
-| Name        | Installation                                                 | Purpose                                                                             |
-| ----------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| Python 3.12 | [Download](https://www.python.org/downloads/)                | The library is Python-based.                                                        |
-| Poetry      | [Instructions](https://python-poetry.org/docs/#installation) | Poetry is used for package management and virtualenv management in Python codebases |
+## Requirements
 
-# Getting Started
+| Name | Installation | Purpose |
+| --- | --- | --- |
+| Python 3.12 | <https://www.python.org/downloads/> | Runtime and package development |
+| Poetry | <https://python-poetry.org/docs/#installation> | Dependency management and packaging |
+| CUDA toolkit | NVIDIA or conda packages | Builds the `rspmm` extension and supports GPU workflows |
 
-## Install Dependencies
-```shell
-# install python dependencies
-poetry install
-```
-
-## Install Pre-commit Hooks
-Set up pre-commit hooks for development:
+## Local Setup
 
 ```bash
+poetry install
 pre-commit install
 ```
 
-## CUDA Installation
-GFM-RAG require the `nvcc` compiler to compile the `rspmm` kernel. If you encounter errors related to CUDA, make sure you have the CUDA toolkit installed and the `nvcc` compiler is in your PATH. Meanwhile, make sure your CUDA_HOME variable is set properly to avoid potential compilation errors, e.g.,
+If CUDA is installed manually, make sure `CUDA_HOME` is set:
 
 ```bash
-export CUDA_HOME=/usr/local/cuda-12.4
+export CUDA_HOME=/usr/local/cuda-12.6
 ```
 
-
 ## Repository Structure
-An overview of the repository's top-level folder structure is provided below, detailing the overall design and purpose.
 
-```shell
-gfm_rag/                     # Root directory
-├── docs/                    # Documentation
-|   ├── DEVELOPING.md         # Development guide
-|   |── CHANGELOG.md             # Project changelog
-│   ├── config/             # Configuration documentation
-│   │   ├── kg_index_config.md
-│   │   └── ...
-│   └── workflow/           # Workflow documentation
-│       ├── kg_index.md
-│       ├── training.md
-│       └── ...
-├── gfmrag/                 # Main package
-|   ├── gfmrag_retriever.py # GFM-RAG retriever
-|   ├── kg_indexer.py       # KG-index builder
-|   ├── models.py          # GFM models
-|   ├── losses.py       # Training losses
-|   ├── doc_rankers.py   # Document rankers
-│   ├── datasets/           # Dataset implementations
-│   │   ├── qa_dataset.py
-│   │   └── ...
-│   ├── kg_construction/    # Knowledge graph construction
-│   │   ├── entity_linking_model/ # Entity linking models
-│   │   ├── ner_model/ # Named entity recognition models
-│   │   ├── openie_model/ # OpenIE models
-│   │   ├── kg_constructor.py # KG constructor
-│   │   ├── qa_constructor.py # QA constructor
-│   │   └── utils.py
-│   ├── ultra/             # ultra models
-│   │   ├── models.py
-│   │   ├── layers.py
-│   │   └── ...
-|   ├── workflow/              # Training and inference scripts
-|   │   ├── config/           # Configuration files
-|   │   │   ├── stage1_index_dataset.yaml
-|   │   │   ├── stage2_qa_finetune.yaml
-|   │   │   ├── stage3_qa_inference.yaml
-|   │   │   └── ...
-|   │   ├── stage1_index_dataset.py
-|   │   ├── stage2_qa_finetune.py
-|   │   └── stage3_qa_inference.py
-│   ├── llms/              # Language models
-│   ├── evaluation/         # Evaluator for QA
-│   └── utils/             # Utility functions
-├── tests/                  # Test cases
-├── scripts/                  # Scripts for running experiments
-├── mkdocs.yml           # Documentation configuration
-├── poetry.lock         # Poetry lock file
-└── pyproject.toml      # Project configuration
+```text
+gfm-rag/
+├── docs/
+│   ├── experiment/          # Script-first paper reproduction guides
+│   ├── getting_started/     # Minimal user entrypoints
+│   ├── workflow/            # General user workflow guides
+│   ├── config/              # Configuration reference
+│   ├── api/                 # API reference pages
+│   ├── DEVELOPING.md
+│   └── CHANGELOG.md
+├── gfmrag/
+│   ├── gfmrag_retriever.py
+│   ├── graph_index_construction/
+│   ├── graph_index_datasets/
+│   ├── models/
+│   ├── trainers/
+│   ├── workflow/
+│   │   ├── config/
+│   │   │   ├── gfm_rag/
+│   │   │   └── gfm_reasoner/
+│   │   ├── index_dataset.py
+│   │   ├── sft_training.py
+│   │   ├── qa.py
+│   │   └── qa_ircot_inference.py
+│   ├── evaluation/
+│   ├── llms/
+│   └── utils/
+├── scripts/
+│   ├── gfm-rag/
+│   └── g-reasoner/
+├── tests/
+├── mkdocs.yml
+├── pyproject.toml
+└── poetry.lock
 ```
 
 ## Common Commands
 
-Serve the documentation locally:
+Serve the docs locally:
 
-```shell
+```bash
 mkdocs serve
 ```
 
-Run the pre-commit hooks:
+Run repository checks:
 
-```shell
+```bash
 pre-commit run --all-files
 ```
 
-Build package:
+Build the package:
 
-```shell
+```bash
 poetry build
 ```

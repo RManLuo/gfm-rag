@@ -8,31 +8,7 @@ from gfmrag.models.ultra.variadic import variadic_softmax
 
 
 class BaseLoss(ABC):
-    """Base abstract class for all loss functions.
-
-    This class serves as a template for implementing custom loss functions. All loss
-    functions should inherit from this class and implement the required abstract methods.
-
-    Methods:
-        __init__(*args: Any, **kwargs: Any) -> None
-            Initialize the loss function with given parameters.
-
-        __call__(pred: torch.Tensor, target: torch.Tensor, *args: Any, **kwargs: Any) -> Any
-            Calculate the loss between predicted and target values.
-
-    Args:
-        pred : torch.Tensor
-            The predicted values from the model
-        target : torch.Tensor
-            The ground truth values
-        *args : Any
-            Variable length argument list
-        **kwargs : Any
-            Arbitrary keyword arguments
-
-    Returns:
-        Any: The computed loss value
-    """
+    """Abstract interface for loss functions."""
 
     @abstractmethod
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -118,25 +94,7 @@ class BCELoss(BaseLoss):
 
 
 class ListCELoss(BaseLoss):
-    """Ranking loss for multi-label target lists.
-
-
-    Args:
-        pred (torch.Tensor): Predicted logits tensor of shape (B x N) where B is batch size
-            and N is number of possible labels.
-        target (torch.Tensor): Binary target tensor of shape (B x N) where 1 indicates positive
-            labels and 0 indicates negative labels.
-        *args: Additional positional arguments (unused).
-        **kwargs: Additional keyword arguments (unused).
-
-    Returns:
-        torch.Tensor: Scalar tensor containing the mean loss value.
-
-    Notes:
-        - Empty targets (all zeros) are automatically skipped in loss computation
-        - Small epsilon values (1e-5) are added to prevent numerical instability
-        - The loss is normalized by the number of positive labels per sample
-    """
+    """Ranking loss for multi-label target lists."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         pass
@@ -144,25 +102,7 @@ class ListCELoss(BaseLoss):
     def __call__(
         self, pred: torch.Tensor, target: torch.Tensor, *args: Any, **kwargs: Any
     ) -> Any:
-        """Compute the ranking loss
-
-        This loss function first normalizes the predictions using sigmoid and sum, then calculates
-        a negative log likelihood loss weighted by the target values. Empty targets are skipped.
-
-        Args:
-            pred (torch.Tensor): Prediction tensor of shape (B x N) containing logits
-            target (torch.Tensor): Target tensor of shape (B x N) containing ground truth values
-            *args: Variable length argument list
-            **kwargs: Arbitrary keyword arguments
-
-        Returns:
-            torch.Tensor: Scalar loss value averaged over non-empty batch elements
-
-        Note:
-            - B represents batch size
-            - N represents the number of elements per sample
-            - A small epsilon (1e-5) is added for numerical stability
-        """
+        """Compute the normalized listwise cross-entropy loss."""
         target_sum = target.sum(dim=-1)
         non_zero_target_mask = target_sum != 0  # Skip empty target
         target_sum = target_sum[non_zero_target_mask]
@@ -177,19 +117,7 @@ class ListCELoss(BaseLoss):
 
 
 class KLDivLoss(BaseLoss):
-    """Kullback-Leibler Divergence loss function.
-
-    This loss function computes the Kullback-Leibler divergence between two probability distributions.
-    It is often used in variational inference and generative models.
-
-    Args:
-        reduction (Literal["sum", "mean", "batchmean"]): Specifies the reduction method to apply to the loss.
-        *args: Additional positional arguments (unused).
-        **kwargs: Additional keyword arguments (unused).
-
-    Returns:
-        torch.Tensor: Scalar tensor containing the mean KL divergence loss value.
-    """
+    """Kullback-Leibler divergence loss."""
 
     def __init__(
         self,
@@ -207,17 +135,7 @@ class KLDivLoss(BaseLoss):
     def __call__(
         self, pred: torch.Tensor, target: torch.Tensor, *args: Any, **kwargs: Any
     ) -> Any:
-        """Compute the KL divergence loss.
-
-        Args:
-            pred (torch.Tensor): Predicted logits tensor.
-            target (torch.Tensor): Target logits tensor.
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-
-        Returns:
-            torch.Tensor: Scalar loss value averaged over the batch.
-        """
+        """Compute KL divergence between the predicted and target distributions."""
         pred_prob = F.sigmoid(pred)
         target_prob = (target + 1) / 2
         # Ensure prob is not zero to avoid log(0)
@@ -237,18 +155,7 @@ class KLDivLoss(BaseLoss):
 
 
 class MSELoss(BaseLoss):
-    """Mean Squared Error loss function.
-
-    This loss function computes the mean squared error between predicted and target values.
-    It is commonly used for regression tasks.
-
-    Args:
-        *args: Additional positional arguments (unused).
-        **kwargs: Additional keyword arguments (unused).
-
-    Returns:
-        torch.Tensor: Scalar tensor containing the mean squared error loss value.
-    """
+    """Mean squared error loss."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         pass
@@ -256,17 +163,7 @@ class MSELoss(BaseLoss):
     def __call__(
         self, pred: torch.Tensor, target: torch.Tensor, *args: Any, **kwargs: Any
     ) -> Any:
-        """Compute the mean squared error loss.
-
-        Args:
-            pred (torch.Tensor): Predicted values tensor.
-            target (torch.Tensor): Target values tensor.
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-
-        Returns:
-            torch.Tensor: Scalar loss value averaged over the batch.
-        """
+        """Compute mean squared error after normalizing both tensors."""
         # Normalize the pred and target to [0, 1]
         norm_pred = F.sigmoid(pred)
         norm_target = (target + 1) / 2

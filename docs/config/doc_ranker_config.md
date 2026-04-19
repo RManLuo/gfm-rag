@@ -1,7 +1,10 @@
+# Document Ranker Configuration
 
 ## Simple Ranker
 
-!!! example
+An example Simple Ranker configuration file is shown below:
+
+!!! example "simple_ranker"
 
     ```yaml title="gfmrag/workflow/config/doc_ranker/simple_ranker.yaml"
     --8<-- "gfmrag/workflow/config/doc_ranker/simple_ranker.yaml"
@@ -13,7 +16,9 @@
 
 ## IDF Ranker
 
-!!! example
+An example IDF Ranker configuration file is shown below:
+
+!!! example "idf_ranker"
 
     ```yaml title="gfmrag/workflow/config/doc_ranker/idf_ranker.yaml"
     --8<-- "gfmrag/workflow/config/doc_ranker/idf_ranker.yaml"
@@ -25,7 +30,9 @@
 
 ## Top-k Ranker
 
-!!! example
+An example Top-k Ranker configuration file is shown below:
+
+!!! example "topk_ranker"
 
     ```yaml title="gfmrag/workflow/config/doc_ranker/topk_ranker.yaml"
     --8<-- "gfmrag/workflow/config/doc_ranker/topk_ranker.yaml"
@@ -38,7 +45,9 @@
 
 ## IDF Top-k Ranker
 
-!!! example
+An example IDF Top-k Ranker configuration file is shown below:
+
+!!! example "idf_topk_ranker"
 
     ```yaml title="gfmrag/workflow/config/doc_ranker/idf_topk_ranker.yaml"
     --8<-- "gfmrag/workflow/config/doc_ranker/idf_topk_ranker.yaml"

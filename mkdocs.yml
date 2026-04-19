@@ -96,46 +96,64 @@ extra_javascript:
 
 site_name: GFM-RAG
 site_url: https://rmanluo.github.io/gfm-rag/
+
 nav:
   - Home:
-      - Welcome: index.md
-      - Development: DEVELOPING.md
-      - Changelog: CHANGELOG.md
-  - Installation: install.md
+      - Overview: index.md
+  - Installation:
+      - Install: install.md
+  - Getting Started:
+      - Quick Start: getting_started/quick_start.md
   - Workflow:
-      - Data Preparation: workflow/data_preparation.md
-      - KG-index Construction: workflow/kg_index.md
-      - GFM-RAG Retrieval: workflow/inference.md
-      - GFM-RAG Training: workflow/training.md
-      - Path Interpretation: workflow/path_interpretation.md
+      - Data Format: workflow/data_format.md
+      - Index: workflow/index.md
+      - Retrieval and QA: workflow/retrieval_and_qa.md
+      - Training: workflow/training.md
+  - Experiment:
+      - Overview: experiment/overview.md
+      - GFM-RAG Reproduction: experiment/gfm_rag.md
+      - G-reasoner Reproduction: experiment/g_reasoner.md
   - Config:
-      - KG-index Config: config/kg_index_config.md
-      - GFM-RAG Config: config/gfmrag_retriever_config.md
-      - GFM-RAG Pre-training Config: config/gfmrag_pretrain_config.md
-      - GFM-RAG Fine-tuning Config: config/gfmrag_finetune_config.md
-      - NER Model Config: config/ner_model_config.md
-      - Entity Linking Model Config: config/el_model_config.md
-      - OpenIE Model Config: config/openie_model_config.md
-      - Document Ranker Config: config/doc_ranker_config.md
-      - Text Embedding Config: config/text_embedding_config.md
-      - Wandb Config: config/wandb_config.md
+      - Overview: config/index.md
+      - Shared Components:
+          - Graph Constructor Config: config/graph_constructor_config.md
+          - SFT Constructor Config: config/sft_constructor_config.md
+          - NER Model Config: config/ner_model_config.md
+          - Entity Linking Model Config: config/el_model_config.md
+          - OpenIE Model Config: config/openie_model_config.md
+          - Document Ranker Config: config/doc_ranker_config.md
+          - Text Embedding Config: config/text_embedding_config.md
+          - Wandb Config: config/wandb_config.md
+      - GFM-RAG:
+          - Overview: config/gfm_rag_config.md
+          - Graph Index: config/gfm_rag_graph_index_config.md
+          - Retrieval and QA: config/gfmrag_retriever_config.md
+          - KGC Training: config/gfmrag_pretrain_config.md
+          - SFT Training: config/gfmrag_finetune_config.md
+      - G-reasoner:
+          - Overview: config/g_reasoner_config.md
+          - Graph Index: config/g_reasoner_graph_index_config.md
+          - Retrieval and QA: config/g_reasoner_retrieval_config.md
+          - SFT Training: config/g_reasoner_sft_config.md
   - API Reference:
-      - KG-index Constructor: api/kg_indexer.md
-      - GFM Retriever: api/gfmrag_retriever.md
-      - GNN Models: api/models.md
-      - Document Ranker: api/doc_ranker.md
+      - Graph Indexer: api/graph_indexer.md
       - Datasets: api/datasets.md
+      - GFM Retriever: api/gfmrag_retriever.md
+      - Graph Foundation Models: api/models.md
       - Large Language Models: api/llms.md
       - Text Embedding Models: api/text_emb_models.md
       - Loss Functions: api/losses.md
       - Prompt Builder: api/prompt_builder.md
       - Evaluator: api/evaluator.md
-      - KG Construnction:
-          - KG Constructor: api/kg_construnction/kg_constructor.md
-          - QA Constructor: api/kg_construnction/qa_constructor.md
-          - NER Model: api/kg_construnction/ner_model.md
-          - Entity Linking Model: api/kg_construnction/el_model.md
-          - OpenIE Model: api/kg_construnction/openie_model.md
+      - Graph Index Construction:
+          - Graph Constructor: api/graph_construction/graph_constructor.md
+          - SFT Constructor: api/graph_construction/sft_constructor.md
+          - NER Model: api/graph_construction/ner_model.md
+          - Entity Linking Model: api/graph_construction/el_model.md
+          - OpenIE Model: api/graph_construction/openie_model.md
+  - Development:
+      - Development: DEVELOPING.md
+      - Changelog: CHANGELOG.md
 repo_url: https://github.com/RManLuo/gfm-rag
 repo_name: gfm-rag
 

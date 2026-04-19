@@ -70,29 +70,9 @@ class Graph(TypedDict):
 
 
 class BaseGraphConstructor(ABC):
-    """
-    Abstract base class for graph construction.
-
-    This class defines the interface for constructing graphs from datasets.
-    Subclasses must implement create_graph()methods.
-
-    Attributes:
-        None
-
-    Methods:
-        create_graph: Creates a graph from the specified dataset.
-
-    """
+    """Abstract interface for building graph structures from a dataset."""
 
     @abstractmethod
     def build_graph(self, data_root: str, data_name: str) -> Graph:
-        """
-        Create a graph from the dataset
-
-        Args:
-            data_root (str): path to the dataset
-            data_name (str): name of the dataset
-        Returns:
-            Graph: The constructed graph containing nodes, edges, and relations.
-        """
+        """Build a graph for ``data_name`` under ``data_root``."""
         pass

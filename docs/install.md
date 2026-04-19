@@ -1,98 +1,84 @@
-# Installation Guide
+# Install
 
-## Prerequisites
+This page covers environment setup only. For usage, go to [Quick Start](getting_started/quick_start.md) or the [Workflow](workflow/data_format.md) section.
 
-Before installing GFM-RAG, make sure your system meets these requirements:
+## Requirements
 
-- Python 3.12 or higher
-- CUDA 12 or higher (for GPU support)
-- Poetry (recommended for development)
+- Python 3.12
+- CUDA 12 or newer for GPU-backed training and inference
+- `nvcc` available when compiling the `rspmm` kernel
+- Poetry if you plan to install from source or contribute to the repository
 
-## Installation Methods
-
-### Install via Conda
-Conda provides an easy way to install the CUDA development toolkit which is required by GFM-RAG:
+## Install With Conda
 
 ```bash
 conda create -n gfmrag python=3.12
 conda activate gfmrag
-conda install cuda-toolkit -c nvidia/label/cuda-12.4.1 # Replace with your desired CUDA version
+conda install cuda-toolkit -c nvidia/label/cuda-12.6.3
 pip install gfmrag
 ```
 
-### Install via Pip
+## Install With Pip
 
 ```bash
 pip install gfmrag
 ```
 
+## Install From Source
 
-### Install from Source
-
-For contributors or those who want to install from source, follow these steps:
-
-1. Clone the repository:
 ```bash
 git clone https://github.com/RManLuo/gfm-rag.git
 cd gfm-rag
-```
-
-2. Install [Poetry](https://python-poetry.org/docs/):
-
-3. Create and activate a conda environment:
-```bash
 conda create -n gfmrag python=3.12
 conda activate gfmrag
-conda install cuda-toolkit -c nvidia/label/cuda-12.4.1 # Replace with your desired CUDA version
-```
-
-4. Install project dependencies:
-```bash
+conda install cuda-toolkit -c nvidia/label/cuda-12.6.3
 poetry install
 ```
 
-## Optional Components
+## Optional LLM Backends
 
-### Llama.cpp Integration
+### Llama.cpp
 
-If you plan to use locally host LLMs via Llama.cpp:
-
-Install llama-cpp-python:
 ```bash
 pip install llama-cpp-python
 ```
 
-For more information, visit the following resources:
-- [LangChain Llama.cpp](https://python.langchain.com/docs/integrations/chat/llamacpp/)
-- [llama-cpp-python repository](https://github.com/abetlen/llama-cpp-python)
+References:
 
-### Ollama Integration
+- <https://python.langchain.com/docs/integrations/chat/llamacpp/>
+- <https://github.com/abetlen/llama-cpp-python>
 
-If you plan to use Ollama for hosting LLMs:
+### Ollama
 
-Install Ollama:
 ```bash
 pip install langchain-ollama
 pip install ollama
 ```
 
-For more information, visit the following resources:
-- [LangChain Ollama](https://python.langchain.com/docs/integrations/chat/ollama/)
+Reference:
+
+- <https://python.langchain.com/docs/integrations/chat/ollama/>
 
 ## Troubleshooting
 
+### CUDA errors when compiling `rspmm`
 
-### CUDA errors when compiling `rspmm` kernel
-GFM-RAG requires the `nvcc` compiler to compile the `rspmm` kernel. If you encounter errors related to CUDA, make sure you have the CUDA toolkit installed and the `nvcc` compiler is in your PATH. Meanwhile, make sure your CUDA_HOME variable is set properly to avoid potential compilation errors, eg
+If compilation fails, make sure `nvcc` is available and `CUDA_HOME` points to the installed toolkit:
 
 ```bash
-export CUDA_HOME=/usr/local/cuda-12.4
+export CUDA_HOME=/usr/local/cuda-12.6
 ```
 
-Usually, if you install CUDA toolkit via conda, the CUDA_HOME variable is set automatically.
+If CUDA was installed via conda, `CUDA_HOME` is often configured automatically.
 
-### Stuck when compiling `rspmm` kernel
+### `rspmm` compilation appears stuck
 
-Sometimes the compilation of the `rspmm` kernel may get stuck. If you encounter this issue, try to manually remove the compilation cache under `~/.cache/torch_extensions/` and recompile the kernel.
+Clear the extension cache and retry:
 
-For more help, please check our [GitHub issues](https://github.com/RManLuo/gfm-rag/issues) or create a new one.
+```bash
+rm -rf ~/.cache/torch_extensions
+```
+
+### Need development commands instead of installation
+
+See [Development](DEVELOPING.md) for `mkdocs`, `pre-commit`, and packaging commands.

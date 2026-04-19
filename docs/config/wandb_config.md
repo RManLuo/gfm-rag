@@ -72,15 +72,15 @@ notes: "Baseline experiment with default settings"
 
 ### Core Settings
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `enabled` | Enable/disable wandb logging | `true` |
-| `project` | Project name in wandb | varies by script |
-| `entity` | Team/username for the project | `null` (uses default) |
-| `name` | Run name | `null` (auto-generated) |
-| `group` | Group name for organizing runs | `null` |
-| `tags` | List of tags for the run | `[]` |
-| `notes` | Description of the experiment | `""` |
+| Parameter | Options | Note |
+| :--: | :--: | :-- |
+| `enabled` | `true`, `false` | Whether to enable wandb logging. |
+| `project` | Any string | Project name in wandb. Varies by script. |
+| `entity` | Any string or `null` | Team or username for the project. `null` uses the default account. |
+| `name` | Any string or `null` | Run name. `null` auto-generates a name. |
+| `group` | Any string or `null` | Group name for organizing related runs. |
+| `tags` | List of strings | Tags attached to the run. |
+| `notes` | Any string | Description of the experiment. |
 
 ### Advanced Settings
 

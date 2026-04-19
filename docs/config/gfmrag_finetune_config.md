@@ -1,81 +1,83 @@
-# GFM-RAG Fine-tuning Configuration
-An example configuration file for GFM fine-tuning is shown below:
+# GFM-RAG SFT Training Config
 
-!!! example
+This page documents `gfmrag/workflow/config/gfm_rag/sft_training.yaml`.
 
-    ```yaml title="gfmrag/workflow/config/stage2_qa_finetune.yaml"
-    --8<-- "gfmrag/workflow/config/stage2_qa_finetune.yaml"
+## Purpose
+
+This preset is used by `python -m gfmrag.workflow.sft_training` for supervised fine-tuning and retrieval evaluation in the original `GFM-RAG` model family.
+
+!!! example "gfmrag/workflow/config/gfm_rag/sft_training.yaml"
+
+    ```yaml title="gfmrag/workflow/config/gfm_rag/sft_training.yaml"
+    --8<-- "gfmrag/workflow/config/gfm_rag/sft_training.yaml"
     ```
 
-## General Configuration
+## Top-level Fields
 
-| Parameter | Options |              Note               |
-| :-------: | :-----: | :-----------------------------: |
-| `run.dir` |  None   | The output directory of the log |
+| Parameter | Options | Note |
+| :--: | :--: | :-- |
+| `hydra.run.dir` | `outputs/qa_finetune/<date>/<time>/` | Directory used by Hydra for runtime logs and outputs. |
+| `defaults` | List of config groups | Pulls in `doc_ranker`, `text_emb_model`, and `wandb`. |
+| `datasets` | Mapping | Selects indexed datasets and feature settings. |
+| `model` | Mapping | Configures `gfmrag.models.gfm_rag_v1.GNNRetriever`. |
+| `losses` | List | Defines one or more supervised losses. |
+| `optimizer` | Mapping | Sets optimizer type and learning rate. |
+| `trainer` | Mapping | Configures `SFTTrainer`, evaluation metrics, and prediction behavior. |
 
-## Defaults
+## `datasets` Fields
 
-|    Parameter     | Options |                                 Note                                  |
-| :--------------: | :-----: | :-------------------------------------------------------------------: |
-| `text_emb_model` |  None   | The [text embedding model][text-embedding-model-configuration] to use |
+The default dataset class is `GraphIndexDatasetV1`.
 
+| Parameter | Options | Note |
+| :--: | :--: | :-- |
+| `datasets.cfgs.root` | Any valid data root | Root directory containing indexed datasets. |
+| `datasets.cfgs.target_type` | Node type string | Graph target node type. |
+| `datasets.cfgs.use_node_feat` | `True`, `False` | Whether to use node features. |
+| `datasets.cfgs.use_edge_feat` | `True`, `False` | Whether to use edge features. |
+| `datasets.cfgs.use_relation_feat` | `True`, `False` | Whether to use relation features. |
+| `datasets.train_names` | List of dataset names | Training split list. |
+| `datasets.valid_names` | List of dataset names | Validation split list. |
+| `datasets.max_datasets_in_memory` | Positive integer | Maximum number of datasets kept in memory. |
+| `datasets.data_loading_workers` | Positive integer | Number of background loading workers. |
 
-## Training datasets
+## `model` Fields
 
-|         Parameter          | Options |                                  Note                                   |
-| :------------------------: | :-----: | :---------------------------------------------------------------------: |
-|        `_target_`        |  None   |                 [QADataset][gfmrag.graph_index_datasets.QADataset]                  |
-|        `cfgs.root`         |  None   |               root dictionary of the datasets saving path               |
-|    `cfgs.force_rebuild`    |  None   |                  whether to force rebuild the dataset                   |
-| `cfgs.text_emb_model_cfgs` |  None   | [text embedding model][text-embedding-model-configuration]configuration |
-|       `train_names`        |  `[]`   |                     List of training dataset names                      |
-|       `valid_names`        |  `[]`   |                    List of validation dataset names    |
+The default model target is `gfmrag.models.gfm_rag_v1.GNNRetriever`.
 
-## GFM model configuration
+| Parameter | Options | Note |
+| :--: | :--: | :-- |
+| `model.init_nodes_weight` | `True`, `False` | Whether to initialize node weights at input. |
+| `model.init_nodes_type` | Node type string | Node type used for initialization. |
+| `model.ranker` | Mapping | Shared document ranker config. |
+| `model.entity_model` | Mapping | Nested `QueryNBFNet` settings. |
 
-|    Parameter     |            Options             |                          Note                          |
-| :--------------: | :----------------------------: | :----------------------------------------------------: |
-|   `_target_`   |              None              |        [QueryGNN][gfmrag.models.QueryGNN] model        |
-|  `entity_model`  |              None              | [EntityNBFNet][gfmrag.ultra.models.QueryNBFNet] model |
-|   `input_dim`    |              None              |              input dimension of the model              |
-|  `hidden_dims`   |              `[]`              |             hidden dimensions of the model             |
-|  `message_func`  |  `transe`,`rotate`,`distmult`  |             message function of the model              |
-| `aggregate_func` | `pna`,`min`,`max`,`mean`,`sum` |            aggregate function of the model             |
-|   `short_cut`    |        `True`, `False`         |                whether to use short cut                |
-|   `layer_norm`   |        `True`, `False`         |               whether to use layer norm                |
+## `losses` Fields
 
+The default preset includes two losses: `bce_loss` and `pcr_loss`. Each loss block defines:
 
-## Loss configuration
+| Parameter | Options | Note |
+| :--: | :--: | :-- |
+| `losses[].name` | Any string | Human-readable loss name. |
+| `losses[].loss._target_` | Loss class path | Concrete loss implementation. |
+| `losses[].weight` | Float | Loss weight in the total objective. |
+| `losses[].target_node_type` | Node type string | Target node type for that loss. |
+| `losses[].is_distillation_loss` | `True`, `False` | Optional distillation flag. |
 
-|         Parameter         | Options |                     Note                      |
-| :-----------------------: | :-----: | :-------------------------------------------: |
-```
-|     `strict_negative`     |  None   |    whether to use strict negative sampling    |
-| `metric` |  None   |    evaluation metrics to use    |
-| `losses` |  None   |    list of losses to use    |
-| `losses[].name` |  None   |    name of the loss    |
-| `losses[]._target_` |  None   |    [loss function][gfmrag.losses.BaseLoss] to use    |
-| `losses[].cfg` |  None   |    configuration of the loss    |
-| `losses[].cfg.weight` |  None   |    weight of the loss    |
-| `losses[].cfg.is_doc_loss` |  None   |    whether the loss is for document    |
+## `trainer` Fields
 
-## Optimizer configuration
+| Parameter | Options | Note |
+| :--: | :--: | :-- |
+| `trainer.args.train_batch_size` | Positive integer | Training batch size. |
+| `trainer.args.num_epoch` | Positive integer | Number of epochs. |
+| `trainer.args.do_train` | `True`, `False` | Whether to run training. |
+| `trainer.args.do_eval` | `True`, `False` | Whether to run evaluation. |
+| `trainer.args.save_best_only` | `True`, `False` | Whether to save only the best checkpoint. |
+| `trainer.args.metric_for_best_model` | Metric name | Metric used to select the best checkpoint. |
+| `trainer.metrics` | List of metric names | Evaluation metrics. |
+| `trainer.target_types` | List of node types | Node types used in evaluation. |
 
-|   Parameter   | Options |                        Note                        |
-| :-----------: | :-----: | :------------------------------------------------: |
-| `optimizer._target_` |  None   |         torch optimizer for the model         |
-| `optimizer.lr` |  None   |        learning rate for the optimizer        |
+## Related Shared Configs
 
-## Training configuration
-
-|     Parameter     | Options |                        Note                        |
-| :---------------: | :-----: | :------------------------------------------------: |
-|   `batch_size`    |  None   |            batch size for the training             |
-|    `num_epoch`    |  None   |           number of epochs for training            |
-|  `log_interval`   |  None   |         logging interval for the training          |
-|    `fast_test`    |  None   |          number of samples for fast test           |
-| `save_best_only`  |  None   | whether to save the best model based on the metric |
-| `save_pretrained` |  None   |     whether to save the model for QA inference     |
-| `batch_per_epoch` |  None   |      number of batches per epoch for training      |
-|     `timeout`     |  None   |       timeout minutes for multi-gpu training       |
-|   `checkpoint`    |  None   |          checkpoint path for the training          |
+- [Document Ranker Config](doc_ranker_config.md)
+- [Text Embedding Config](text_embedding_config.md)
+- [Wandb Config](wandb_config.md)

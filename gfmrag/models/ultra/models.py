@@ -7,47 +7,7 @@ from .base_nbfnet import BaseNBFNet
 
 
 class EntityNBFNet(BaseNBFNet):
-    """Neural Bellman-Ford Network for Entity Prediction.
-
-    This class extends BaseNBFNet to perform entity prediction in knowledge graphs using a neural
-    version of the Bellman-Ford algorithm. It learns entity representations through message passing
-    over the graph structure.
-
-    Args:
-        input_dim (int): Dimension of input node/relation features
-        hidden_dims (list): List of hidden dimensions for each layer
-        num_relation (int, optional): Number of relation types. Defaults to 1 (dummy value)
-        **kwargs: Additional arguments passed to BaseNBFNet
-
-    Attributes:
-        layers (nn.ModuleList): List of GeneralizedRelationalConv layers
-        mlp (nn.Sequential): Multi-layer perceptron for final prediction
-        query (torch.Tensor): Relation type embeddings used as queries
-
-    Methods:
-        bellmanford(data, h_index, r_index, separate_grad=False):
-            Performs neural Bellman-Ford message passing iterations.
-
-            Args:
-                data: Graph data object containing edge information
-                h_index (torch.Tensor): Indices of head entities
-                r_index (torch.Tensor): Indices of relations
-                separate_grad (bool): Whether to use separate gradients for visualization
-
-            Returns:
-                dict: Contains node features and edge weights after message passing
-
-        forward(data, relation_representations, batch):
-            Forward pass for entity prediction.
-
-            Args:
-                data: Graph data object
-                relation_representations (torch.Tensor): Embeddings of relations
-                batch: Batch of (head, tail, relation) triples
-
-            Returns:
-                torch.Tensor: Prediction scores for tail entities
-    """
+    """Neural Bellman-Ford Network for entity prediction."""
 
     def __init__(self, input_dim, hidden_dims, num_relation=1, **kwargs):
         # dummy num_relation = 1 as we won't use it in the NBFNet layer

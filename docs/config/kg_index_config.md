@@ -1,63 +1,70 @@
-# KG-index Configuration
+# KG-index Config
 
-An example of a KG-index configuration file is shown below:
+This page documents the top-level indexing presets that reference the graph constructor and SFT constructor config groups.
 
-!!! example
+## Files Covered
 
-    ```yaml title="gfmrag/workflow/config/stage1_index_dataset.yaml"
-    --8<-- "gfmrag/workflow/config/stage1_index_dataset.yaml"
-    ```
+- `gfmrag/workflow/config/gfm_rag/index_dataset.yaml`
+- `gfmrag/workflow/config/gfm_reasoner/index_dataset.yaml`
 
-## General Configuration
+## Purpose
 
-| Parameter | Options |              Note               |
-| :-------: | :-----: | :-----------------------------: |
-| `run.dir` |  None   | The output directory of the log |
+These presets are used by `python -m gfmrag.workflow.index_dataset` to:
 
-## Defaults
+- select shared construction components
+- choose the graph constructor preset
+- choose the SFT constructor preset
+- specify the dataset root and dataset name
 
-|   Parameter    | Options |                           Note                           |
-| :------------: | :-----: | :------------------------------------------------------: |
-|  `ner_model`   |  None   |    The config of the [ner_model](ner_model_config.md)    |
-| `openie_model` |  None   | The config of the [openie_model](openie_model_config.md) |
-|   `el_model`   |  None   |     The config of the [el_model](el_model_config.md)     |
+## Shared Top-level Fields
 
-## Dataset
+| Parameter | Options | Note |
+| :--: | :--: | :-- |
+| `hydra.run.dir` | `outputs/kg_construction/<date>/<time>/` | Directory used by Hydra for runtime logs and outputs. |
+| `defaults` | List of config groups | Pulls in component config groups. |
+| `dataset` | Mapping | Chooses the dataset root, dataset name, and force flag. |
 
-|  Parameter  | Options |          Note           |
-| :---------: | :-----: | :---------------------: |
-|   `root`    |  None   | The data root directory |
-| `data_name` |  None   |      The data name      |
+## Defaults in `gfm_rag/index_dataset.yaml`
 
-## KG Constructor
+| Parameter | Options | Note |
+| :--: | :--: | :-- |
+| `ner_model` | `llm_ner_model` by default | Named entity recognition preset. |
+| `openie_model` | `llm_openie_model` by default | OpenIE preset used by the graph constructor. |
+| `el_model` | `colbert_el_model` by default | Entity-linking preset. |
+| `graph_constructor` | `kg_constructor` by default | Graph construction preset. |
+| `sft_constructor` | `gfm_rag_sft_constructor` by default | SFT constructor preset. |
 
-|      Parameter      | Options |                                     Note                                      |
-| :-----------------: | :-----: | :---------------------------------------------------------------------------: |
-|     `_target_`      |  None   |      The class of [KGConstructor][gfmrag.kg_construction.KGConstructor]       |
-|   `open_ie_model`   |  None   |           The config of the [openie_model](openie_model_config.md)            |
-|     `ner_model`     |  None   |              The config of the [ner_model](ner_model_config.md)               |
-|     `el_model`      |  None   |               The config of the [el_model](el_model_config.md)                |
-|       `root`        |  None   | The temporary directory for storing intermediate files during KG construction |
-|   `num_processes`   |  None   |                        The number of processes to use                         |
-| `cosine_sim_edges`  |  None   |        Whether to conduct entities resolution using cosine similarity         |
-|     `threshold`     |  None   |                        Threshold for cosine similarity                        |
-| `max_sim_neighbors` |  None   |                  Maximum number of similar neighbors to add                   |
-|     `add_title`     |  None   |     Whether to add the title to the content of the document during OpenIE     |
-|       `force`       |  None   |                       Whether to force recompute the KG                       |
+## Defaults in `gfm_reasoner/index_dataset.yaml`
 
+| Parameter | Options | Note |
+| :--: | :--: | :-- |
+| `ner_model` | `llm_ner_model` by default | Named entity recognition preset. |
+| `openie_model` | `llm_openie_model` by default | OpenIE preset used by the graph constructor. |
+| `el_model` | `colbert_el_model` by default | Entity-linking preset. |
+| `text_emb_model` | `qwen3_8b` by default | Text embedding preset used by `hipporag2_sft_constructor`. |
+| `graph_constructor` | `kg_constructor` by default | Graph construction preset. |
+| `sft_constructor` | `hipporag2_sft_constructor` by default | SFT constructor preset. |
 
-Please refer to [KG Constructor][gfmrag.kg_construction.KGConstructor] for details of parameters.
+## `dataset` Fields
 
+| Parameter | Options | Note |
+| :--: | :--: | :-- |
+| `dataset.root` | Any valid data root | Root directory that contains the dataset folder. |
+| `dataset.data_name` | Any dataset name | Dataset name under `root`. |
+| `dataset.force` | `True`, `False` | Whether to force recomputation even if cached files exist. |
 
-## QA Constructor
+## Constructor Config Groups
 
-|    Parameter    | Options |                                     Note                                      |
-| :-------------: | :-----: | :---------------------------------------------------------------------------: |
-|   `_target_`    |  None   |      The class of [QAConstructor][gfmrag.kg_construction.QAConstructor]       |
-|     `root`      |  None   | The temporary directory for storing intermediate files during QA construction |
-|   `ner_model`   |  None   |              The config of the [ner_model](ner_model_config.md)               |
-|   `el_model`    |  None   |               The config of the [el_model](el_model_config.md)                |
-| `num_processes` |  None   |                        The number of processes to use                         |
-|     `force`     |  None   |                    Whether to force recompute the QA data                     |
+The two constructor groups are documented separately:
 
-Please refer to [QAConstructor][gfmrag.kg_construction.QAConstructor] for details of parameters.
+- [Graph Constructor Config](graph_constructor_config.md)
+- [SFT Constructor Config](sft_constructor_config.md)
+
+Use those pages when you want to change constructor-specific fields such as `num_processes`, `threshold`, `topk`, `enable_filtering`, or temporary working directories.
+
+## Related Shared Configs
+
+- [NER Model Config](ner_model_config.md)
+- [OpenIE Model Config](openie_model_config.md)
+- [Entity Linking Model Config](el_model_config.md)
+- [Text Embedding Config](text_embedding_config.md)

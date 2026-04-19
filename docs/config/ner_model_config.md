@@ -1,3 +1,5 @@
+# NER Model Configuration
+
 ## LLM NER Model Configuration
 
 An example of a LLM NER model configuration file is shown below:

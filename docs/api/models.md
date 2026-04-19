@@ -3,6 +3,6 @@
         heading_level: 1
 
 
-::: gfmrag.ultra.models.EntityNBFNet
+::: gfmrag.models.gfm_rag_v1
 
-::: gfmrag.ultra.models.QueryNBFNet
+::: gfmrag.models.gfm_reasoner

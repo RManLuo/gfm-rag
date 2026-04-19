@@ -37,7 +37,7 @@ This configuration supports the [Nvidia embedding models](https://huggingface.co
 
 |       Parameter       |                                                   Options                                                   |                                                   Note                                                   |
 | :-------------------: | :---------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: |
-|      `_target_`       |                       `gfmrag.kg_construction.entity_linking_model.NVEmbedV2ELModel`                        | The class name of [Nvidia Embedding model][gfmrag.kg_construction.entity_linking_model.NVEmbedV2ELModel] |
+|      `_target_`       |                       `gfmrag.text_emb_models.NVEmbedV2`                        | The class name of `NVEmbedV2` |
 | `text_emb_model_name` |                                            `nvidia/NV-Embed-v2`                                             |                                 The name of the Nvidia embedding model.                                  |
 |      `normalize`      |                                               `True`, `False`                                               |                                   Whether to normalize the embeddings.                                   |
 |   `query_instruct`    | `Instruct: Given an entity, retrieve entities that are semantically equivalent to the given entity\nQuery: ` |                                      The instruction for the query.                                      |

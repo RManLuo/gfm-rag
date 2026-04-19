@@ -38,8 +38,8 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
         tokenizer_kwargs (dict | None): Additional tokenizer configuration parameters
 
     Methods:
-        encode(text: list[str], is_query: bool = False, show_progress_bar: bool = True, use_async: bool = True) -> torch.Tensor:
-            Encodes a list of texts into embeddings with optional async processing for improved performance.
+        encode(text: list[str], is_query: bool = False, show_progress_bar: bool = True) -> torch.Tensor:
+            Encodes a list of texts into embeddings.
     """
 
     def __init__(
@@ -250,8 +250,6 @@ class Qwen3TextEmbModel(BaseTextEmbModel):
             is_query (bool, optional): Whether the text is a query (True) or passage (False).
                 Determines which instruction prompt to use. Defaults to False.
             show_progress_bar (bool, optional): Whether to display progress bar during encoding.
-                Defaults to True.
-            use_async (bool, optional): Whether to use asynchronous processing for better performance.
                 Defaults to True.
 
         Returns:
