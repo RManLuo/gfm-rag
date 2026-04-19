@@ -48,8 +48,8 @@ For more details, please refer to our [project](https://github.com/RManLuo/gfm-r
 
 ## Features
 
-- **Graph Foundation Model (GFM)**: A graph neural network-based retriever that can reason over the KG-index.
-- **Knowledge Graph Index**: A knowledge graph index that captures the relationships between knowledge.
+- **Graph Foundation Model (GFM)**: A graph neural network-based retriever that can reason over the graph-index.
+- **Universal Graph Index**: A universal graph index that can represent various types of structural knowledge such as Knowledge Graphs, Document Graphs, and Hierarchical Graphs.
 - **Efficiency**: The GFM-RAG pipeline is efficient in conducting multi-hop reasoning with single-step retrieval.
 - **Generalizability**: The GFM-RAG can be directly applied to unseen datasets without fine-tuning.
 - **Transferability**: The GFM-RAG can be fine-tuned on your own dataset to improve performance on specific domains.
@@ -84,7 +84,7 @@ This section shows the smallest end-to-end retrieval example:
 2. Let `GFMRetriever.from_index(...)` build stage1 automatically if needed
 3. Call `retriever.retrieve(...)` to get documents
 
-For the full data schema, including pre-built `processed/stage1/`, see [gfmrag/workflow/README.md](gfmrag/workflow/README.md).
+You can find the full data schema here [Data Format](docs/workflow/data_format.md).
 
 ### Prepare A Minimal Raw Dataset
 
@@ -195,12 +195,7 @@ if __name__ == "__main__":
 On the first run, `GFMRetriever.from_index(...)` will use `raw/documents.json` to build `processed/stage1/` automatically if the stage1 graph files do not already exist.
 
 > [!NOTE]
-> The default workflow configs used above rely on external models and services:
-> - `ner_model: llm_ner_model`
-> - `openie_model: llm_openie_model`
-> - `el_model: colbert_el_model`
->
-> In particular, the default NER/OpenIE setup uses OpenAI API-backed components, so make sure the corresponding credentials are available in your environment before running the example.
+> If you have your own pre-built [graph files](docs/workflow/data_format.md), you can directly place them under `processed/stage1/` and `GFMRetriever.from_index(...)` will load from there for reasoning without rebuilding.
 
 ## GFM Fine-tuning
 
@@ -237,10 +232,10 @@ An example of the training data:
     }
   },
     ...
-]
+
 ```
 
-You need to create a [configuration file](gfmrag/workflow/config/gfm_rag/sft_training.yaml) for fine-tuning.
+You need to create a [configuration file](gfmrag/workflow/config/gfm_reasoner/sft_training.yaml) for fine-tuning.
 
 > [!NOTE]
 > We have already released the two pre-trained model checkpoint [GFM-RAG-8M](https://huggingface.co/rmanluo/GFM-RAG-8M) and [G-reasoner-34M](https://huggingface.co/rmanluo/G-reasoner-34M), which can be used for further finetuning. The model will be automatically downloaded by specifying it in the configuration.
@@ -248,7 +243,7 @@ You need to create a [configuration file](gfmrag/workflow/config/gfm_rag/sft_tra
 > load_model_from_pretrained: rmanluo/G-reasoner-34M # or rmanluo/GFM-RAG-8M
 > ```
 
-Details of the configuration parameters are explained in the [GFM-RAG Fine-tuning Configuration](https://rmanluo.github.io/gfm-rag/config/gfmrag_finetune_config/) page.
+Details of the configuration parameters are explained in the [Training](docs/workflow/training.md) page.
 
 You can fine-tune the pre-trained GFM-RAG model on your dataset using the following command:
 

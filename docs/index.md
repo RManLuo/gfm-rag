@@ -20,7 +20,7 @@ For more details, please refer to our [project](https://github.com/RManLuo/gfm-r
 ## Features
 
 - **Graph Foundation Model (GFM)**: A graph neural network-based retriever that can reason over the graph-index.
-- **Graph Index**: A graph index that captures the relationships between knowledge.
+- **Universal Graph Index**: A universal graph index that can represent various types of structural knowledge such as Knowledge Graphs, Document Graphs, and Hierarchical Graphs.
 - **Efficiency**: The GFM-RAG pipeline is efficient in conducting multi-hop reasoning with single-step retrieval.
 - **Generalizability**: The GFM-RAG can be directly applied to unseen datasets without fine-tuning.
 - **Transferability**: The GFM-RAG can be fine-tuned on your own dataset to improve performance on specific domains.
