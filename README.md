@@ -29,13 +29,14 @@
 
 The GFM-RAG is the first graph foundation model-powered RAG pipeline that combines the power of graph neural networks to reason over graphs and retrieve relevant documents for question answering.
 
-![](docs/images/intro.png)
+![](docs/images/g-reasoner.png)
 
 We first build a graph-index from the documents to capture the relationships between knowledge. Then, we feed the query and constructed graph-index into the pre-trained graph foundation model (GFM) retriever to obtain relevant documents for LLM generation. The GFM retriever experiences large-scale training and can be directly applied to unseen datasets without fine-tuning.
 
 GFM-RAG is designed to be efficient and generalizable. You can bring your own dataset and directly apply the pre-trained GFM retriever to obtain relevant documents for question answering. You can also fine-tune the GFM retriever on your own dataset to improve performance on specific domains.
 
-For more details, please refer to our [project page](https://rmanluo.github.io/gfm-rag/) and [paper](https://www.arxiv.org/abs/2502.01113).
+For more details, please refer to our [project](https://github.com/RManLuo/gfm-rag) and papers: [GFM-RAG](https://www.arxiv.org/abs/2502.01113), [G-reasoner](https://arxiv.org/abs/2509.24276).
+
 
 ## 🎉 News
 - **[2026-04-20]** We have released the G-reasoner codebase and a [34M pre-trained model](https://huggingface.co/rmanluo/G-reasoner-34M). 🚀
