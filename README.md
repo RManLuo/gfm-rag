@@ -78,59 +78,40 @@ pip install gfmrag
 > [!NOTE]
 > Read the full documentation at: https://rmanluo.github.io/gfm-rag/
 
-This section shows the smallest end-to-end retrieval example:
+GFM-RAG provides a **unified graph interface**: if you already have a graph that conforms to the three-file format (`nodes.csv` / `relations.csv` / `edges.csv`), you can **skip the index-building step entirely** and use it directly for retrieval and reasoning — regardless of how the graph was constructed.
 
-1. Provide a dataset in `raw/`
-2. Let `GFMRetriever.from_index(...)` build stage1 automatically if needed
-3. Call `retriever.retrieve(...)` to get documents
+There are two starting points:
 
-You can find the full data schema here [Data Format](docs/workflow/data_format.md).
+- **Path A — Start from raw documents** (steps 1–3 below): provide `raw/documents.json` and let `GFMRetriever.from_index(...)` build the graph automatically.
+- **Path B — Bring your own graph** (step 1b below): place pre-built graph files under `processed/stage1/` and `GFMRetriever.from_index(...)` will load them directly without rebuilding.
 
-### Prepare A Minimal Raw Dataset
+See [Data Format](../workflow/data_format.md) for the full schema of both paths.
 
-Create the following directory:
+---
+
+### Path A: Start From Raw Documents
+
+#### 1. Create A Minimal Dataset
 
 ```text
 data/
 └── toy_raw/
     └── raw/
         ├── documents.json
-        └── test.json (Optional)
+        └── test.json
 ```
 
-#### `raw/documents.json`
-
-`raw/documents.json` is the raw document corpus used to build the graph index.
-It must be a JSON object where:
-
-- each key is a document title or document id
-- each value is the plain-text content of that document
-
-Example:
+`raw/documents.json` is required:
 
 ```json
 {
-  "France": "France is a country in Western Europe. Paris is its capital. The president of France is Emmanuel Macron.",
+  "France": "France is a country in Western Europe. Paris is its capital.",
   "Paris": "Paris is the capital and most populous city of France.",
-  "Emmanuel Macron": "Emmanuel Macron is a French politician who has served as president of France since 2017."
+  "Emmanuel Macron": "Emmanuel Macron has served as president of France since 2017."
 }
 ```
 
-#### `raw/test.json` (optional)
-
-`raw/test.json` is optional for retrieval itself, but useful for storing example queries or later evaluation.
-It must be a JSON array. Each item should contain:
-
-- `id`: unique sample id
-- `question`: the input query
-
-It can also contain task metadata such as:
-
-- `answer`: reference answer
-- `answer_aliases`: optional aliases of the answer
-- `supporting_documents`: document titles that support the answer
-
-Example:
+`raw/test.json` is optional for plain retrieval, but useful for later QA and evaluation:
 
 ```json
 [
@@ -144,58 +125,89 @@ Example:
 ]
 ```
 
-### Retrieve Documents With `GFMRetriever`
-
-The example below follows the same initialization path used in [gfmrag/gfmrag_retriever.py](gfmrag/gfmrag_retriever.py) and [gfmrag/workflow/qa_ircot_inference.py](gfmrag/workflow/qa_ircot_inference.py).
-
-Save the script below as `quickstart_retrieve.py` in the repository root:
+#### 2. Initialize `GFMRetriever`
 
 ```python
-import json
-
-import hydra
 from hydra.utils import instantiate
-from omegaconf import DictConfig
+from omegaconf import OmegaConf
 
 from gfmrag import GFMRetriever
 
+cfg = OmegaConf.load("gfmrag/workflow/config/gfm_rag/qa_ircot_inference.yaml")
 
-@hydra.main(
-    config_path="gfmrag/workflow/config/gfm_rag",
-    config_name="qa_ircot_inference",
-    version_base=None,
+retriever = GFMRetriever.from_index(
+    data_dir="./data",
+    data_name="toy_raw",
+    model_path="rmanluo/G-reasoner-34M",
+    ner_model=instantiate(cfg.ner_model),
+    el_model=instantiate(cfg.el_model),
+    graph_constructor=instantiate(cfg.graph_constructor),
 )
-def main(cfg: DictConfig) -> None:
-    cfg.dataset.root = "./data"
-    cfg.dataset.data_name = "toy_raw"
-
-    ner_model = instantiate(cfg.graph_retriever.ner_model)
-    el_model = instantiate(cfg.graph_retriever.el_model)
-    graph_constructor = instantiate(cfg.graph_constructor)
-
-    retriever = GFMRetriever.from_index(
-        data_dir=cfg.dataset.root,
-        data_name=cfg.dataset.data_name,
-        model_path="rmanluo/G-reasoner-34M",  # or rmanluo/GFM-RAG-8M
-        ner_model=ner_model,
-        el_model=el_model,
-        graph_constructor=graph_constructor,
-    )
-
-    results = retriever.retrieve("Who is the president of France?", top_k=5)
-
-    print(results)
-
-
-if __name__ == "__main__":
-    main()
 ```
 
+On the first run, `GFMRetriever.from_index(...)` builds `processed/stage1/` automatically if the graph files do not already exist.
 
-On the first run, `GFMRetriever.from_index(...)` will use `raw/documents.json` to build `processed/stage1/` automatically if the stage1 graph files do not already exist.
+#### 3. Retrieve Documents
 
-> [!NOTE]
-> If you have your own pre-built [graph files](docs/workflow/data_format.md), you can directly place them under `processed/stage1/` and `GFMRetriever.from_index(...)` will load from there for reasoning without rebuilding.
+```python
+results = retriever.retrieve(
+    "Who is the president of France?",
+    top_k=5,
+)
+
+for item in results["document"]:
+    print(item["id"], item["score"])
+```
+
+---
+
+### Path B: Bring Your Own Graph
+
+If you already have a graph — for example, an existing Knowledge Graph, a graph produced by another pipeline, or a graph you built manually — you can use it directly **without running the index-building step**, as long as it conforms to the GFM-RAG graph format.
+
+#### 1. Place Pre-built Graph Files
+
+Create the following directory structure and populate it with your graph files:
+
+```text
+data/
+└── my_dataset/
+    └── processed/
+        └── stage1/
+            ├── nodes.csv
+            ├── relations.csv
+            ├── edges.csv
+            └── test.json   (optional)
+```
+
+The three CSV files define the graph:
+
+| File | Description |
+|------|-------------|
+| `nodes.csv` | Node name, type (`entity` / `document` / `summary`), and optional attributes |
+| `relations.csv` | Relation name and optional attributes |
+| `edges.csv` | Edges as `(source, relation, target)` triples with optional attributes |
+
+See [Data Format](../workflow/data_format.md) for the full schema and examples.
+
+#### 2. Initialize `GFMRetriever` and Retrieve
+
+`GFMRetriever.from_index(...)` detects that `processed/stage1/` already exists and loads the graph directly — no rebuild occurs.
+
+```python
+from gfmrag import GFMRetriever
+
+retriever = GFMRetriever.from_index(
+    data_dir="./data",
+    data_name="my_dataset",
+    model_path="rmanluo/G-reasoner-34M",  # or rmanluo/GFM-RAG-8M
+)
+
+results = retriever.retrieve("Your query here", top_k=5)
+
+for item in results["document"]:
+    print(item["id"], item["score"])
+```
 
 ## GFM Fine-tuning
 
