@@ -2,15 +2,55 @@
 
 ## Download the datasets in new graph format
 
-Dataset Example: https://drive.google.com/file/d/1Hd_3-0DzEoYounRrU_0OBEfS_cZ014eA/view?usp=sharing
-
-Full dataset in new format: https://drive.google.com/file/d/1sWx7TC3S9XpVKMcJRfDWe_NxRfvtYeRf/view?usp=drive_link
+Dataset Example: [here](https://1drv.ms/f/c/cb4bbdfe5951d1a1/IgDTnyNJiiAPTJKqY1KizEVMAQ1jX5wAf94YMlF-VyLvscI?e=bgp0Yv)
 
 ## Explanation of the new graph format
 
+The framework supports two input layouts for each dataset:
+
+1. Raw input files under `raw/`
+2. Pre-built stage1 files under `processed/stage1/`
+
+If only `raw/` is provided, the indexing workflow will construct the graph files and processed QA files under `processed/stage1/`.
+If `processed/stage1/` is already provided, the framework can consume those files directly without rebuilding stage1.
+
+### **✅ Supported Dataset Layouts**
+
+#### Option 1: Provide raw files only
+
+```text
+root/
+└── data_name/
+    └── raw/
+        ├── documents.json
+        ├── train.json (optional)
+        └── test.json (optional)
+```
+
+- `raw/documents.json` is the raw graph source used to build stage1 graph files.
+- `raw/train.json` and `raw/test.json` are optional raw QA files.
+- When these QA files are provided, the workflow will generate `processed/stage1/train.json` and `processed/stage1/test.json`.
+
+#### Option 2: Provide pre-built stage1 files
+
+```text
+root/
+└── data_name/
+    └── processed/
+        └── stage1/
+            ├── nodes.csv
+            ├── relations.csv
+            ├── edges.csv
+            ├── train.json (optional)
+            └── test.json (optional)
+```
+
+- `processed/stage1/nodes.csv`, `relations.csv`, and `edges.csv` are the graph files consumed by the framework.
+- `processed/stage1/train.json` and `processed/stage1/test.json` are the processed QA files consumed by the framework directly.
+
 ## **📂 Graph Index File Structure**
 
-Graph data consists of three CSV files:
+When using pre-built stage1 data, graph data consists of three CSV files:
 
 - `nodes.csv`: Defines nodes and their attributes.
 - `relations.csv`: Defines relationships and their attributes.
@@ -127,9 +167,14 @@ end_year: 2017
 
 ---
 
-## Training and Test Data: `train.json` and `test.json`
+## Training and Test Data: `processed/stage1/train.json` and `processed/stage1/test.json`
 
-The `train.json` and `test.json` files contain processed training and test data in the following format:
+The `processed/stage1/train.json` and `processed/stage1/test.json` files contain processed training and test data in the following format:
+
+These are the stage1 QA files consumed by the framework directly. They can either:
+
+- be generated automatically from `raw/train.json` and `raw/test.json`, or
+- be provided directly under `processed/stage1/`
 
 | **Field**       | **Type**         | **Description** |
 | --------------- | ---------------- | --------------- |

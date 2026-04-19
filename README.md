@@ -72,181 +72,129 @@ pip install gfmrag
 > [!NOTE]
 > Read the full documentation at: https://rmanluo.github.io/gfm-rag/
 
-### Prepare Data
+This section shows the smallest end-to-end retrieval example:
 
-We have provided the testing split and full training data in [here](https://1drv.ms/f/c/cb4bbdfe5951d1a1/IgDTnyNJiiAPTJKqY1KizEVMAQ1jX5wAf94YMlF-VyLvscI?e=bgp0Yv).
+1. Provide a dataset in `raw/`
+2. Let `GFMRetriever.from_index(...)` build stage1 automatically if needed
+3. Call `retriever.retrieve(...)` to get documents
 
-You need to prepare the following files:
+For the full data schema, including pre-built `processed/stage1/`, see [gfmrag/workflow/README.md](gfmrag/workflow/README.md).
 
-- `dataset_corpus.json`: A JSON file containing the entire document corpus.
-- `train.json` (optional): A JSON file containing the training data.
-- `test.json` (optional): A JSON file containing the test data.
+### Prepare A Minimal Raw Dataset
 
-Place your files in the following structure:
+Create the following directory:
+
+```text
+data/
+└── toy_raw/
+    └── raw/
+        ├── documents.json
+        └── test.json (Optional)
 ```
-data_name/
-├── raw/
-│   ├── dataset_corpus.json
-│   ├── train.json # (optional)
-│   └── test.json # (optional)
-└── processed/ # Output directory
-```
 
-#### `dataset_corpus.json`
+#### `raw/documents.json`
 
-The `dataset_corpus.json` is a dictionary where each key is the title or unique id of a document and the value is the text of the document.
+`raw/documents.json` is the raw document corpus used to build the graph index.
+It must be a JSON object where:
+
+- each key is a document title or document id
+- each value is the plain-text content of that document
+
+Example:
 
 ```json
 {
-    "Fred Gehrke":
-        "Clarence Fred Gehrke (April 24, 1918 – February 9, 2002) was an American football player and executive.  He played in the National Football League (NFL) for the Cleveland / Los Angeles Rams, San Francisco 49ers and Chicago Cardinals from 1940 through 1950.  To boost team morale, Gehrke designed and painted the Los Angeles Rams logo in 1948, which was the first painted on the helmets of an NFL team.  He later served as the general manager of the Denver Broncos from 1977 through 1981.  He is the great-grandfather of Miami Marlin Christian Yelich"
-    ,
-    "Manny Machado":
-        "Manuel Arturo Machado (] ; born July 6, 1992) is an American professional baseball third baseman and shortstop for the Baltimore Orioles of Major League Baseball (MLB).  He attended Brito High School in Miami and was drafted by the Orioles with the third overall pick in the 2010 Major League Baseball draft.  He bats and throws right-handed."
-    ,
-    ...
- }
+  "France": "France is a country in Western Europe. Paris is its capital. The president of France is Emmanuel Macron.",
+  "Paris": "Paris is the capital and most populous city of France.",
+  "Emmanuel Macron": "Emmanuel Macron is a French politician who has served as president of France since 2017."
+}
 ```
 
-#### `train.json` and `test.json` (optional)
-If you want to train and evaluate the model, you need to provide training and testing data in the form of a JSON file. Each entry in the JSON file should contain the following fields:
+#### `raw/test.json` (optional)
 
-- `id`: A unique identifier for the example.
-- `question`: The question or query.
-- `supporting_facts`: A list of supporting facts relevant to the question. Each supporting fact is a list containing the title of the document that can be found in the `dataset_corpus.json` file.
+`raw/test.json` is optional for retrieval itself, but useful for storing example queries or later evaluation.
+It must be a JSON array. Each item should contain:
 
-Each entry can also contain additional fields depending on the task. For example:
+- `id`: unique sample id
+- `question`: the input query
 
-- `answer`: The answer to the question.
+It can also contain task metadata such as:
 
-The additional fields will be copied during the following steps of the pipeline.
+- `answer`: reference answer
+- `answer_aliases`: optional aliases of the answer
+- `supporting_documents`: document titles that support the answer
 
 Example:
+
 ```json
 [
-	{
-		"id": "5adf5e285542992d7e9f9323",
-		"question": "When was the judge born who made notable contributions to the trial of the man who tortured, raped, and murdered eight student nurses from South Chicago Community Hospital on the night of July 13-14, 1966?",
-		"answer": "June 4, 1931",
-		"supporting_facts": [
-			"Louis B. Garippo",
-			"Richard Speck"
-		]
-	},
-	{
-		"id": "5a7f7b365542992097ad2f80",
-		"question": "Did the Beaulieu Mine or the McIntyre Mines yield gold and copper?",
-		"answer": "The McIntyre also yielded a considerable amount of copper",
-		"supporting_facts": [
-			"Beaulieu Mine",
-			"McIntyre Mines"
-		]
-	}
-    ...
+  {
+    "id": "toy-1",
+    "question": "Who is the president of France?",
+    "answer": "Emmanuel Macron",
+    "answer_aliases": ["Macron"],
+    "supporting_documents": ["France", "Emmanuel Macron"]
+  }
 ]
 ```
 
-### Index Dataset
+### Retrieve Documents With `GFMRetriever`
 
-You need to create a KG-index [configuration file](gfmrag/workflow/config/gfm_rag/index_dataset.yaml).
+The example below follows the same initialization path used in [gfmrag/gfmrag_retriever.py](gfmrag/gfmrag_retriever.py) and [gfmrag/workflow/qa_ircot_inference.py](gfmrag/workflow/qa_ircot_inference.py).
 
-Details of the configuration parameters are explained in the [KG-index Configuration](https://rmanluo.github.io/gfm-rag/config/kg_index_config/) page.
-
-```bash
-python -m gfmrag.workflow.index_dataset --config-path config/gfm_rag
-```
-
-This method performs two main tasks:
-
-1. Create and save knowledge graph related files (`kg.txt` and `document2entities.json`) from the `dataset_corpus.json` file
-2. Identify the query entities and supporting entities in training and testing data if available in the raw data directory.
-
-Files created:
-
-- `kg.txt`: Contains knowledge graph triples
-- `document2entities.json`: Maps documents to their entities
-- `train.json`: Processed training data (if raw exists)
-- `test.json`: Processed testing data (if raw exists)
-
-Directory structure:
-```
-data_name/
-├── raw/
-│   ├── dataset_corpus.json
-│   ├── train.json (optional)
-│   └── test.json (optional)
-└── processed/
-    └── stage1/
-        ├── kg.txt
-        ├── document2entities.json
-        ├── train.json
-        └── test.json
-```
-
-### GFM-RAG Retrieval
-
-You need to create a [configuration file](gfmrag/workflow/config/gfm_rag/qa_ircot_inference.yaml) for inference.
-
-> [!NOTE]
-> We have already released the pre-trained model [here](https://huggingface.co/rmanluo/GFM-RAG-8M), which can be used directly for retrieval. The model will be automatically downloaded by specifying it in the configuration.
-> ```yaml
-> graph_retriever:
->     model_path: rmanluo/GFM-RAG-8M
-> ```
-
-Details of the configuration parameters are explained in the [GFM-RAG Configuration](https://rmanluo.github.io/gfm-rag/config/gfmrag_retriever_config/) page.
-
-#### Initialize GFMRetriever
-
-You can initialize the GFMRetriever with the following code. It will load the pre-trained GFM-RAG model and the KG-index for retrieval.
+Save the script below as `quickstart_retrieve.py` in the repository root:
 
 ```python
-import logging
-import os
+import json
 
 import hydra
-from hydra.core.hydra_config import HydraConfig
-from omegaconf import DictConfig, OmegaConf
+from hydra.utils import instantiate
+from omegaconf import DictConfig
 
 from gfmrag import GFMRetriever
 
-logger = logging.getLogger(__name__)
-
 
 @hydra.main(
-    config_path="config/gfm_rag",
+    config_path="gfmrag/workflow/config/gfm_rag",
     config_name="qa_ircot_inference",
     version_base=None,
 )
 def main(cfg: DictConfig) -> None:
-    output_dir = HydraConfig.get().runtime.output_dir
-    logger.info(f"Config:\n {OmegaConf.to_yaml(cfg)}")
-    logger.info(f"Current working directory: {os.getcwd()}")
-    logger.info(f"Output directory: {output_dir}")
+    cfg.dataset.root = "./data"
+    cfg.dataset.data_name = "toy_raw"
 
-    gfmrag_retriever = GFMRetriever.from_config(cfg)
+    ner_model = instantiate(cfg.graph_retriever.ner_model)
+    el_model = instantiate(cfg.graph_retriever.el_model)
+    graph_constructor = instantiate(cfg.graph_constructor)
+
+    retriever = GFMRetriever.from_index(
+        data_dir=cfg.dataset.root,
+        data_name=cfg.dataset.data_name,
+        model_path="rmanluo/G-reasoner-34M",  # or rmanluo/GFM-RAG-8M
+        ner_model=ner_model,
+        el_model=el_model,
+        graph_constructor=graph_constructor,
+    )
+
+    results = retriever.retrieve("Who is the president of France?", top_k=5)
+
+    print(results)
+
+
+if __name__ == "__main__":
+    main()
 ```
 
-#### Document Retrieval
 
-You can use GFM-RAG retriever to reason over the KG-index and obtain documents for a given query.
-```python
-docs = retriever.retrieve("Who is the president of France?", top_k=5)
-```
+On the first run, `GFMRetriever.from_index(...)` will use `raw/documents.json` to build `processed/stage1/` automatically if the stage1 graph files do not already exist.
 
-#### Question Answering
-
-```python
-from hydra.utils import instantiate
-from gfmrag.llms import BaseLanguageModel
-from gfmrag.prompt_builder import QAPromptBuilder
-
-llm = instantiate(cfg.llm)
-qa_prompt_builder = QAPromptBuilder(cfg.qa_prompt)
-
-message = qa_prompt_builder.build_input_prompt(current_query, retrieved_docs)
-answer = llm.generate_sentence(message)  # Answer: "Emmanuel Macron"
-```
+> [!NOTE]
+> The default workflow configs used above rely on external models and services:
+> - `ner_model: llm_ner_model`
+> - `openie_model: llm_openie_model`
+> - `el_model: colbert_el_model`
+>
+> In particular, the default NER/OpenIE setup uses OpenAI API-backed components, so make sure the corresponding credentials are available in your environment before running the example.
 
 ## GFM Fine-tuning
 
@@ -258,34 +206,30 @@ An example of the training data:
 
 ```json
 [
-	{
-		"id": "5abc553a554299700f9d7871",
-		"question": "Kyle Ezell is a professor at what School of Architecture building at Ohio State?",
-		"answer": "Knowlton Hall",
-		"supporting_facts": [
-			"Knowlton Hall",
-			"Kyle Ezell"
-		],
-		"question_entities": [
-			"kyle ezell",
-			"architectural association school of architecture",
-			"ohio state"
-		],
-		"supporting_entities": [
-			"10 million donation",
-			"2004",
-			"architecture",
-			"austin e  knowlton",
-			"austin e  knowlton school of architecture",
-			"bachelor s in architectural engineering",
-			"city and regional planning",
-			"columbus  ohio  united states",
-			"ives hall",
-			"july 2002",
-			"knowlton hall",
-			"ksa",
-		]
-	},
+  {
+    "id": "5abc553a554299700f9d7871",
+    "question": "Kyle Ezell is a professor at what School of Architecture building at Ohio State?",
+    "answer": "Knowlton Hall",
+    "supporting_documents": ["Knowlton Hall", "Kyle Ezell"],
+    "start_nodes": {
+      "entity": [
+        "kyle ezell",
+        "architectural association school of architecture",
+        "ohio state"
+      ]
+    },
+    "target_nodes": {
+      "document": ["Knowlton Hall", "Kyle Ezell"],
+      "entity": [
+        "10 million donation",
+        "2004",
+        "architecture",
+        "austin e  knowlton",
+        "austin e  knowlton school of architecture",
+        "bachelor s in architectural engineering"
+      ]
+    }
+  },
     ...
 ]
 ```
