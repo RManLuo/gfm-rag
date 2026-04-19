@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import os.path as osp
-from typing import Literal
+from typing import Any, ClassVar, Literal
 
 import datasets
 import pandas as pd
@@ -71,7 +71,7 @@ class GraphIndexDataset:
 
     """
 
-    FINGER_PRINT_ATTRS = [
+    FINGER_PRINT_ATTRS: ClassVar[list[str]] = [
         "use_node_feat",
         "use_relation_feat",
         "use_edge_feat",
@@ -83,6 +83,29 @@ class GraphIndexDataset:
 
     PROCESSED_GRAPH_NAMES = ["graph.pt", "node2id.json", "rel2id.json"]
     PROCESSED_QA_DATA_NAMES = ["train.pt", "test.pt"]
+
+    @classmethod
+    def export_config_dict(
+        cls, dataset_cfgs: DictConfig | dict[str, Any]
+    ) -> dict[str, Any]:
+        """Build the persisted dataset config dict.
+
+        The returned structure intentionally matches the JSON produced by
+        ``save_config()`` so it can also be embedded into model checkpoints.
+        """
+        if isinstance(dataset_cfgs, DictConfig):
+            cfgs = OmegaConf.to_container(dataset_cfgs, resolve=True)
+        elif isinstance(dataset_cfgs, dict):
+            cfgs = dataset_cfgs
+        assert isinstance(cfgs, dict)
+
+        config = {
+            "class_name": cls.__name__,
+            "text_emb_model_cfgs": cfgs["text_emb_model_cfgs"],
+        }
+        for key in cls.FINGER_PRINT_ATTRS:
+            config[key] = cfgs.get(key)
+        return config
 
     def __init__(
         self,
@@ -673,13 +696,14 @@ class GraphIndexDataset:
 
     def save_config(self) -> None:
         """Save the configuration of the dataset to a JSON file."""
-        config = {
-            "class_name": self.__class__.__name__,
-            "text_emb_model_cfgs": OmegaConf.to_container(
-                self.text_emb_model_cfgs, resolve=True
-            ),
-        }
-        for key in self.FINGER_PRINT_ATTRS:
-            config[key] = getattr(self, key, None)
+        config = self.__class__.export_config_dict(
+            {
+                "text_emb_model_cfgs": self.text_emb_model_cfgs,
+                **{
+                    key: getattr(self, key, None)
+                    for key in self.__class__.FINGER_PRINT_ATTRS
+                },
+            }
+        )
         with open(osp.join(self.processed_dir, "config.json"), "w") as f:
             json.dump(config, f, indent=4)

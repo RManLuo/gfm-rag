@@ -7,7 +7,7 @@ class RetrievalEvaluator(BaseEvaluator):
     def evaluate(self, k: tuple = (1, 2, 5, 10)) -> dict:
         metrics: dict[str, list] = {f"recall@{i}": [] for i in k}
         for pred in self.data:
-            gold_docs = pred["supporting_facts"]
+            gold_docs = pred["supporting_documents"]
             flat_docs = [
                 doc for docs in pred["retrieved_docs"].values() for doc in docs
             ]

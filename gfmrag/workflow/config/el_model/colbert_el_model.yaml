@@ -1,3 +1,4 @@
 _target_: gfmrag.graph_index_construction.entity_linking_model.ColbertELModel
 model_name_or_path: colbert-ir/colbertv2.0
 root: tmp
+use_in_memory: true

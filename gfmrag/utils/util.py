@@ -6,6 +6,8 @@ from hydra.utils import get_class, instantiate
 from omegaconf import DictConfig, OmegaConf
 from transformers.utils import cached_file
 
+from gfmrag.graph_index_datasets import GraphIndexDataset
+
 
 def save_model_to_pretrained(
     model: torch.nn.Module, cfg: DictConfig, path: str
@@ -13,10 +15,13 @@ def save_model_to_pretrained(
     os.makedirs(path, exist_ok=True)
     model_config = OmegaConf.to_container(cfg.model, resolve=True)
     model_config["feat_dim"] = model.feat_dim
+    dataset_cls = get_class(cfg.datasets._target_)
+    assert issubclass(dataset_cls, GraphIndexDataset)
     config = {
         "text_emb_model_config": OmegaConf.to_container(
             cfg.datasets.cfgs.text_emb_model_cfgs
         ),
+        "dataset_config": dataset_cls.export_config_dict(cfg.datasets.cfgs),
         "model_config": model_config,
     }
 

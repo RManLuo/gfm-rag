@@ -15,10 +15,10 @@ for DATA_NAME in ${DATA_NAME_LIST}; do
 done
 TRAIN_DATA_NAME_LIST=${TRAIN_DATA_NAME_LIST:1}
 echo "TRAIN_DATA_NAME_LIST: [${TRAIN_DATA_NAME_LIST}]"
-torchrun --nproc-per-node=${N_GPU} -m gfmrag.workflow.stage2_kg_pretrain \
+HYDRA_FULL_ERROR=1 torchrun --nproc-per-node=${N_GPU} -m gfmrag.workflow.kgc_training \
     datasets.train_names=[${TRAIN_DATA_NAME_LIST}] \
     datasets.cfgs.root=${DATA_ROOT} \
-    train.fast_test=5000 \
-    train.num_epoch=${N_EPOCH} \
-    train.batch_per_epoch=${BATCH_PER_EPOCH} \
-    train.batch_size=${BATCH_SIZE}
+    trainer.fast_test=5000 \
+    trainer.args.num_epoch=${N_EPOCH} \
+    trainer.args.max_steps_per_epoch=${BATCH_PER_EPOCH} \
+    trainer.args.train_batch_size=${BATCH_SIZE}

@@ -4,7 +4,7 @@ import os
 
 import pandas as pd
 import torch
-from hydra.utils import instantiate
+from hydra.utils import get_class, instantiate
 from omegaconf import OmegaConf
 
 from gfmrag import utils
@@ -175,6 +175,35 @@ class GFMRetriever:
         return graph_retriever_input
 
     @staticmethod
+    def _load_qa_data_from_model_config(
+        data_dir: str,
+        data_name: str,
+        model_config: dict,
+        force_reindex: bool,
+    ) -> GraphIndexDataset:
+        dataset_config = model_config.get("dataset_config")
+        if dataset_config is None:
+            raise ValueError("dataset_config not found in model config")
+
+        dataset_cls = get_class(
+            f"gfmrag.graph_index_datasets.{dataset_config['class_name']}"
+        )
+        assert issubclass(dataset_cls, GraphIndexDataset)
+
+        dataset_kwargs = {
+            key: value for key, value in dataset_config.items() if key != "class_name"
+        }
+        dataset_kwargs["text_emb_model_cfgs"] = OmegaConf.create(
+            dataset_kwargs["text_emb_model_cfgs"]
+        )
+        return dataset_cls(
+            root=data_dir,
+            data_name=data_name,
+            force_reload=force_reindex,
+            **dataset_kwargs,
+        )
+
+    @staticmethod
     def from_index(
         data_dir: str,
         data_name: str,
@@ -187,8 +216,9 @@ class GFMRetriever:
         """Construct a GFMRetriever from a data directory.
 
         Detects whether processed/stage1/ exists. If not, uses graph_constructor
-        to build it from raw/documents.json. Then loads GraphIndexDataset (stage2),
-        indexes the entity linking model, and assembles the retriever.
+        to build it from raw/documents.json. Then restores the stage2 dataset from
+        the checkpoint dataset config when available, indexes the entity linking
+        model, and assembles the retriever.
 
         Args:
             data_dir: Root data directory (contains data_name/ subdirectory).
@@ -238,12 +268,11 @@ class GFMRetriever:
         graph_retriever, model_config = utils.load_model_from_pretrained(model_path)
         graph_retriever.eval()
 
-        text_emb_model_cfgs = OmegaConf.create(model_config["text_emb_model_config"])
-        qa_data = GraphIndexDataset(
-            root=data_dir,
+        qa_data = GFMRetriever._load_qa_data_from_model_config(
+            data_dir=data_dir,
             data_name=data_name,
-            text_emb_model_cfgs=text_emb_model_cfgs,
-            force_reload=force_reindex,
+            model_config=model_config,
+            force_reindex=force_reindex,
         )
 
         device = utils.get_device()
@@ -260,7 +289,7 @@ class GFMRetriever:
         id_col = "uid" if "uid" in nodes_df.columns else "name"
         nodes_df = nodes_df.set_index(id_col)
 
-        text_emb_model = instantiate(text_emb_model_cfgs)
+        text_emb_model = instantiate(qa_data.text_emb_model_cfgs)
 
         return GFMRetriever(
             qa_data=qa_data,

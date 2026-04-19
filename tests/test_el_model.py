@@ -236,6 +236,7 @@ def test_colbert_el_model(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
             "model_name_or_path": "colbert-ir/colbertv2.0",
             "root": str(tmp_path),
             "force": False,
+            "use_in_memory": False,
         }
     )
 
@@ -352,6 +353,7 @@ def test_colbert_el_model_rebuilds_when_metadata_is_stale(
             "model_name_or_path": "colbert-ir/colbertv2.0",
             "root": str(tmp_path),
             "force": False,
+            "use_in_memory": False,
         }
     )
 

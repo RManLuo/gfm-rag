@@ -2,7 +2,7 @@ import ast
 import json
 import logging
 import os.path as osp
-from typing import Any
+from typing import Any, ClassVar
 
 import pandas as pd
 import torch
@@ -22,6 +22,10 @@ class GraphIndexDatasetV1(GraphIndexDataset):
     This is a specialized version of the GraphIndexDataset tailored for the first iteration of the GFM-RAG framework, which predict other types of nodes based on entity predictions.
     It inherits from GraphIndexDataset and can include additional features or modifications specific to version 1
     """
+
+    FINGER_PRINT_ATTRS: ClassVar[list[str]] = GraphIndexDataset.FINGER_PRINT_ATTRS + [
+        "target_type"
+    ]
 
     def __init__(self, target_type: str, **kwargs: Any):
         """

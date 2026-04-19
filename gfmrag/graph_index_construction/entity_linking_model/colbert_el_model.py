@@ -28,7 +28,7 @@ class ColbertELModel(BaseELModel):
         doc_index_name: str = "nbits_2",
         phrase_index_name: str = "nbits_2",
         force: bool = False,
-        use_in_memory: bool = False,
+        use_in_memory: bool = True,
         **_: Any,
     ) -> None:
         model_path = Path(model_name_or_path).expanduser()

@@ -201,6 +201,88 @@ def test_from_index_with_existing_stage1(tmp_path: Any) -> None:
     el_model.index.assert_called_once()
 
 
+def test_from_index_restores_dataset_class_from_dataset_config(tmp_path: Any) -> None:
+    from unittest.mock import patch
+
+    from gfmrag.gfmrag_retriever import GFMRetriever
+    from gfmrag.graph_index_datasets import GraphIndexDataset
+
+    stage1 = tmp_path / "my_data" / "processed" / "stage1"
+    stage1.mkdir(parents=True)
+    (stage1 / "nodes.csv").write_text('name,type,attributes\nDocA,document,"{}"\n')
+    (stage1 / "relations.csv").write_text('name,attributes\nrel1,"{}"\n')
+    (stage1 / "edges.csv").write_text(
+        "source,target,relation,attributes\nDocA,DocA,rel1,{}\n"
+    )
+    raw = tmp_path / "my_data" / "raw"
+    raw.mkdir(parents=True)
+    (raw / "documents.json").write_text("{}")
+
+    captured_kwargs: dict[str, Any] = {}
+
+    class FakeDataset(GraphIndexDataset):
+        def __init__(self, **kwargs: Any) -> None:
+            captured_kwargs.update(kwargs)
+            self.text_emb_model_cfgs = kwargs["text_emb_model_cfgs"]
+            self.node2id = {"DocA": 0}
+            self.id2node = {0: "DocA"}
+            self.graph = MagicMock()
+            self.graph.num_nodes = 1
+            self.graph.to.return_value = self.graph
+
+    mock_model = MagicMock()
+    el_model = MagicMock()
+    ner_model = MagicMock()
+
+    with (
+        patch(
+            "gfmrag.gfmrag_retriever.utils.load_model_from_pretrained",
+            return_value=(
+                mock_model,
+                {
+                    "dataset_config": {
+                        "class_name": "GraphIndexDatasetV1",
+                        "text_emb_model_cfgs": {
+                            "_target_": "gfmrag.text_emb_models.BGETextEmbModel"
+                        },
+                        "use_node_feat": False,
+                        "use_relation_feat": True,
+                        "use_edge_feat": False,
+                        "inverse_relation_feat": "text",
+                        "target_type": "entity",
+                    }
+                },
+            ),
+        ),
+        patch(
+            "gfmrag.gfmrag_retriever.get_class", return_value=FakeDataset
+        ) as mock_get_class,
+        patch("gfmrag.gfmrag_retriever.instantiate", return_value=MagicMock()),
+    ):
+        retriever = GFMRetriever.from_index(
+            data_dir=str(tmp_path),
+            data_name="my_data",
+            model_path="fake/model",
+            ner_model=ner_model,
+            el_model=el_model,
+        )
+
+    assert isinstance(retriever, GFMRetriever)
+    mock_get_class.assert_called_once_with(
+        "gfmrag.graph_index_datasets.GraphIndexDatasetV1"
+    )
+    assert captured_kwargs["root"] == str(tmp_path)
+    assert captured_kwargs["data_name"] == "my_data"
+    assert captured_kwargs["force_reload"] is False
+    assert captured_kwargs["target_type"] == "entity"
+    assert captured_kwargs["use_node_feat"] is False
+    assert captured_kwargs["inverse_relation_feat"] == "text"
+    assert captured_kwargs["text_emb_model_cfgs"]["_target_"] == (
+        "gfmrag.text_emb_models.BGETextEmbModel"
+    )
+    el_model.index.assert_called_once()
+
+
 def test_from_index_calls_graph_constructor_when_no_stage1(tmp_path: Any) -> None:
     from unittest.mock import patch
 

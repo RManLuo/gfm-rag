@@ -1,0 +1,41 @@
+hydra:
+  run:
+    dir: outputs/qa_agent_inference/${dataset.data_name}/${now:%Y-%m-%d}/${now:%H-%M-%S} # Output directory
+  searchpath:
+    - pkg://gfmrag.workflow.config
+
+defaults:
+  - _self_
+  - agent_prompt: hotpotqa_ircot # The agent prompt to use
+  - qa_prompt: hotpotqa # The QA prompt to use
+  - ner_model: llm_ner_model # The NER model to use
+  - openie_model: llm_openie_model # The OpenIE model to use
+  - el_model: colbert_el_model # The EL model to use
+  - qa_evaluator: hotpotqa # The QA evaluator to use
+  - graph_constructor: kg_constructor # The graph constructor to use
+
+seed: 1024
+
+dataset:
+  root: ./data
+  data_name: hotpotqa_test
+
+llm:
+  _target_: gfmrag.llms.ChatGPT # The language model to use
+  model_name_or_path: gpt-4o-mini # The model name or path
+  retry: 5 # Number of retries
+
+graph_retriever:
+  model_path: rmanluo/G-reasoner-34M # Checkpoint path of the pre-trained G-reasoner model
+  ner_model: ${ner_model} # The NER model to use
+  el_model: ${el_model} # The EL model to use
+  qa_evaluator: ${qa_evaluator} # The QA evaluator to use
+  target_type: document # The target type for the graph retriever
+  graph_constructor: ${graph_constructor} # The graph constructor to use
+
+test:
+  top_k: 10 # Number of documents to retrieve
+  max_steps: 2 # Maximum number of steps
+  max_test_samples: -1 # -1 for all samples
+  resume: null # Resume from previous prediction
+  target_types: [document] # The target type for evaluation

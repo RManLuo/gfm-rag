@@ -5,7 +5,8 @@ DATA_NAME="hotpotqa" # hotpotqa musique 2wikimultihopqa
 LLM="gpt-4o-mini"
 MAX_STEPS=3
 MAX_SAMPLE=-1
-python -m gfmrag.workflow.stage3_qa_ircot_inference \
+MODEL_PATH=rmanluo/GFM-RAG-8M
+HYDRA_FULL_ERROR=1 python -m gfmrag.workflow.qa_ircot_inference \
     dataset.root=${DATA_ROOT} \
     llm.model_name_or_path=${LLM} \
     qa_prompt=${DATA_NAME} \
@@ -13,4 +14,5 @@ python -m gfmrag.workflow.stage3_qa_ircot_inference \
     agent_prompt=${DATA_NAME}_ircot \
     test.max_steps=${MAX_STEPS} \
     test.max_test_samples=${MAX_SAMPLE} \
-    dataset.data_name=${DATA_NAME}_test
+    dataset.data_name=${DATA_NAME}_test \
+    graph_retriever.model_path=${MODEL_PATH}

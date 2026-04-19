@@ -28,7 +28,9 @@ def agent_reasoning(
     step = 1
     current_query = query
     thoughts: list[str] = []
-    retrieved_docs = gfmrag_retriever.retrieve(current_query, top_k=cfg.test.top_k)
+    retrieved_docs = gfmrag_retriever.retrieve(
+        current_query, top_k=cfg.test.top_k, target_types=cfg.test.target_types
+    )
     logs = []
     while step <= cfg.test.max_steps:
         message = qa_prompt_builder.build_input_prompt(
@@ -56,7 +58,9 @@ def agent_reasoning(
 
         step += 1
 
-        new_ret_docs = gfmrag_retriever.retrieve(response, top_k=cfg.test.top_k)
+        new_ret_docs = gfmrag_retriever.retrieve(
+            response, top_k=cfg.test.top_k, target_types=cfg.test.target_types
+        )
 
         # Merge new_ret_docs into retrieved_docs, dedup by id, keep highest score
         for target_type, new_docs in new_ret_docs.items():
@@ -86,12 +90,16 @@ def main(cfg: DictConfig) -> None:
 
     ner_model = instantiate(cfg.graph_retriever.ner_model)
     el_model = instantiate(cfg.graph_retriever.el_model)
+    graph_constructor = (
+        instantiate(cfg.graph_constructor) if cfg.graph_constructor else None
+    )
     gfmrag_retriever = GFMRetriever.from_index(
-        data_dir=cfg.dataset.cfgs.root,
-        data_name=cfg.dataset.cfgs.data_name,
+        data_dir=cfg.dataset.root,
+        data_name=cfg.dataset.data_name,
         model_path=cfg.graph_retriever.model_path,
         ner_model=ner_model,
         el_model=el_model,
+        graph_constructor=graph_constructor,
     )
     llm = instantiate(cfg.llm)
     agent_prompt_builder = QAPromptBuilder(cfg.agent_prompt)
@@ -135,7 +143,7 @@ def main(cfg: DictConfig) -> None:
                     "answer_aliases": sample.get(
                         "answer_aliases", []
                     ),  # Some datasets have answer aliases
-                    "supporting_facts": sample["supporting_facts"],
+                    "supporting_documents": sample["supporting_documents"],
                     "response": qa_response,
                     "retrieved_docs": retrieved_docs,
                     "logs": result["logs"],

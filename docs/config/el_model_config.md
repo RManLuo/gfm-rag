@@ -17,10 +17,10 @@ model_name_or_path: colbert-ir/colbertv2.0
 root: tmp
 phrase_index_name: nbits_2
 force: false
-use_in_memory: false
+use_in_memory: true
 ```
 
-`use_in_memory: true` switches the backend to `QdrantClient(":memory:")`. In that mode, no persistent cache files are written, and the index is only reused within the current process.
+`use_in_memory: true` switches the backend to `QdrantClient(":memory:")`. This is now the default mode. In that mode, no persistent cache files are written, and the index is only reused within the current process.
 
 |      Parameter      |                           Options                            |                                               Note                                               |
 | :-----------------: | :----------------------------------------------------------: | :----------------------------------------------------------------------------------------------: |

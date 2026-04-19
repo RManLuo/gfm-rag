@@ -2,6 +2,7 @@
 DATA_ROOT="data"
 N_GPU=8
 N_EPOCH=15
+BATCH_SIZE=4
 START_N=0
 END_N=19
 DATA_NAME_LIST="hotpotqa_train musique_train 2wikimultihopqa_train"
@@ -13,17 +14,21 @@ for DATA_NAME in ${DATA_NAME_LIST}; do
 done
 TRAIN_DATA_NAME_LIST=${TRAIN_DATA_NAME_LIST:1}
 echo "TRAIN_DATA_NAME_LIST: [${TRAIN_DATA_NAME_LIST}]"
-torchrun --nproc_per_node=${N_GPU} -m gfmrag.workflow.stage2_qa_finetune \
+HYDRA_FULL_ERROR=1 torchrun --nproc_per_node=${N_GPU} -m gfmrag.workflow.sft_training \
     datasets.train_names=[${TRAIN_DATA_NAME_LIST}] \
     datasets.cfgs.root=${DATA_ROOT} \
-    train.num_epoch=${N_EPOCH}
+    trainer.args.num_epoch=${N_EPOCH} \
+    trainer.args.train_batch_size=${BATCH_SIZE}
 
 # Retrieval evaluation
 N_GPU=4
 DATA_ROOT="data"
-checkpoints=rmanluo/GFM-RAG-8M # Or the path to your checkpoints
-torchrun --nproc_per_node=${N_GPU} -m gfmrag.workflow.stage2_qa_finetune \
-    train.checkpoint=${checkpoints} \
+CHECKPOINT="rmanluo/GFM-RAG-8M" # Or the path to your checkpoints
+HYDRA_FULL_ERROR=1 torchrun --nproc_per_node=${N_GPU} -m gfmrag.workflow.sft_training \
+    load_model_from_pretrained=${CHECKPOINT} \
     datasets.cfgs.root=${DATA_ROOT} \
     datasets.train_names=[] \
-    train.num_epoch=0
+    +trainer.args.eval_batch_size=1 \
+    trainer.args.do_train=false \
+    trainer.args.do_eval=true \
+    trainer.args.do_predict=true
