@@ -3,7 +3,9 @@
    <p>
    <a href='https://rmanluo.github.io/gfm-rag/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>
    <a href='https://www.arxiv.org/abs/2502.01113'><img src='https://img.shields.io/badge/arXiv-2502.01113-b31b1b'></a>
+    <a href='https://www.arxiv.org/abs/2509.24276'><img src='https://img.shields.io/badge/arXiv-2509.24276-b31b1b'></a>
    <a href='https://huggingface.co/collections/rmanluo/gfm-rag-67a1ef7bfe097a938d8848dc'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-GFM--RAG-blue'></a>
+    <a href='https://huggingface.co/collections/rmanluo/g-reasoner'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-G--Reasoner-blue'></a>
   <a href="https://pypi.org/project/gfmrag/">
   </p>
   <p>
@@ -25,15 +27,18 @@
 
 [\[中文解读\]](https://rman.top/2025/03/01/gfm-rag/)
 
-The GFM-RAG is the first graph foundation model-powered RAG pipeline that combines the power of graph neural networks to reason over knowledge graphs and retrieve relevant documents for question answering.
+The GFM-RAG is the first graph foundation model-powered RAG pipeline that combines the power of graph neural networks to reason over graphs and retrieve relevant documents for question answering.
 
 ![](docs/images/intro.png)
 
-We first build a knowledge graph index (KG-index) from the documents to capture the relationships between knowledge. Then, we feed the query and constructed KG-index into the pre-trained graph foundation model (GFM) retriever to obtain relevant documents for LLM generation. The GFM retriever experiences large-scale training and can be directly applied to unseen datasets without fine-tuning.
+We first build a graph-index from the documents to capture the relationships between knowledge. Then, we feed the query and constructed graph-index into the pre-trained graph foundation model (GFM) retriever to obtain relevant documents for LLM generation. The GFM retriever experiences large-scale training and can be directly applied to unseen datasets without fine-tuning.
+
+GFM-RAG is designed to be efficient and generalizable. You can bring your own dataset and directly apply the pre-trained GFM retriever to obtain relevant documents for question answering. You can also fine-tune the GFM retriever on your own dataset to improve performance on specific domains.
 
 For more details, please refer to our [project page](https://rmanluo.github.io/gfm-rag/) and [paper](https://www.arxiv.org/abs/2502.01113).
 
 ## 🎉 News
+- **[2026-04-20]** We have released the G-reasoner codebase and a [34M pre-trained model](https://huggingface.co/rmanluo/G-reasoner-34M). 🚀
 - **[2026-01-27]** We are excited to share that [G-reasoner](https://arxiv.org/abs/2509.24276) has been accepted by [ICLR 2026](https://iclr.cc/Conferences/2026).
 - **[2025-10-01]** Checkout our latest progress: [G-reasoner: Foundation Models for Unified Reasoning over Graph-structured Knowledge](https://arxiv.org/abs/2509.24276). Code and model will be updated soon.
 - **[2025-09-19]** We are excited to share that [GFM-RAG](https://www.arxiv.org/abs/2502.01113) has been accepted by [NeurIPS 2025](https://neurips.cc/Conferences/2025).
@@ -256,7 +261,7 @@ torchrun --nproc_per_node=4 --nnodes=2 -m gfmrag.workflow.sft_training --config-
 
 ## Reproduce Results reported in the paper
 
-TODO: Please refer to the [reproducibility guide](docs/reproducibility.md) for details.
+Please refer to the [Experiment](docs/experiment/overview.md) section for detailed reproduction instructions for both [GFM-RAG](docs/experiment/gfm_rag.md) and [G-Reasoner](docs/experiment/g_reasoner.md).
 
 ## Acknowledgements
 
