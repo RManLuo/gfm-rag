@@ -2,7 +2,7 @@
 
 ## Pre-train Text Embedding Model Configuration
 
-This configuration supports most of the pre-train text embedding models of [SentenceTransformer](https://huggingface.co/sentence-transformers). Examples of DPR text embedding model configuration files are shown below:
+This configuration supports most pre-trained text embedding models from [SentenceTransformer](https://huggingface.co/sentence-transformers). Example configuration files are shown below:
 
 
 !!! example "all-mpnet-base-v2"
@@ -24,6 +24,35 @@ This configuration supports most of the pre-train text embedding models of [Sent
   |   `query_instruct`    |                   None                    |                          The instruction for the query.                           |
   |  `passage_instruct`   |                   None                    |                         The instruction for the passage.                          |
   |    `model_kwargs`     |                   `{}`                    |                          The additional model arguments.                          |
+
+## Qwen3 Embedding Model Configuration
+
+This configuration supports Qwen3 embedding models through [gfmrag.text_emb_models.Qwen3TextEmbModel][gfmrag.text_emb_models.Qwen3TextEmbModel]. Example configuration files are shown below:
+
+!!! example "Qwen/Qwen3-Embedding-0.6B"
+
+    ```yaml title="gfmrag/workflow/config/text_emb_model/qwen3.yaml"
+    --8<-- "gfmrag/workflow/config/text_emb_model/qwen3.yaml"
+    ```
+
+!!! example "Qwen/Qwen3-Embedding-8B"
+
+    ```yaml title="gfmrag/workflow/config/text_emb_model/qwen3_8b.yaml"
+    --8<-- "gfmrag/workflow/config/text_emb_model/qwen3_8b.yaml"
+    ```
+
+|       Parameter       |                                Options                                 |                                                      Note                                                       |
+| :-------------------: | :--------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------: |
+|      `_target_`       |             `gfmrag.text_emb_models.Qwen3TextEmbModel`                 |                            The class name of `Qwen3TextEmbModel`.                            |
+| `text_emb_model_name` | `Qwen/Qwen3-Embedding-0.6B`, `Qwen/Qwen3-Embedding-8B`, or local path  |                                   The name or local path of the Qwen3 embedding model.                                   |
+|      `normalize`      |                           `True`, `False`                              |                                          Whether to normalize the embeddings.                                          |
+|      `batch_size`     |                          Positive integer                              |                                             Batch size used for encoding.                                             |
+|   `query_instruct`    |                              String, `null`                            |                                     The instruction prepended to each query.                                      |
+|  `passage_instruct`   |                              String, `null`                            |                                    The instruction prepended to each passage.                                     |
+|    `truncate_dim`     |                          Positive integer, `null`                      | Optional output embedding dimension for Matryoshka truncation, such as `1024` for `0.6B` or `4096` for `8B`. |
+|      `api_base`       |                              URL, `null`                               |               Base URL of an existing vLLM embedding server. If `null`, gfmrag starts a local vLLM instance.               |
+|       `api_key`       |                                String                                  |                                  API key used when `api_base` points to a protected server.                                  |
+|    `vllm_timeout`     |                          Positive integer                              |                                         Timeout in seconds for vLLM embedding requests.                                          |
 
 ## Nvidia Embedding Model Configuration
 

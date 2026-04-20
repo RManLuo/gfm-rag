@@ -118,10 +118,9 @@ nav:
       - Shared Components:
           - Graph Constructor Config: config/graph_constructor_config.md
           - SFT Constructor Config: config/sft_constructor_config.md
+          - OpenIE Model Config: config/openie_model_config.md
           - NER Model Config: config/ner_model_config.md
           - Entity Linking Model Config: config/el_model_config.md
-          - OpenIE Model Config: config/openie_model_config.md
-          - Document Ranker Config: config/doc_ranker_config.md
           - Text Embedding Config: config/text_embedding_config.md
           - Wandb Config: config/wandb_config.md
       - GFM-RAG:
@@ -137,7 +136,7 @@ nav:
           - SFT Training: config/g_reasoner_sft_config.md
   - API Reference:
       - Graph Indexer: api/graph_indexer.md
-      - Datasets: api/datasets.md
+      - Graph Index Datasets: api/datasets.md
       - GFM Retriever: api/gfmrag_retriever.md
       - Graph Foundation Models: api/models.md
       - Large Language Models: api/llms.md
@@ -148,9 +147,9 @@ nav:
       - Graph Index Construction:
           - Graph Constructor: api/graph_construction/graph_constructor.md
           - SFT Constructor: api/graph_construction/sft_constructor.md
+          - OpenIE Model: api/graph_construction/openie_model.md
           - NER Model: api/graph_construction/ner_model.md
           - Entity Linking Model: api/graph_construction/el_model.md
-          - OpenIE Model: api/graph_construction/openie_model.md
   - Development:
       - Development: DEVELOPING.md
       - Changelog: CHANGELOG.md
