@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://rmanluo.github.io/gfm-rag/main/config/text_embedding_config/">
       
       
-        <link rel="prev" href="../doc_ranker_config/">
+        <link rel="prev" href="../el_model_config/">
       
       
         <link rel="next" href="../wandb_config/">
@@ -861,6 +861,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../openie_model_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenIE Model Config
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ner_model_config/" class="md-nav__link">
         
   
@@ -890,52 +913,6 @@
   
   <span class="md-ellipsis">
     Entity Linking Model Config
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../openie_model_config/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    OpenIE Model Config
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../doc_ranker_config/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Document Ranker Config
     
   </span>
   
@@ -1006,6 +983,15 @@
   <a href="#pre-train-text-embedding-model-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       Pre-train Text Embedding Model Configuration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#qwen3-embedding-model-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Qwen3 Embedding Model Configuration
     </span>
   </a>
   
@@ -1522,6 +1508,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#qwen3-embedding-model-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Qwen3 Embedding Model Configuration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#nvidia-embedding-model-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       Nvidia Embedding Model Configuration
@@ -1551,7 +1546,7 @@
 
 <h1 id="text-embedding-model-configuration">Text Embedding Model Configuration<a class="headerlink" href="#text-embedding-model-configuration" title="Permanent link">&para;</a></h1>
 <h2 id="pre-train-text-embedding-model-configuration">Pre-train Text Embedding Model Configuration<a class="headerlink" href="#pre-train-text-embedding-model-configuration" title="Permanent link">&para;</a></h2>
-<p>This configuration supports most of the pre-train text embedding models of <a href="https://huggingface.co/sentence-transformers">SentenceTransformer</a>. Examples of DPR text embedding model configuration files are shown below:</p>
+<p>This configuration supports most pre-trained text embedding models from <a href="https://huggingface.co/sentence-transformers">SentenceTransformer</a>. Example configuration files are shown below:</p>
 <div class="admonition example">
 <p class="admonition-title">all-mpnet-base-v2</p>
 <div class="language-yaml highlight"><span class="filename">gfmrag/workflow/config/text_emb_model/mpnet.yaml</span><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><a href="#__codelineno-0-1"><span class="linenos" data-linenos="1 "></span></a><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gfmrag.text_emb_models.BaseTextEmbModel</span>
@@ -1615,18 +1610,103 @@
 </tr>
 </tbody>
 </table>
+<h2 id="qwen3-embedding-model-configuration">Qwen3 Embedding Model Configuration<a class="headerlink" href="#qwen3-embedding-model-configuration" title="Permanent link">&para;</a></h2>
+<p>This configuration supports Qwen3 embedding models through <a class="autorefs autorefs-internal" href="../../api/text_emb_models/#gfmrag.text_emb_models.Qwen3TextEmbModel">gfmrag.text_emb_models.Qwen3TextEmbModel</a>. Example configuration files are shown below:</p>
+<div class="admonition example">
+<p class="admonition-title">Qwen/Qwen3-Embedding-0.6B</p>
+<div class="language-yaml highlight"><span class="filename">gfmrag/workflow/config/text_emb_model/qwen3.yaml</span><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><a href="#__codelineno-2-1"><span class="linenos" data-linenos="1 "></span></a><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gfmrag.text_emb_models.Qwen3TextEmbModel</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2"></a><a href="#__codelineno-2-2"><span class="linenos" data-linenos="2 "></span></a><span class="nt">text_emb_model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Qwen/Qwen3-Embedding-0.6B</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3"></a><a href="#__codelineno-2-3"><span class="linenos" data-linenos="3 "></span></a><span class="nt">normalize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4"></a><a href="#__codelineno-2-4"><span class="linenos" data-linenos="4 "></span></a><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5"></a><a href="#__codelineno-2-5"><span class="linenos" data-linenos="5 "></span></a><span class="nt">query_instruct</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Instruct:</span><span class="nv"> </span><span class="s">Given</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">web</span><span class="nv"> </span><span class="s">search</span><span class="nv"> </span><span class="s">query,</span><span class="nv"> </span><span class="s">retrieve</span><span class="nv"> </span><span class="s">relevant</span><span class="nv"> </span><span class="s">passages</span><span class="nv"> </span><span class="s">that</span><span class="nv"> </span><span class="s">answer</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">query\nQuery:</span><span class="nv"> </span><span class="s">&quot;</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6"></a><a href="#__codelineno-2-6"><span class="linenos" data-linenos="6 "></span></a><span class="nt">passage_instruct</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7"></a><a href="#__codelineno-2-7"><span class="linenos" data-linenos="7 "></span></a><span class="nt">truncate_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1024</span>
+</code></pre></div>
+</div>
+<div class="admonition example">
+<p class="admonition-title">Qwen/Qwen3-Embedding-8B</p>
+<div class="language-yaml highlight"><span class="filename">gfmrag/workflow/config/text_emb_model/qwen3_8b.yaml</span><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><a href="#__codelineno-3-1"><span class="linenos" data-linenos="1 "></span></a><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gfmrag.text_emb_models.Qwen3TextEmbModel</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2"></a><a href="#__codelineno-3-2"><span class="linenos" data-linenos="2 "></span></a><span class="nt">text_emb_model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Qwen/Qwen3-Embedding-8B</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3"></a><a href="#__codelineno-3-3"><span class="linenos" data-linenos="3 "></span></a><span class="nt">normalize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4"></a><a href="#__codelineno-3-4"><span class="linenos" data-linenos="4 "></span></a><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5"></a><a href="#__codelineno-3-5"><span class="linenos" data-linenos="5 "></span></a><span class="nt">query_instruct</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Instruct:</span><span class="nv"> </span><span class="s">Given</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">web</span><span class="nv"> </span><span class="s">search</span><span class="nv"> </span><span class="s">query,</span><span class="nv"> </span><span class="s">retrieve</span><span class="nv"> </span><span class="s">relevant</span><span class="nv"> </span><span class="s">passages</span><span class="nv"> </span><span class="s">that</span><span class="nv"> </span><span class="s">answer</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">query\nQuery:</span><span class="nv"> </span><span class="s">&quot;</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6"></a><a href="#__codelineno-3-6"><span class="linenos" data-linenos="6 "></span></a><span class="nt">passage_instruct</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7"></a><a href="#__codelineno-3-7"><span class="linenos" data-linenos="7 "></span></a><span class="nt">truncate_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4096</span>
+</code></pre></div>
+</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Options</th>
+<th style="text-align: center;">Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>_target_</code></td>
+<td style="text-align: center;"><code>gfmrag.text_emb_models.Qwen3TextEmbModel</code></td>
+<td style="text-align: center;">The class name of <code>Qwen3TextEmbModel</code>.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>text_emb_model_name</code></td>
+<td style="text-align: center;"><code>Qwen/Qwen3-Embedding-0.6B</code>, <code>Qwen/Qwen3-Embedding-8B</code>, or local path</td>
+<td style="text-align: center;">The name or local path of the Qwen3 embedding model.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>normalize</code></td>
+<td style="text-align: center;"><code>True</code>, <code>False</code></td>
+<td style="text-align: center;">Whether to normalize the embeddings.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>batch_size</code></td>
+<td style="text-align: center;">Positive integer</td>
+<td style="text-align: center;">Batch size used for encoding.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>query_instruct</code></td>
+<td style="text-align: center;">String, <code>null</code></td>
+<td style="text-align: center;">The instruction prepended to each query.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>passage_instruct</code></td>
+<td style="text-align: center;">String, <code>null</code></td>
+<td style="text-align: center;">The instruction prepended to each passage.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>truncate_dim</code></td>
+<td style="text-align: center;">Positive integer, <code>null</code></td>
+<td style="text-align: center;">Optional output embedding dimension for Matryoshka truncation, such as <code>1024</code> for <code>0.6B</code> or <code>4096</code> for <code>8B</code>.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>api_base</code></td>
+<td style="text-align: center;">URL, <code>null</code></td>
+<td style="text-align: center;">Base URL of an existing vLLM embedding server. If <code>null</code>, gfmrag starts a local vLLM instance.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>api_key</code></td>
+<td style="text-align: center;">String</td>
+<td style="text-align: center;">API key used when <code>api_base</code> points to a protected server.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>vllm_timeout</code></td>
+<td style="text-align: center;">Positive integer</td>
+<td style="text-align: center;">Timeout in seconds for vLLM embedding requests.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="nvidia-embedding-model-configuration">Nvidia Embedding Model Configuration<a class="headerlink" href="#nvidia-embedding-model-configuration" title="Permanent link">&para;</a></h2>
 <p>This configuration supports the <a href="https://huggingface.co/nvidia/NV-Embed-v2">Nvidia embedding models</a>. An example of a Nvidia embedding model configuration file is shown below:</p>
 <div class="admonition example">
 <p class="admonition-title">nvidia/NV-Embed-v2</p>
-<div class="language-yaml highlight"><span class="filename">gfmrag/workflow/config/text_emb_model/nv_embed_v2.yaml</span><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><a href="#__codelineno-2-1"><span class="linenos" data-linenos="1 "></span></a><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gfmrag.text_emb_models.NVEmbedV2</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2"></a><a href="#__codelineno-2-2"><span class="linenos" data-linenos="2 "></span></a><span class="nt">text_emb_model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nvidia/NV-Embed-v2</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3"></a><a href="#__codelineno-2-3"><span class="linenos" data-linenos="3 "></span></a><span class="nt">normalize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4"></a><a href="#__codelineno-2-4"><span class="linenos" data-linenos="4 "></span></a><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5"></a><a href="#__codelineno-2-5"><span class="linenos" data-linenos="5 "></span></a><span class="nt">query_instruct</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Instruct:</span><span class="nv"> </span><span class="s">Given</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">multi-hop</span><span class="nv"> </span><span class="s">question,</span><span class="nv"> </span><span class="s">retrieve</span><span class="nv"> </span><span class="s">documents</span><span class="nv"> </span><span class="s">that</span><span class="nv"> </span><span class="s">can</span><span class="nv"> </span><span class="s">help</span><span class="nv"> </span><span class="s">answer</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">question\nQuery:</span><span class="nv"> </span><span class="s">&quot;</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6"></a><a href="#__codelineno-2-6"><span class="linenos" data-linenos="6 "></span></a><span class="nt">passage_instruct</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7"></a><a href="#__codelineno-2-7"><span class="linenos" data-linenos="7 "></span></a><span class="nt">model_kwargs</span><span class="p">:</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8"></a><a href="#__codelineno-2-8"><span class="linenos" data-linenos="8 "></span></a><span class="w">  </span><span class="nt">torch_dtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bfloat16</span>
+<div class="language-yaml highlight"><span class="filename">gfmrag/workflow/config/text_emb_model/nv_embed_v2.yaml</span><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a><a href="#__codelineno-4-1"><span class="linenos" data-linenos="1 "></span></a><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gfmrag.text_emb_models.NVEmbedV2</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2"></a><a href="#__codelineno-4-2"><span class="linenos" data-linenos="2 "></span></a><span class="nt">text_emb_model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nvidia/NV-Embed-v2</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3"></a><a href="#__codelineno-4-3"><span class="linenos" data-linenos="3 "></span></a><span class="nt">normalize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4"></a><a href="#__codelineno-4-4"><span class="linenos" data-linenos="4 "></span></a><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5"></a><a href="#__codelineno-4-5"><span class="linenos" data-linenos="5 "></span></a><span class="nt">query_instruct</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Instruct:</span><span class="nv"> </span><span class="s">Given</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">multi-hop</span><span class="nv"> </span><span class="s">question,</span><span class="nv"> </span><span class="s">retrieve</span><span class="nv"> </span><span class="s">documents</span><span class="nv"> </span><span class="s">that</span><span class="nv"> </span><span class="s">can</span><span class="nv"> </span><span class="s">help</span><span class="nv"> </span><span class="s">answer</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">question\nQuery:</span><span class="nv"> </span><span class="s">&quot;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6"></a><a href="#__codelineno-4-6"><span class="linenos" data-linenos="6 "></span></a><span class="nt">passage_instruct</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7"></a><a href="#__codelineno-4-7"><span class="linenos" data-linenos="7 "></span></a><span class="nt">model_kwargs</span><span class="p">:</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8"></a><a href="#__codelineno-4-8"><span class="linenos" data-linenos="8 "></span></a><span class="w">  </span><span class="nt">torch_dtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bfloat16</span>
 </code></pre></div>
 </div>
 <table>
@@ -1705,7 +1785,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../doc_ranker_config/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Document Ranker Config">
+          <a href="../el_model_config/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Entity Linking Model Config">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1715,7 +1795,7 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Document Ranker Config
+                Entity Linking Model Config
               </div>
             </div>
           </a>
