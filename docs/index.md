@@ -37,8 +37,8 @@ For more details, please refer to our [project](https://github.com/RManLuo/gfm-r
 
 ## How GFM-RAG And G-reasoner Relate
 
-- `[GFM-RAG](https://www.arxiv.org/abs/2502.01113)` is the original graph foundation model retriever and remains the baseline workflow and published checkpoint family.
-- `[G-reasoner](https://arxiv.org/abs/2509.24276)` extends the same repository with a newer training and reproduction path.
+- [GFM-RAG](https://www.arxiv.org/abs/2502.01113) is the original graph foundation model retriever and remains the baseline workflow and published checkpoint family.
+- [G-reasoner](https://arxiv.org/abs/2509.24276) is the latest version of the graph foundation model retriever, which has new architecture and better performance.
 - Both lines share the same indexing, dataset, QA, and documentation structure in this site.
 
 ## Fastest Path
