@@ -85,7 +85,7 @@ There are two starting points:
 - **Path A — Start from raw documents** (steps 1–3 below): provide `raw/documents.json` and let `GFMRetriever.from_index(...)` build the graph automatically.
 - **Path B — Bring your own graph** (step 1b below): place pre-built graph files under `processed/stage1/` and `GFMRetriever.from_index(...)` will load them directly without rebuilding.
 
-See [Data Format](../workflow/data_format.md) for the full schema of both paths.
+See [Data Format](docs/workflow/data_format.md) for the full schema of both paths.
 
 ---
 
@@ -188,7 +188,7 @@ The three CSV files define the graph:
 | `relations.csv` | Relation name and optional attributes |
 | `edges.csv` | Edges as `(source, relation, target)` triples with optional attributes |
 
-See [Data Format](../workflow/data_format.md) for the full schema and examples.
+See [Data Format](docs/workflow/data_format.md) for the full schema and examples.
 
 #### 2. Initialize `GFMRetriever` and Retrieve
 
