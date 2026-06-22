@@ -8,8 +8,8 @@ Evaluate on two GraphRAG benchmarks. Start with data, build the KG index, run re
 
 Two GraphRAG benchmarks use similar names, so we use the following names to avoid confusion.
 
-- `graphrag_bench_cs` → GraphRAG-Bench: Challenging Domain-Specific Reasoning for Evaluating Graph Retrieval-Augmented Generation (aka **G-Bench CS**). [Repo](https://github.com/jeremycp3/GraphRAG-Bench)
-- `graphrag_benchmark_medical` / `graphrag_benchmark_novel` → When to use Graphs in RAG: A Comprehensive Analysis for Graph Retrieval-Augmented Generation (aka **G-Bench Medical / Novel**). [Repo](https://github.com/GraphRAG-Bench/GraphRAG-Benchmark)
+- `graphrag_bench_cs` refers to GraphRAG-Bench: Challenging Domain-Specific Reasoning for Evaluating Graph Retrieval-Augmented Generation (aka **G-Bench CS**). [Repo](https://github.com/jeremycp3/GraphRAG-Bench)
+- `graphrag_benchmark_medical` / `graphrag_benchmark_novel` refer to When to use Graphs in RAG: A Comprehensive Analysis for Graph Retrieval-Augmented Generation (aka **G-Bench Medical / Novel**). [Repo](https://github.com/GraphRAG-Bench/GraphRAG-Benchmark)
 
 ## 1) Prepare data
 
@@ -53,7 +53,7 @@ data/<dataset>/processed/stage1/
 
 ## 3) Generate retrieval results
 
-The QA scripts need retrieval results per dataset with top documents and entities for each question.
+The QA scripts need retrieval results per dataset with top documents and entities for each question (default `test.top_k=10` in the stage-3 scripts).
 
 You can either run retrieval yourself or use our precomputed results. Download our precomputed retrieval results from [here](https://drive.google.com/file/d/12kcmz62HMRxuXhKKMrstHUDgRu6AwNUD/view?usp=sharing).
 This archive is the same package used for the prebuilt KG indices above.
@@ -90,12 +90,12 @@ We use the official evaluation scripts from corresponding repos with minimal mod
 
 ### GraphRAG-Bench (CS)
 
-1) Clone the [repo](https://github.com/jeremycp3/GraphRAG-Bench) and download their [data](https://huggingface.co/datasets/Awesome-GraphRAG/GraphRAG-Bench).
+1) Clone the [repo](https://github.com/jeremycp3/GraphRAG-Bench) and download their [data](https://huggingface.co/datasets/Awesome-GraphRAG/GraphRAG-Bench), then place the benchmark data in that repo's expected `Datasets/` layout.
 2) Copy the five JSON outputs from step 4 into `GraphRAG-Bench/Datasets/output/g-reasoner/`.
-3) Run the evaluator inside that repo, e.g. `python evaluator.py`.
+3) From the `GraphRAG-Bench` repo root, run the evaluator command documented by that project (for example, `python evaluator.py`).
 
 ### GraphRAG-Benchmark (Novel / Medical)
 
-1) Clone the [repo](https://github.com/GraphRAG-Bench/GraphRAG-Benchmark) and download their [data](https://huggingface.co/datasets/GraphRAG-Bench/GraphRAG-Bench).
+1) Clone the [repo](https://github.com/GraphRAG-Bench/GraphRAG-Benchmark) and download their [data](https://huggingface.co/datasets/GraphRAG-Bench/GraphRAG-Bench), then place the benchmark files in that repo's expected `Datasets/` layout.
 2) Copy `prediction.jsonl` from step 4 into `GraphRAG-Benchmark/Datasets/output/g-reasoner/<domain>/prediction.jsonl`.
 3) Run the evaluation entry point, e.g. `bash run_retrieval_evaluation.sh` and `bash run_gen_evaluation.sh` for retrieval and generation evaluation respectively.
