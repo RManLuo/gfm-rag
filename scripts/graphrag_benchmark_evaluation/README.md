@@ -8,7 +8,7 @@ Evaluate on two GraphRAG benchmarks. Start with data, build the KG index, run re
 
 Two GraphRAG benchmarks use similar names, so we use the following names to avoid confusion.
 
-- `graphrag_bench_cs` refers to GraphRAG-Bench: Challenging Domain-Specific Reasoning for Evaluating Graph Retrieval-Augmented Generation (aka **G-Bench CS**). [Repo](https://github.com/jeremycp3/GraphRAG-Bench)
+- `graphrag_bench_cs` refers to GraphRAG-Bench: Challenging Domain-Specific Reasoning for Evaluating Graph Retrieval-Augmented Generation (aka **GraphRAG-Bench (CS)**). [Repo](https://github.com/jeremycp3/GraphRAG-Bench)
 - `graphrag_benchmark_medical` / `graphrag_benchmark_novel` refer to When to use Graphs in RAG: A Comprehensive Analysis for Graph Retrieval-Augmented Generation (aka **G-Bench Medical / Novel**). [Repo](https://github.com/GraphRAG-Bench/GraphRAG-Benchmark)
 
 ## 1) Prepare data
@@ -96,6 +96,6 @@ We use the official evaluation scripts from corresponding repos with minimal mod
 
 ### GraphRAG-Benchmark (Novel / Medical)
 
-1) Clone the [repo](https://github.com/GraphRAG-Bench/GraphRAG-Benchmark) and download their [data](https://huggingface.co/datasets/GraphRAG-Bench/GraphRAG-Bench), then place the benchmark files in that repo's expected `Datasets/` layout.
+1) Clone the [repo](https://github.com/GraphRAG-Bench/GraphRAG-Benchmark) and download their [data](https://huggingface.co/datasets/GraphRAG-Bench/GraphRAG-Bench), then place the benchmark files under that repo's `Datasets/` directory following the setup steps in their README.
 2) Copy `prediction.jsonl` from step 4 into `GraphRAG-Benchmark/Datasets/output/g-reasoner/<domain>/prediction.jsonl`.
 3) Run the evaluation entry point, e.g. `bash run_retrieval_evaluation.sh` and `bash run_gen_evaluation.sh` for retrieval and generation evaluation respectively.
