@@ -338,6 +338,15 @@ python -m gfmrag.workflow.qa_ircot_inference \
 
 ---
 
+## GraphRAG Benchmark Evaluation
+
+The GraphRAG benchmark evaluation guide is included below from:
+`scripts/graphrag_benchmark_evaluation/README.md`
+
+--8<-- "../../scripts/graphrag_benchmark_evaluation/README.md"
+
+---
+
 ## Expected Outputs Summary
 
 | Stage | Output Location | Contents |
