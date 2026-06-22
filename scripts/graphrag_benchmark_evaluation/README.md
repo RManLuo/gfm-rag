@@ -38,7 +38,7 @@ You can run indexing yourself or use our prebuilt KG indices. Download our prebu
 To build KG indices locally, create `nodes.csv`, `edges.csv`, `relations.csv`, and processed `test.json` for each dataset by running the following script.
 
 ```bash
-bash graphrag_benchmark/scripts/stage1_data_index.sh
+bash scripts/graphrag_benchmark_evaluation/scripts/stage1_data_index.sh
 ```
 
 Expected layout after indexing:
@@ -56,11 +56,12 @@ data/<dataset>/processed/stage1/
 The QA scripts need retrieval results per dataset with top documents and entities for each question.
 
 You can either run retrieval yourself or use our precomputed results. Download our precomputed retrieval results from [here](https://drive.google.com/file/d/12kcmz62HMRxuXhKKMrstHUDgRu6AwNUD/view?usp=sharing).
+This archive is the same package used for the prebuilt KG indices above.
 
 To generate retrieval results locally using GFM-RAG, run the following script:
 
 ```bash
-bash graphrag_benchmark/scripts/stage2_retrieval.sh
+bash scripts/graphrag_benchmark_evaluation/scripts/stage2_retrieval.sh
 ```
 
 ## 4) Run QA
@@ -70,7 +71,7 @@ Use the provided scripts to load the retrieval outputs, build prompts, and call 
 ### GraphRAG-Bench (CS)
 
 ```bash
-bash graphrag_benchmark/scripts/stage3_qa_inference_graphrag_bench.sh
+bash scripts/graphrag_benchmark_evaluation/scripts/stage3_qa_inference_graphrag_bench.sh
 ```
 
 Outputs: one JSON per task type (FB, MC, MS, OE, TF) named for the official evaluator.
@@ -78,7 +79,7 @@ Outputs: one JSON per task type (FB, MC, MS, OE, TF) named for the official eval
 ### GraphRAG-Benchmark (Novel / Medical)
 
 ```bash
-bash graphrag_benchmark/scripts/stage3_qa_inference_graphrag_benchmark.sh
+bash scripts/graphrag_benchmark_evaluation/scripts/stage3_qa_inference_graphrag_benchmark.sh
 ```
 
 Outputs: one `prediction.jsonl`.
