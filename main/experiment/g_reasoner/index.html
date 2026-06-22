@@ -817,6 +817,75 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#evaluation-on-graphrag-benchmarks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Evaluation on GraphRAG Benchmarks
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Evaluation on GraphRAG Benchmarks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#benchmarks-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benchmarks at a glance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-prepare-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      1) Prepare data
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-build-the-kg-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      2) Build the KG index
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-generate-retrieval-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      3) Generate retrieval results
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-run-qa" class="md-nav__link">
+    <span class="md-ellipsis">
+      4) Run QA
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-evaluate-with-the-official-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      5) Evaluate with the official scripts
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#scripts-overview" class="md-nav__link">
     <span class="md-ellipsis">
       Scripts Overview
@@ -1204,6 +1273,75 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#evaluation-on-graphrag-benchmarks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Evaluation on GraphRAG Benchmarks
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Evaluation on GraphRAG Benchmarks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#benchmarks-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benchmarks at a glance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-prepare-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      1) Prepare data
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-build-the-kg-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      2) Build the KG index
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-generate-retrieval-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      3) Generate retrieval results
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-run-qa" class="md-nav__link">
+    <span class="md-ellipsis">
+      4) Run QA
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-evaluate-with-the-official-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      5) Evaluate with the official scripts
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#scripts-overview" class="md-nav__link">
     <span class="md-ellipsis">
       Scripts Overview
@@ -1408,7 +1546,7 @@
 <li>Sufficient GPU memory: Stage 2 scripts default to 4 GPUs</li>
 </ul>
 <h2 id="dataset-download">Dataset Download<a class="headerlink" href="#dataset-download" title="Permanent link">&para;</a></h2>
-<p>Download the testing split and full training data from <a href="https://1drv.ms/f/c/cb4bbdfe5951d1a1/IgDTnyNJiiAPTJKqY1KizEVMAQ1jX5wAf94YMlF-VyLvscI?e=bgp0Yv">OneDrive</a> and place them under the <code>data/</code> directory:</p>
+<p>Download the testing split and full training data from <a href="https://1drv.ms/u/c/cb4bbdfe5951d1a1/IQBJXhHkEFY6TJVIX2OSVCPyAd-yP8q3VJn7IqbpdbrX2a8?e=bvgg4G">OneDrive</a> and place them under the <code>data/</code> directory:</p>
 <div class="language-text highlight"><span class="filename">Text Only</span><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><a href="#__codelineno-0-1"><span class="linenos" data-linenos=" 1 "></span></a>data/
 <a id="__codelineno-0-2" name="__codelineno-0-2"></a><a href="#__codelineno-0-2"><span class="linenos" data-linenos=" 2 "></span></a>├── 2wikimultihopqa_test/
 <a id="__codelineno-0-3" name="__codelineno-0-3"></a><a href="#__codelineno-0-3"><span class="linenos" data-linenos=" 3 "></span></a>│   ├── processed/stage1/    # Pre-built graph index (provided)
@@ -1426,6 +1564,75 @@
 <blockquote>
 <p>G-Reasoner uses <code>hotpotqa_test_v2</code> (not <code>hotpotqa_test</code>) as the validation split. The <code>processed/stage1/</code> directories for the test sets are pre-built and provided in the download.</p>
 </blockquote>
+<h2 id="evaluation-on-graphrag-benchmarks">Evaluation on GraphRAG Benchmarks<a class="headerlink" href="#evaluation-on-graphrag-benchmarks" title="Permanent link">&para;</a></h2>
+<p>Evaluate on two GraphRAG benchmarks. Start with data, build the KG index, run retrieval + QA, then score with the official scripts.</p>
+<blockquote>
+<p>Install and set up the environment following the top-level <code>README.md</code> before running the commands here.</p>
+</blockquote>
+<h3 id="benchmarks-at-a-glance">Benchmarks at a glance<a class="headerlink" href="#benchmarks-at-a-glance" title="Permanent link">&para;</a></h3>
+<p>Two GraphRAG benchmarks uses similar name, we will use the following names to avoid confusion.</p>
+<ul>
+<li><code>graphrag_bench_cs</code> → GraphRAG-Bench: Challenging Domain-Specific Reasoning for Evaluating Graph Retrieval-Augmented Generation (aka <strong>G-Bench CS</strong>). <a href="https://github.com/jeremycp3/GraphRAG-Bench">Repo</a></li>
+<li><code>graphrag_benchmark_medical</code> / <code>graphrag_benchmark_novel</code> → When to use Graphs in RAG: A Comprehensive Analysis for Graph Retrieval-Augmented Generation (aka <strong>G-Bench Medical / Novel</strong>). <a href="https://github.com/GraphRAG-Bench/GraphRAG-Benchmark">Repo</a></li>
+</ul>
+<h3 id="1-prepare-data">1) Prepare data<a class="headerlink" href="#1-prepare-data" title="Permanent link">&para;</a></h3>
+<p>Download our preprocessed data from <a href="https://1drv.ms/u/c/cb4bbdfe5951d1a1/IQBJXhHkEFY6TJVIX2OSVCPyAd-yP8q3VJn7IqbpdbrX2a8?e=bvgg4G">here</a> and place it under <code>data/</code>.</p>
+<div class="language-text highlight"><span class="filename">Text Only</span><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><a href="#__codelineno-1-1"><span class="linenos" data-linenos=" 1 "></span></a>data/
+<a id="__codelineno-1-2" name="__codelineno-1-2"></a><a href="#__codelineno-1-2"><span class="linenos" data-linenos=" 2 "></span></a>├── graphrag_bench_cs/
+<a id="__codelineno-1-3" name="__codelineno-1-3"></a><a href="#__codelineno-1-3"><span class="linenos" data-linenos=" 3 "></span></a>│   └── raw/
+<a id="__codelineno-1-4" name="__codelineno-1-4"></a><a href="#__codelineno-1-4"><span class="linenos" data-linenos=" 4 "></span></a>│       ├── documents.json
+<a id="__codelineno-1-5" name="__codelineno-1-5"></a><a href="#__codelineno-1-5"><span class="linenos" data-linenos=" 5 "></span></a>│       └── test.json
+<a id="__codelineno-1-6" name="__codelineno-1-6"></a><a href="#__codelineno-1-6"><span class="linenos" data-linenos=" 6 "></span></a>├── graphrag_benchmark_medical/
+<a id="__codelineno-1-7" name="__codelineno-1-7"></a><a href="#__codelineno-1-7"><span class="linenos" data-linenos=" 7 "></span></a>│   └── raw/
+<a id="__codelineno-1-8" name="__codelineno-1-8"></a><a href="#__codelineno-1-8"><span class="linenos" data-linenos=" 8 "></span></a>│       ├── documents.json
+<a id="__codelineno-1-9" name="__codelineno-1-9"></a><a href="#__codelineno-1-9"><span class="linenos" data-linenos=" 9 "></span></a>│       └── test.json
+<a id="__codelineno-1-10" name="__codelineno-1-10"></a><a href="#__codelineno-1-10"><span class="linenos" data-linenos="10 "></span></a>└── graphrag_benchmark_novel/
+<a id="__codelineno-1-11" name="__codelineno-1-11"></a><a href="#__codelineno-1-11"><span class="linenos" data-linenos="11 "></span></a>    └── raw/
+<a id="__codelineno-1-12" name="__codelineno-1-12"></a><a href="#__codelineno-1-12"><span class="linenos" data-linenos="12 "></span></a>        ├── documents.json
+<a id="__codelineno-1-13" name="__codelineno-1-13"></a><a href="#__codelineno-1-13"><span class="linenos" data-linenos="13 "></span></a>        └── test.json
+</code></pre></div>
+<h3 id="2-build-the-kg-index">2) Build the KG index<a class="headerlink" href="#2-build-the-kg-index" title="Permanent link">&para;</a></h3>
+<p>You can run indexing yourself or use our prebuilt KG indices. Download our prebuilt KG indices from <a href="https://drive.google.com/file/d/12kcmz62HMRxuXhKKMrstHUDgRu6AwNUD/view?usp=sharing">here</a>.</p>
+<p>To build KG indices locally, create <code>nodes.csv</code>, <code>edges.csv</code>, <code>relations.csv</code>, and processed <code>test.json</code> for each dataset running the following script.</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><a href="#__codelineno-2-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/graphrag_benchmark_evaluation/scripts/stage1_data_index.sh
+</code></pre></div>
+<p>Expected layout after indexing:</p>
+<div class="language-text highlight"><span class="filename">Text Only</span><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><a href="#__codelineno-3-1"><span class="linenos" data-linenos="1 "></span></a>data/&lt;dataset&gt;/processed/stage1/
+<a id="__codelineno-3-2" name="__codelineno-3-2"></a><a href="#__codelineno-3-2"><span class="linenos" data-linenos="2 "></span></a>├── edges.csv
+<a id="__codelineno-3-3" name="__codelineno-3-3"></a><a href="#__codelineno-3-3"><span class="linenos" data-linenos="3 "></span></a>├── nodes.csv
+<a id="__codelineno-3-4" name="__codelineno-3-4"></a><a href="#__codelineno-3-4"><span class="linenos" data-linenos="4 "></span></a>├── relations.csv
+<a id="__codelineno-3-5" name="__codelineno-3-5"></a><a href="#__codelineno-3-5"><span class="linenos" data-linenos="5 "></span></a>└── test.json
+</code></pre></div>
+<h3 id="3-generate-retrieval-results">3) Generate retrieval results<a class="headerlink" href="#3-generate-retrieval-results" title="Permanent link">&para;</a></h3>
+<p>The QA scripts need retrieval results per dataset with top documents and entities for each question.</p>
+<p>You can either run retrieval yourself or use our precomputed results. Download our precomputed retrieval results from <a href="https://drive.google.com/file/d/12kcmz62HMRxuXhKKMrstHUDgRu6AwNUD/view?usp=sharing">here</a>.</p>
+<p>To generate retrieval results locally using GFM-RAG running the following script:</p>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a><a href="#__codelineno-4-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/graphrag_benchmark_evaluation/scripts/stage2_retrieval.sh
+</code></pre></div>
+<h3 id="4-run-qa">4) Run QA<a class="headerlink" href="#4-run-qa" title="Permanent link">&para;</a></h3>
+<p>Use the provided scripts to load the retrieval outputs, build prompts, and call the LLM. Yon can check the prompts in <code>config/qa_prompt/</code>.</p>
+<h4 id="graphrag-bench-cs">GraphRAG-Bench (CS)<a class="headerlink" href="#graphrag-bench-cs" title="Permanent link">&para;</a></h4>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1"></a><a href="#__codelineno-5-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/graphrag_benchmark_evaluation/scripts/stage3_qa_inference_graphrag_bench.sh
+</code></pre></div>
+<p>Outputs: one JSON per task type (FB, MC, MS, OE, TF) named for the official evaluator.</p>
+<h4 id="graphrag-benchmark-novel-medical">GraphRAG-Benchmark (Novel / Medical)<a class="headerlink" href="#graphrag-benchmark-novel-medical" title="Permanent link">&para;</a></h4>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1"></a><a href="#__codelineno-6-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/graphrag_benchmark_evaluation/scripts/stage3_qa_inference_graphrag_benchmark.sh
+</code></pre></div>
+<p>Outputs: one <code>prediction.jsonl</code>.</p>
+<h3 id="5-evaluate-with-the-official-scripts">5) Evaluate with the official scripts<a class="headerlink" href="#5-evaluate-with-the-official-scripts" title="Permanent link">&para;</a></h3>
+<p>We use the official evaluation scripts from corresponding repos with minimal modifications to fit our data and outputs.</p>
+<h4 id="graphrag-bench-cs_1">GraphRAG-Bench (CS)<a class="headerlink" href="#graphrag-bench-cs_1" title="Permanent link">&para;</a></h4>
+<ol>
+<li>Clone the <a href="https://github.com/icedpanda/GraphRAG-Bench">repo</a> and download their <a href="https://huggingface.co/datasets/Awesome-GraphRAG/GraphRAG-Bench">data</a>.</li>
+<li>Copy the five JSON outputs from step 4 into <code>GraphRAG-Bench/Datasets/output/g-reasoner/</code>.</li>
+<li>Run the evaluator inside that repo, e.g. <code>python evaluator.py</code>.</li>
+</ol>
+<h4 id="graphrag-benchmark-novel-medical_1">GraphRAG-Benchmark (Novel / Medical)<a class="headerlink" href="#graphrag-benchmark-novel-medical_1" title="Permanent link">&para;</a></h4>
+<ol>
+<li>Clone the <a href="https://github.com/icedpanda/GraphRAG-Benchmark">repo</a> and download their <a href="https://huggingface.co/datasets/GraphRAG-Bench/GraphRAG-Bench">data</a>.</li>
+<li>Copy <code>prediction.jsonl</code> from step 4 into <code>GraphRAG-Benchmark/Datasets/output/g-reasoner/&lt;domain&gt;/prediction.jsonl</code>.</li>
+<li>Run the evaluation entry point, e.g. <code>bash run_retreival_evaluation.sh</code> and <code>bash run_gen_evaluation.sh</code> for retrieval and generation evaluation respectively.</li>
+</ol>
 <h2 id="scripts-overview">Scripts Overview<a class="headerlink" href="#scripts-overview" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1467,35 +1674,35 @@
 <h2 id="stage-1-build-graph-index">Stage 1: Build Graph Index<a class="headerlink" href="#stage-1-build-graph-index" title="Permanent link">&para;</a></h2>
 <p>This stage uses a text embedding model (instead of LLM-based NER/OpenIE) to extract entities and construct a graph, then builds the SFT training pairs with the <code>hipporag2_sft_constructor</code>.</p>
 <p><strong>Output</strong>: <code>data/&lt;data_name&gt;/processed/stage1/</code> containing <code>nodes.csv</code>, <code>relations.csv</code>, <code>edges.csv</code>, <code>train.json</code>, <code>test.json</code>.</p>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><a href="#__codelineno-1-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/g-reasoner/stage1_data_index.sh
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1"></a><a href="#__codelineno-7-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/g-reasoner/stage1_data_index.sh
 </code></pre></div>
 <h3 id="what-the-script-does">What the script does<a class="headerlink" href="#what-the-script-does" title="Permanent link">&para;</a></h3>
 <p><strong>Index test datasets</strong> (no SFT constructor needed):</p>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><a href="#__codelineno-2-1"><span class="linenos" data-linenos="1 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2"></a><a href="#__codelineno-2-2"><span class="linenos" data-linenos="2 "></span></a><span class="nv">DATA_NAME_LIST</span><span class="o">=</span><span class="s2">&quot;hotpotqa_test_v2 musique_test 2wikimultihopqa_test&quot;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3"></a><a href="#__codelineno-2-3"><span class="linenos" data-linenos="3 "></span></a><span class="k">for</span><span class="w"> </span>DATA_NAME<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="si">${</span><span class="nv">DATA_NAME_LIST</span><span class="si">}</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4"></a><a href="#__codelineno-2-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.index_dataset<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5"></a><a href="#__codelineno-2-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">        </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6"></a><a href="#__codelineno-2-6"><span class="linenos" data-linenos="6 "></span></a><span class="w">        </span>dataset.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7"></a><a href="#__codelineno-2-7"><span class="linenos" data-linenos="7 "></span></a><span class="w">        </span><span class="nv">text_emb_model</span><span class="o">=</span><span class="si">${</span><span class="nv">TEXT_EMBEDDING_MODEL</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8"></a><a href="#__codelineno-2-8"><span class="linenos" data-linenos="8 "></span></a><span class="w">        </span>dataset.data_name<span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9"></a><a href="#__codelineno-2-9"><span class="linenos" data-linenos="9 "></span></a><span class="k">done</span>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1"></a><a href="#__codelineno-8-1"><span class="linenos" data-linenos="1 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2"></a><a href="#__codelineno-8-2"><span class="linenos" data-linenos="2 "></span></a><span class="nv">DATA_NAME_LIST</span><span class="o">=</span><span class="s2">&quot;hotpotqa_test_v2 musique_test 2wikimultihopqa_test&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3"></a><a href="#__codelineno-8-3"><span class="linenos" data-linenos="3 "></span></a><span class="k">for</span><span class="w"> </span>DATA_NAME<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="si">${</span><span class="nv">DATA_NAME_LIST</span><span class="si">}</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4"></a><a href="#__codelineno-8-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.index_dataset<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5"></a><a href="#__codelineno-8-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">        </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6"></a><a href="#__codelineno-8-6"><span class="linenos" data-linenos="6 "></span></a><span class="w">        </span>dataset.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7"></a><a href="#__codelineno-8-7"><span class="linenos" data-linenos="7 "></span></a><span class="w">        </span><span class="nv">text_emb_model</span><span class="o">=</span><span class="si">${</span><span class="nv">TEXT_EMBEDDING_MODEL</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8"></a><a href="#__codelineno-8-8"><span class="linenos" data-linenos="8 "></span></a><span class="w">        </span>dataset.data_name<span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9"></a><a href="#__codelineno-8-9"><span class="linenos" data-linenos="9 "></span></a><span class="k">done</span>
 </code></pre></div>
 <p><strong>Index training datasets</strong> (20 shards × 3 datasets, with SFT filtering):</p>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><a href="#__codelineno-3-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2"></a><a href="#__codelineno-3-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">DATA_NAME_LIST</span><span class="o">=</span><span class="s2">&quot;hotpotqa_train musique_train 2wikimultihopqa_train&quot;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3"></a><a href="#__codelineno-3-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">START_N</span><span class="o">=</span><span class="m">0</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4"></a><a href="#__codelineno-3-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">END_N</span><span class="o">=</span><span class="m">19</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5"></a><a href="#__codelineno-3-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>seq<span class="w"> </span><span class="si">${</span><span class="nv">START_N</span><span class="si">}</span><span class="w"> </span><span class="si">${</span><span class="nv">END_N</span><span class="si">}</span><span class="k">)</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6"></a><a href="#__codelineno-3-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="w">    </span><span class="k">for</span><span class="w"> </span>DATA_NAME<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="si">${</span><span class="nv">DATA_NAME_LIST</span><span class="si">}</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7"></a><a href="#__codelineno-3-7"><span class="linenos" data-linenos=" 7 "></span></a><span class="w">        </span>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.index_dataset<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8"></a><a href="#__codelineno-3-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="w">            </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9"></a><a href="#__codelineno-3-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="w">            </span>dataset.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10"></a><a href="#__codelineno-3-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">            </span><span class="nv">text_emb_model</span><span class="o">=</span><span class="si">${</span><span class="nv">TEXT_EMBEDDING_MODEL</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11"></a><a href="#__codelineno-3-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">            </span>sft_constructor.enable_filtering<span class="o">=</span><span class="si">${</span><span class="nv">ENABLE_FILTERING</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12"></a><a href="#__codelineno-3-12"><span class="linenos" data-linenos="12 "></span></a><span class="w">            </span>dataset.data_name<span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}${</span><span class="nv">i</span><span class="si">}</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13"></a><a href="#__codelineno-3-13"><span class="linenos" data-linenos="13 "></span></a><span class="w">    </span><span class="k">done</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14"></a><a href="#__codelineno-3-14"><span class="linenos" data-linenos="14 "></span></a><span class="k">done</span>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1"></a><a href="#__codelineno-9-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2"></a><a href="#__codelineno-9-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">DATA_NAME_LIST</span><span class="o">=</span><span class="s2">&quot;hotpotqa_train musique_train 2wikimultihopqa_train&quot;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3"></a><a href="#__codelineno-9-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">START_N</span><span class="o">=</span><span class="m">0</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4"></a><a href="#__codelineno-9-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">END_N</span><span class="o">=</span><span class="m">19</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5"></a><a href="#__codelineno-9-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>seq<span class="w"> </span><span class="si">${</span><span class="nv">START_N</span><span class="si">}</span><span class="w"> </span><span class="si">${</span><span class="nv">END_N</span><span class="si">}</span><span class="k">)</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6"></a><a href="#__codelineno-9-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="w">    </span><span class="k">for</span><span class="w"> </span>DATA_NAME<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="si">${</span><span class="nv">DATA_NAME_LIST</span><span class="si">}</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7"></a><a href="#__codelineno-9-7"><span class="linenos" data-linenos=" 7 "></span></a><span class="w">        </span>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.index_dataset<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8"></a><a href="#__codelineno-9-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="w">            </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9"></a><a href="#__codelineno-9-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="w">            </span>dataset.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10"></a><a href="#__codelineno-9-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">            </span><span class="nv">text_emb_model</span><span class="o">=</span><span class="si">${</span><span class="nv">TEXT_EMBEDDING_MODEL</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11"></a><a href="#__codelineno-9-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">            </span>sft_constructor.enable_filtering<span class="o">=</span><span class="si">${</span><span class="nv">ENABLE_FILTERING</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12"></a><a href="#__codelineno-9-12"><span class="linenos" data-linenos="12 "></span></a><span class="w">            </span>dataset.data_name<span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}${</span><span class="nv">i</span><span class="si">}</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13"></a><a href="#__codelineno-9-13"><span class="linenos" data-linenos="13 "></span></a><span class="w">    </span><span class="k">done</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14"></a><a href="#__codelineno-9-14"><span class="linenos" data-linenos="14 "></span></a><span class="k">done</span>
 </code></pre></div>
 <h3 id="default-indexing-components">Default Indexing Components<a class="headerlink" href="#default-indexing-components" title="Permanent link">&para;</a></h3>
 <p>The <code>gfm_reasoner</code> config (<code>gfmrag/workflow/config/gfm_reasoner/index_dataset.yaml</code>) uses:</p>
@@ -1513,30 +1720,30 @@
 <hr />
 <h2 id="stage-2a-supervised-fine-tuning">Stage 2a: Supervised Fine-tuning<a class="headerlink" href="#stage-2a-supervised-fine-tuning" title="Permanent link">&para;</a></h2>
 <p>Fine-tune the G-Reasoner model on the QA datasets. The model uses a 6-layer <code>QueryNBFNet</code> with 1024-dimensional embeddings by default.</p>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a><a href="#__codelineno-4-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/g-reasoner/stage2_finetune.sh
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1"></a><a href="#__codelineno-10-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/g-reasoner/stage2_finetune.sh
 </code></pre></div>
 <h3 id="what-the-script-does_1">What the script does<a class="headerlink" href="#what-the-script-does_1" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1"></a><a href="#__codelineno-5-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">N_GPU</span><span class="o">=</span><span class="m">4</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2"></a><a href="#__codelineno-5-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">N_EPOCH</span><span class="o">=</span><span class="m">10</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3"></a><a href="#__codelineno-5-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">BATCH_SIZE</span><span class="o">=</span><span class="m">4</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4"></a><a href="#__codelineno-5-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">N_DIM</span><span class="o">=</span><span class="m">1024</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5"></a><a href="#__codelineno-5-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="nv">N_LAYERS</span><span class="o">=</span><span class="s2">&quot;[</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="s2">,</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="s2">,</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="s2">,</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="s2">,</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="s2">,</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="s2">]&quot;</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6"></a><a href="#__codelineno-5-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7"></a><a href="#__codelineno-5-7"><span class="linenos" data-linenos=" 7 "></span></a>
-<a id="__codelineno-5-8" name="__codelineno-5-8"></a><a href="#__codelineno-5-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="c1"># Builds comma-separated list: musique_train0,...,2wikimultihopqa_train19</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9"></a><a href="#__codelineno-5-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>torchrun<span class="w"> </span>--nproc_per_node<span class="o">=</span><span class="si">${</span><span class="nv">N_GPU</span><span class="si">}</span><span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.sft_training<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10"></a><a href="#__codelineno-5-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11"></a><a href="#__codelineno-5-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">    </span>model.entity_model.input_dim<span class="o">=</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12"></a><a href="#__codelineno-5-12"><span class="linenos" data-linenos="12 "></span></a><span class="w">    </span>model.entity_model.hidden_dims<span class="o">=</span><span class="si">${</span><span class="nv">N_LAYERS</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13"></a><a href="#__codelineno-5-13"><span class="linenos" data-linenos="13 "></span></a><span class="w">    </span>datasets.cfgs.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14"></a><a href="#__codelineno-5-14"><span class="linenos" data-linenos="14 "></span></a><span class="w">    </span>datasets.train_names<span class="o">=[</span><span class="si">${</span><span class="nv">TRAIN_DATA_NAME_LIST</span><span class="si">}</span><span class="o">]</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15"></a><a href="#__codelineno-5-15"><span class="linenos" data-linenos="15 "></span></a><span class="w">    </span>datasets.valid_names<span class="o">=[</span>hotpotqa_test_v2,musique_test,2wikimultihopqa_test<span class="o">]</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16"></a><a href="#__codelineno-5-16"><span class="linenos" data-linenos="16 "></span></a><span class="w">    </span>trainer.args.num_epoch<span class="o">=</span><span class="si">${</span><span class="nv">N_EPOCH</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-17" name="__codelineno-5-17"></a><a href="#__codelineno-5-17"><span class="linenos" data-linenos="17 "></span></a><span class="w">    </span>trainer.args.train_batch_size<span class="o">=</span><span class="si">${</span><span class="nv">BATCH_SIZE</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-18" name="__codelineno-5-18"></a><a href="#__codelineno-5-18"><span class="linenos" data-linenos="18 "></span></a><span class="w">    </span>+trainer.training_mode<span class="o">=</span><span class="si">${</span><span class="nv">TRAIN_MODE</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19"></a><a href="#__codelineno-5-19"><span class="linenos" data-linenos="19 "></span></a><span class="w">    </span>trainer.args.split_graph_training<span class="o">=</span><span class="si">${</span><span class="nv">SPLIT_GRAPH_TRAINING</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-20" name="__codelineno-5-20"></a><a href="#__codelineno-5-20"><span class="linenos" data-linenos="20 "></span></a><span class="w">    </span>trainer.args.split_graph_inference<span class="o">=</span><span class="si">${</span><span class="nv">SPLIT_GRAPH_INFERENCE</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-21" name="__codelineno-5-21"></a><a href="#__codelineno-5-21"><span class="linenos" data-linenos="21 "></span></a><span class="w">    </span>trainer.args.split_graph_partition<span class="o">=</span><span class="si">${</span><span class="nv">SPLIT_GRAPH_METHOD</span><span class="si">}</span>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1"></a><a href="#__codelineno-11-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">N_GPU</span><span class="o">=</span><span class="m">4</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2"></a><a href="#__codelineno-11-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">N_EPOCH</span><span class="o">=</span><span class="m">10</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3"></a><a href="#__codelineno-11-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">BATCH_SIZE</span><span class="o">=</span><span class="m">4</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4"></a><a href="#__codelineno-11-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">N_DIM</span><span class="o">=</span><span class="m">1024</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5"></a><a href="#__codelineno-11-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="nv">N_LAYERS</span><span class="o">=</span><span class="s2">&quot;[</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="s2">,</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="s2">,</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="s2">,</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="s2">,</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="s2">,</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="s2">]&quot;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6"></a><a href="#__codelineno-11-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7"></a><a href="#__codelineno-11-7"><span class="linenos" data-linenos=" 7 "></span></a>
+<a id="__codelineno-11-8" name="__codelineno-11-8"></a><a href="#__codelineno-11-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="c1"># Builds comma-separated list: musique_train0,...,2wikimultihopqa_train19</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9"></a><a href="#__codelineno-11-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>torchrun<span class="w"> </span>--nproc_per_node<span class="o">=</span><span class="si">${</span><span class="nv">N_GPU</span><span class="si">}</span><span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.sft_training<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10"></a><a href="#__codelineno-11-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11"></a><a href="#__codelineno-11-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">    </span>model.entity_model.input_dim<span class="o">=</span><span class="si">${</span><span class="nv">N_DIM</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12"></a><a href="#__codelineno-11-12"><span class="linenos" data-linenos="12 "></span></a><span class="w">    </span>model.entity_model.hidden_dims<span class="o">=</span><span class="si">${</span><span class="nv">N_LAYERS</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13"></a><a href="#__codelineno-11-13"><span class="linenos" data-linenos="13 "></span></a><span class="w">    </span>datasets.cfgs.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14"></a><a href="#__codelineno-11-14"><span class="linenos" data-linenos="14 "></span></a><span class="w">    </span>datasets.train_names<span class="o">=[</span><span class="si">${</span><span class="nv">TRAIN_DATA_NAME_LIST</span><span class="si">}</span><span class="o">]</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15"></a><a href="#__codelineno-11-15"><span class="linenos" data-linenos="15 "></span></a><span class="w">    </span>datasets.valid_names<span class="o">=[</span>hotpotqa_test_v2,musique_test,2wikimultihopqa_test<span class="o">]</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16"></a><a href="#__codelineno-11-16"><span class="linenos" data-linenos="16 "></span></a><span class="w">    </span>trainer.args.num_epoch<span class="o">=</span><span class="si">${</span><span class="nv">N_EPOCH</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17"></a><a href="#__codelineno-11-17"><span class="linenos" data-linenos="17 "></span></a><span class="w">    </span>trainer.args.train_batch_size<span class="o">=</span><span class="si">${</span><span class="nv">BATCH_SIZE</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18"></a><a href="#__codelineno-11-18"><span class="linenos" data-linenos="18 "></span></a><span class="w">    </span>+trainer.training_mode<span class="o">=</span><span class="si">${</span><span class="nv">TRAIN_MODE</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19"></a><a href="#__codelineno-11-19"><span class="linenos" data-linenos="19 "></span></a><span class="w">    </span>trainer.args.split_graph_training<span class="o">=</span><span class="si">${</span><span class="nv">SPLIT_GRAPH_TRAINING</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-20" name="__codelineno-11-20"></a><a href="#__codelineno-11-20"><span class="linenos" data-linenos="20 "></span></a><span class="w">    </span>trainer.args.split_graph_inference<span class="o">=</span><span class="si">${</span><span class="nv">SPLIT_GRAPH_INFERENCE</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-21" name="__codelineno-11-21"></a><a href="#__codelineno-11-21"><span class="linenos" data-linenos="21 "></span></a><span class="w">    </span>trainer.args.split_graph_partition<span class="o">=</span><span class="si">${</span><span class="nv">SPLIT_GRAPH_METHOD</span><span class="si">}</span>
 </code></pre></div>
 <p>Key training arguments:</p>
 <table>
@@ -1594,137 +1801,137 @@
 <hr />
 <h2 id="stage-2b-retrieval-evaluation">Stage 2b: Retrieval Evaluation<a class="headerlink" href="#stage-2b-retrieval-evaluation" title="Permanent link">&para;</a></h2>
 <p>Evaluate the pre-trained <code>rmanluo/G-reasoner-34M</code> checkpoint (or a locally fine-tuned model) without re-training.</p>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1"></a><a href="#__codelineno-6-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/g-reasoner/stage2_evaluate.sh
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1"></a><a href="#__codelineno-12-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/g-reasoner/stage2_evaluate.sh
 </code></pre></div>
 <h3 id="what-the-script-does_2">What the script does<a class="headerlink" href="#what-the-script-does_2" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1"></a><a href="#__codelineno-7-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">N_GPU</span><span class="o">=</span><span class="m">2</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2"></a><a href="#__codelineno-7-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3"></a><a href="#__codelineno-7-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">CHECKPOINT</span><span class="o">=</span><span class="s2">&quot;rmanluo/G-reasoner-34M&quot;</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4"></a><a href="#__codelineno-7-4"><span class="linenos" data-linenos=" 4 "></span></a>
-<a id="__codelineno-7-5" name="__codelineno-7-5"></a><a href="#__codelineno-7-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>torchrun<span class="w"> </span>--nproc_per_node<span class="o">=</span><span class="si">${</span><span class="nv">N_GPU</span><span class="si">}</span><span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.sft_training<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6"></a><a href="#__codelineno-7-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7"></a><a href="#__codelineno-7-7"><span class="linenos" data-linenos=" 7 "></span></a><span class="w">    </span>--config-name<span class="w"> </span>sft_training<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8"></a><a href="#__codelineno-7-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="w">    </span><span class="nv">load_model_from_pretrained</span><span class="o">=</span><span class="si">${</span><span class="nv">CHECKPOINT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9"></a><a href="#__codelineno-7-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="w">    </span>+datasets.cfgs.skip_empty_target<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10"></a><a href="#__codelineno-7-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">    </span>datasets.cfgs.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11"></a><a href="#__codelineno-7-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">    </span>datasets.train_names<span class="o">=[]</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12"></a><a href="#__codelineno-7-12"><span class="linenos" data-linenos="12 "></span></a><span class="w">    </span>datasets.valid_names<span class="o">=[</span>hotpotqa_test_v2,musique_test,2wikimultihopqa_test<span class="o">]</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13"></a><a href="#__codelineno-7-13"><span class="linenos" data-linenos="13 "></span></a><span class="w">    </span>+trainer.args.eval_batch_size<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14"></a><a href="#__codelineno-7-14"><span class="linenos" data-linenos="14 "></span></a><span class="w">    </span>trainer.metrics<span class="o">=[</span>hits@2,hits@5,recall@2,recall@5,mrr<span class="o">]</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15"></a><a href="#__codelineno-7-15"><span class="linenos" data-linenos="15 "></span></a><span class="w">    </span>trainer.args.do_train<span class="o">=</span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-16" name="__codelineno-7-16"></a><a href="#__codelineno-7-16"><span class="linenos" data-linenos="16 "></span></a><span class="w">    </span>trainer.args.do_eval<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-17" name="__codelineno-7-17"></a><a href="#__codelineno-7-17"><span class="linenos" data-linenos="17 "></span></a><span class="w">    </span>trainer.args.do_predict<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-18" name="__codelineno-7-18"></a><a href="#__codelineno-7-18"><span class="linenos" data-linenos="18 "></span></a><span class="w">    </span>trainer.args.split_graph_inference<span class="o">=</span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-19" name="__codelineno-7-19"></a><a href="#__codelineno-7-19"><span class="linenos" data-linenos="19 "></span></a><span class="w">    </span>trainer.args.split_graph_partition<span class="o">=</span>metis
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1"></a><a href="#__codelineno-13-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">N_GPU</span><span class="o">=</span><span class="m">2</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2"></a><a href="#__codelineno-13-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3"></a><a href="#__codelineno-13-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">CHECKPOINT</span><span class="o">=</span><span class="s2">&quot;rmanluo/G-reasoner-34M&quot;</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4"></a><a href="#__codelineno-13-4"><span class="linenos" data-linenos=" 4 "></span></a>
+<a id="__codelineno-13-5" name="__codelineno-13-5"></a><a href="#__codelineno-13-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>torchrun<span class="w"> </span>--nproc_per_node<span class="o">=</span><span class="si">${</span><span class="nv">N_GPU</span><span class="si">}</span><span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.sft_training<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6"></a><a href="#__codelineno-13-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7"></a><a href="#__codelineno-13-7"><span class="linenos" data-linenos=" 7 "></span></a><span class="w">    </span>--config-name<span class="w"> </span>sft_training<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8"></a><a href="#__codelineno-13-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="w">    </span><span class="nv">load_model_from_pretrained</span><span class="o">=</span><span class="si">${</span><span class="nv">CHECKPOINT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9"></a><a href="#__codelineno-13-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="w">    </span>+datasets.cfgs.skip_empty_target<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10"></a><a href="#__codelineno-13-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">    </span>datasets.cfgs.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11"></a><a href="#__codelineno-13-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">    </span>datasets.train_names<span class="o">=[]</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12"></a><a href="#__codelineno-13-12"><span class="linenos" data-linenos="12 "></span></a><span class="w">    </span>datasets.valid_names<span class="o">=[</span>hotpotqa_test_v2,musique_test,2wikimultihopqa_test<span class="o">]</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13"></a><a href="#__codelineno-13-13"><span class="linenos" data-linenos="13 "></span></a><span class="w">    </span>+trainer.args.eval_batch_size<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14"></a><a href="#__codelineno-13-14"><span class="linenos" data-linenos="14 "></span></a><span class="w">    </span>trainer.metrics<span class="o">=[</span>hits@2,hits@5,recall@2,recall@5,mrr<span class="o">]</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15"></a><a href="#__codelineno-13-15"><span class="linenos" data-linenos="15 "></span></a><span class="w">    </span>trainer.args.do_train<span class="o">=</span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16"></a><a href="#__codelineno-13-16"><span class="linenos" data-linenos="16 "></span></a><span class="w">    </span>trainer.args.do_eval<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17"></a><a href="#__codelineno-13-17"><span class="linenos" data-linenos="17 "></span></a><span class="w">    </span>trainer.args.do_predict<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18"></a><a href="#__codelineno-13-18"><span class="linenos" data-linenos="18 "></span></a><span class="w">    </span>trainer.args.split_graph_inference<span class="o">=</span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19"></a><a href="#__codelineno-13-19"><span class="linenos" data-linenos="19 "></span></a><span class="w">    </span>trainer.args.split_graph_partition<span class="o">=</span>metis
 </code></pre></div>
 <p><strong>Output</strong>: <code>predictions_&lt;data_name&gt;.json</code> files under <code>outputs/qa_finetune/&lt;date&gt;/&lt;time&gt;/</code>.</p>
 <hr />
 <h2 id="stage-3a-single-step-qa-reasoning">Stage 3a: Single-Step QA Reasoning<a class="headerlink" href="#stage-3a-single-step-qa-reasoning" title="Permanent link">&para;</a></h2>
 <p>Reads the retrieval predictions from Stage 2b and generates answers with an LLM in one shot.</p>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1"></a><a href="#__codelineno-8-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/g-reasoner/stage3_qa_inference.sh
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1"></a><a href="#__codelineno-14-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/g-reasoner/stage3_qa_inference.sh
 </code></pre></div>
 <h3 id="what-the-script-does_3">What the script does<a class="headerlink" href="#what-the-script-does_3" title="Permanent link">&para;</a></h3>
 <p>The script defaults to <code>2wikimultihopqa</code>; change <code>DATA_NAME</code> to run other datasets:</p>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1"></a><a href="#__codelineno-9-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2"></a><a href="#__codelineno-9-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">DATA_NAME</span><span class="o">=</span><span class="s2">&quot;2wikimultihopqa&quot;</span><span class="w">   </span><span class="c1"># hotpotqa | musique | 2wikimultihopqa</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3"></a><a href="#__codelineno-9-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">LLM</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4"></a><a href="#__codelineno-9-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">DOC_TOP_K</span><span class="o">=</span><span class="m">5</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5"></a><a href="#__codelineno-9-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="nv">N_THREAD</span><span class="o">=</span><span class="m">10</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6"></a><a href="#__codelineno-9-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="nv">RETRIEVED_RESULT_PATH</span><span class="o">=</span><span class="s2">&quot;outputs/qa_finetune/latest/predictions_</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="s2">_test.json&quot;</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7"></a><a href="#__codelineno-9-7"><span class="linenos" data-linenos=" 7 "></span></a><span class="nv">NODE_PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="s2">_test/processed/stage1/nodes.csv&quot;</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8"></a><a href="#__codelineno-9-8"><span class="linenos" data-linenos=" 8 "></span></a>
-<a id="__codelineno-9-9" name="__codelineno-9-9"></a><a href="#__codelineno-9-9"><span class="linenos" data-linenos=" 9 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10"></a><a href="#__codelineno-9-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11"></a><a href="#__codelineno-9-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-12" name="__codelineno-9-12"></a><a href="#__codelineno-9-12"><span class="linenos" data-linenos="12 "></span></a><span class="w">    </span><span class="nv">qa_evaluator</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-13" name="__codelineno-9-13"></a><a href="#__codelineno-9-13"><span class="linenos" data-linenos="13 "></span></a><span class="w">    </span>llm.model_name_or_path<span class="o">=</span><span class="si">${</span><span class="nv">LLM</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-14" name="__codelineno-9-14"></a><a href="#__codelineno-9-14"><span class="linenos" data-linenos="14 "></span></a><span class="w">    </span>test.n_threads<span class="o">=</span><span class="si">${</span><span class="nv">N_THREAD</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-15" name="__codelineno-9-15"></a><a href="#__codelineno-9-15"><span class="linenos" data-linenos="15 "></span></a><span class="w">    </span>test.top_k<span class="o">=</span><span class="si">${</span><span class="nv">DOC_TOP_K</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-16" name="__codelineno-9-16"></a><a href="#__codelineno-9-16"><span class="linenos" data-linenos="16 "></span></a><span class="w">    </span>test.retrieved_result_path<span class="o">=</span><span class="si">${</span><span class="nv">RETRIEVED_RESULT_PATH</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-17" name="__codelineno-9-17"></a><a href="#__codelineno-9-17"><span class="linenos" data-linenos="17 "></span></a><span class="w">    </span>test.target_types<span class="o">=[</span>document<span class="o">]</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-18" name="__codelineno-9-18"></a><a href="#__codelineno-9-18"><span class="linenos" data-linenos="18 "></span></a><span class="w">    </span>test.node_path<span class="o">=</span><span class="si">${</span><span class="nv">NODE_PATH</span><span class="si">}</span>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1"></a><a href="#__codelineno-15-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2"></a><a href="#__codelineno-15-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">DATA_NAME</span><span class="o">=</span><span class="s2">&quot;2wikimultihopqa&quot;</span><span class="w">   </span><span class="c1"># hotpotqa | musique | 2wikimultihopqa</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3"></a><a href="#__codelineno-15-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">LLM</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4"></a><a href="#__codelineno-15-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">DOC_TOP_K</span><span class="o">=</span><span class="m">5</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5"></a><a href="#__codelineno-15-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="nv">N_THREAD</span><span class="o">=</span><span class="m">10</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6"></a><a href="#__codelineno-15-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="nv">RETRIEVED_RESULT_PATH</span><span class="o">=</span><span class="s2">&quot;outputs/qa_finetune/latest/predictions_</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="s2">_test.json&quot;</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7"></a><a href="#__codelineno-15-7"><span class="linenos" data-linenos=" 7 "></span></a><span class="nv">NODE_PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="s2">_test/processed/stage1/nodes.csv&quot;</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8"></a><a href="#__codelineno-15-8"><span class="linenos" data-linenos=" 8 "></span></a>
+<a id="__codelineno-15-9" name="__codelineno-15-9"></a><a href="#__codelineno-15-9"><span class="linenos" data-linenos=" 9 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10"></a><a href="#__codelineno-15-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11"></a><a href="#__codelineno-15-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12"></a><a href="#__codelineno-15-12"><span class="linenos" data-linenos="12 "></span></a><span class="w">    </span><span class="nv">qa_evaluator</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13"></a><a href="#__codelineno-15-13"><span class="linenos" data-linenos="13 "></span></a><span class="w">    </span>llm.model_name_or_path<span class="o">=</span><span class="si">${</span><span class="nv">LLM</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14"></a><a href="#__codelineno-15-14"><span class="linenos" data-linenos="14 "></span></a><span class="w">    </span>test.n_threads<span class="o">=</span><span class="si">${</span><span class="nv">N_THREAD</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15"></a><a href="#__codelineno-15-15"><span class="linenos" data-linenos="15 "></span></a><span class="w">    </span>test.top_k<span class="o">=</span><span class="si">${</span><span class="nv">DOC_TOP_K</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16"></a><a href="#__codelineno-15-16"><span class="linenos" data-linenos="16 "></span></a><span class="w">    </span>test.retrieved_result_path<span class="o">=</span><span class="si">${</span><span class="nv">RETRIEVED_RESULT_PATH</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17"></a><a href="#__codelineno-15-17"><span class="linenos" data-linenos="17 "></span></a><span class="w">    </span>test.target_types<span class="o">=[</span>document<span class="o">]</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-18" name="__codelineno-15-18"></a><a href="#__codelineno-15-18"><span class="linenos" data-linenos="18 "></span></a><span class="w">    </span>test.node_path<span class="o">=</span><span class="si">${</span><span class="nv">NODE_PATH</span><span class="si">}</span>
 </code></pre></div>
 <h3 id="per-dataset-commands">Per-dataset Commands<a class="headerlink" href="#per-dataset-commands" title="Permanent link">&para;</a></h3>
 <p><strong>HotpotQA</strong>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1"></a><a href="#__codelineno-10-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2"></a><a href="#__codelineno-10-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3"></a><a href="#__codelineno-10-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>hotpotqa<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>hotpotqa<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4"></a><a href="#__codelineno-10-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>test.retrieved_result_path<span class="o">=</span>outputs/qa_finetune/latest/predictions_hotpotqa_test_v2.json<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5"></a><a href="#__codelineno-10-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span>test.node_path<span class="o">=</span>data/hotpotqa_test_v2/processed/stage1/nodes.csv
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1"></a><a href="#__codelineno-16-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2"></a><a href="#__codelineno-16-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3"></a><a href="#__codelineno-16-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>hotpotqa<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>hotpotqa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4"></a><a href="#__codelineno-16-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>test.retrieved_result_path<span class="o">=</span>outputs/qa_finetune/latest/predictions_hotpotqa_test_v2.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5"></a><a href="#__codelineno-16-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span>test.node_path<span class="o">=</span>data/hotpotqa_test_v2/processed/stage1/nodes.csv
 </code></pre></div></p>
 <p><strong>MuSiQue</strong>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1"></a><a href="#__codelineno-11-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2"></a><a href="#__codelineno-11-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3"></a><a href="#__codelineno-11-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>musique<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>musique<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4"></a><a href="#__codelineno-11-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>test.retrieved_result_path<span class="o">=</span>outputs/qa_finetune/latest/predictions_musique_test.json<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5"></a><a href="#__codelineno-11-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span>test.node_path<span class="o">=</span>data/musique_test/processed/stage1/nodes.csv
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1"></a><a href="#__codelineno-17-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2"></a><a href="#__codelineno-17-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3"></a><a href="#__codelineno-17-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>musique<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>musique<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4"></a><a href="#__codelineno-17-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>test.retrieved_result_path<span class="o">=</span>outputs/qa_finetune/latest/predictions_musique_test.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5"></a><a href="#__codelineno-17-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span>test.node_path<span class="o">=</span>data/musique_test/processed/stage1/nodes.csv
 </code></pre></div></p>
 <p><strong>2WikiMultihopQA</strong>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1"></a><a href="#__codelineno-12-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2"></a><a href="#__codelineno-12-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3"></a><a href="#__codelineno-12-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>2wikimultihopqa<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>2wikimultihopqa<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4"></a><a href="#__codelineno-12-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>test.retrieved_result_path<span class="o">=</span>outputs/qa_finetune/latest/predictions_2wikimultihopqa_test.json<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5"></a><a href="#__codelineno-12-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span>test.node_path<span class="o">=</span>data/2wikimultihopqa_test/processed/stage1/nodes.csv
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1"></a><a href="#__codelineno-18-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2"></a><a href="#__codelineno-18-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3"></a><a href="#__codelineno-18-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>2wikimultihopqa<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>2wikimultihopqa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4"></a><a href="#__codelineno-18-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span>test.retrieved_result_path<span class="o">=</span>outputs/qa_finetune/latest/predictions_2wikimultihopqa_test.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5"></a><a href="#__codelineno-18-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span>test.node_path<span class="o">=</span>data/2wikimultihopqa_test/processed/stage1/nodes.csv
 </code></pre></div></p>
 <p><strong>Output</strong>: <code>outputs/qa_inference/&lt;date&gt;/&lt;time&gt;/prediction.jsonl</code></p>
 <hr />
 <h2 id="stage-3b-multi-step-ircot-qa-reasoning">Stage 3b: Multi-Step IRCoT QA Reasoning<a class="headerlink" href="#stage-3b-multi-step-ircot-qa-reasoning" title="Permanent link">&para;</a></h2>
 <p>Runs iterative retrieval and reasoning (IRCoT) using the G-Reasoner retriever and an LLM agent. Unlike Stage 3a, this stage performs retrieval online and does not require pre-computed retrieval results.</p>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1"></a><a href="#__codelineno-13-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/g-reasoner/stage3_qa_ircot_inference.sh
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1"></a><a href="#__codelineno-19-1"><span class="linenos" data-linenos="1 "></span></a>bash<span class="w"> </span>scripts/g-reasoner/stage3_qa_ircot_inference.sh
 </code></pre></div>
 <h3 id="what-the-script-does_4">What the script does<a class="headerlink" href="#what-the-script-does_4" title="Permanent link">&para;</a></h3>
 <p>The script defaults to <code>2wikimultihopqa</code> and 5 test samples for a quick sanity check:</p>
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1"></a><a href="#__codelineno-14-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2"></a><a href="#__codelineno-14-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">DATA_NAME</span><span class="o">=</span><span class="s2">&quot;2wikimultihopqa&quot;</span><span class="w">   </span><span class="c1"># hotpotqa | musique | 2wikimultihopqa</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3"></a><a href="#__codelineno-14-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">LLM</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4"></a><a href="#__codelineno-14-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">MAX_STEPS</span><span class="o">=</span><span class="m">3</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5"></a><a href="#__codelineno-14-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="nv">MAX_SAMPLE</span><span class="o">=</span><span class="m">5</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6"></a><a href="#__codelineno-14-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="nv">MODEL_PATH</span><span class="o">=</span><span class="s2">&quot;save_models/G-reasoner-34M&quot;</span><span class="w">   </span><span class="c1"># or rmanluo/G-reasoner-34M</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7"></a><a href="#__codelineno-14-7"><span class="linenos" data-linenos=" 7 "></span></a>
-<a id="__codelineno-14-8" name="__codelineno-14-8"></a><a href="#__codelineno-14-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa_ircot_inference<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9"></a><a href="#__codelineno-14-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-10" name="__codelineno-14-10"></a><a href="#__codelineno-14-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">    </span>--config-name<span class="w"> </span>stage3_qa_ircot_inference<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-11" name="__codelineno-14-11"></a><a href="#__codelineno-14-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">    </span>dataset.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-12" name="__codelineno-14-12"></a><a href="#__codelineno-14-12"><span class="linenos" data-linenos="12 "></span></a><span class="w">    </span>llm.model_name_or_path<span class="o">=</span><span class="si">${</span><span class="nv">LLM</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-13" name="__codelineno-14-13"></a><a href="#__codelineno-14-13"><span class="linenos" data-linenos="13 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-14" name="__codelineno-14-14"></a><a href="#__codelineno-14-14"><span class="linenos" data-linenos="14 "></span></a><span class="w">    </span><span class="nv">qa_evaluator</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-15" name="__codelineno-14-15"></a><a href="#__codelineno-14-15"><span class="linenos" data-linenos="15 "></span></a><span class="w">    </span><span class="nv">agent_prompt</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span>_ircot<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-16" name="__codelineno-14-16"></a><a href="#__codelineno-14-16"><span class="linenos" data-linenos="16 "></span></a><span class="w">    </span>test.max_steps<span class="o">=</span><span class="si">${</span><span class="nv">MAX_STEPS</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-17" name="__codelineno-14-17"></a><a href="#__codelineno-14-17"><span class="linenos" data-linenos="17 "></span></a><span class="w">    </span>test.max_test_samples<span class="o">=</span><span class="si">${</span><span class="nv">MAX_SAMPLE</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-18" name="__codelineno-14-18"></a><a href="#__codelineno-14-18"><span class="linenos" data-linenos="18 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span>_test<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-19" name="__codelineno-14-19"></a><a href="#__codelineno-14-19"><span class="linenos" data-linenos="19 "></span></a><span class="w">    </span>graph_retriever.model_path<span class="o">=</span><span class="si">${</span><span class="nv">MODEL_PATH</span><span class="si">}</span>
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1"></a><a href="#__codelineno-20-1"><span class="linenos" data-linenos=" 1 "></span></a><span class="nv">DATA_ROOT</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2"></a><a href="#__codelineno-20-2"><span class="linenos" data-linenos=" 2 "></span></a><span class="nv">DATA_NAME</span><span class="o">=</span><span class="s2">&quot;2wikimultihopqa&quot;</span><span class="w">   </span><span class="c1"># hotpotqa | musique | 2wikimultihopqa</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3"></a><a href="#__codelineno-20-3"><span class="linenos" data-linenos=" 3 "></span></a><span class="nv">LLM</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4"></a><a href="#__codelineno-20-4"><span class="linenos" data-linenos=" 4 "></span></a><span class="nv">MAX_STEPS</span><span class="o">=</span><span class="m">3</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5"></a><a href="#__codelineno-20-5"><span class="linenos" data-linenos=" 5 "></span></a><span class="nv">MAX_SAMPLE</span><span class="o">=</span><span class="m">5</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6"></a><a href="#__codelineno-20-6"><span class="linenos" data-linenos=" 6 "></span></a><span class="nv">MODEL_PATH</span><span class="o">=</span><span class="s2">&quot;save_models/G-reasoner-34M&quot;</span><span class="w">   </span><span class="c1"># or rmanluo/G-reasoner-34M</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7"></a><a href="#__codelineno-20-7"><span class="linenos" data-linenos=" 7 "></span></a>
+<a id="__codelineno-20-8" name="__codelineno-20-8"></a><a href="#__codelineno-20-8"><span class="linenos" data-linenos=" 8 "></span></a><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa_ircot_inference<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9"></a><a href="#__codelineno-20-9"><span class="linenos" data-linenos=" 9 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-10" name="__codelineno-20-10"></a><a href="#__codelineno-20-10"><span class="linenos" data-linenos="10 "></span></a><span class="w">    </span>--config-name<span class="w"> </span>stage3_qa_ircot_inference<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11"></a><a href="#__codelineno-20-11"><span class="linenos" data-linenos="11 "></span></a><span class="w">    </span>dataset.root<span class="o">=</span><span class="si">${</span><span class="nv">DATA_ROOT</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-12" name="__codelineno-20-12"></a><a href="#__codelineno-20-12"><span class="linenos" data-linenos="12 "></span></a><span class="w">    </span>llm.model_name_or_path<span class="o">=</span><span class="si">${</span><span class="nv">LLM</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-13" name="__codelineno-20-13"></a><a href="#__codelineno-20-13"><span class="linenos" data-linenos="13 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-14" name="__codelineno-20-14"></a><a href="#__codelineno-20-14"><span class="linenos" data-linenos="14 "></span></a><span class="w">    </span><span class="nv">qa_evaluator</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-15" name="__codelineno-20-15"></a><a href="#__codelineno-20-15"><span class="linenos" data-linenos="15 "></span></a><span class="w">    </span><span class="nv">agent_prompt</span><span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span>_ircot<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-16" name="__codelineno-20-16"></a><a href="#__codelineno-20-16"><span class="linenos" data-linenos="16 "></span></a><span class="w">    </span>test.max_steps<span class="o">=</span><span class="si">${</span><span class="nv">MAX_STEPS</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-17" name="__codelineno-20-17"></a><a href="#__codelineno-20-17"><span class="linenos" data-linenos="17 "></span></a><span class="w">    </span>test.max_test_samples<span class="o">=</span><span class="si">${</span><span class="nv">MAX_SAMPLE</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-18" name="__codelineno-20-18"></a><a href="#__codelineno-20-18"><span class="linenos" data-linenos="18 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span><span class="si">${</span><span class="nv">DATA_NAME</span><span class="si">}</span>_test<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-19" name="__codelineno-20-19"></a><a href="#__codelineno-20-19"><span class="linenos" data-linenos="19 "></span></a><span class="w">    </span>graph_retriever.model_path<span class="o">=</span><span class="si">${</span><span class="nv">MODEL_PATH</span><span class="si">}</span>
 </code></pre></div>
 <p>Set <code>test.max_test_samples=-1</code> to run on the full test set.</p>
 <h3 id="per-dataset-commands_1">Per-dataset Commands<a class="headerlink" href="#per-dataset-commands_1" title="Permanent link">&para;</a></h3>
 <p><strong>HotpotQA</strong> (2 reasoning steps)
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1"></a><a href="#__codelineno-15-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa_ircot_inference<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2"></a><a href="#__codelineno-15-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3"></a><a href="#__codelineno-15-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span>--config-name<span class="w"> </span>stage3_qa_ircot_inference<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4"></a><a href="#__codelineno-15-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>hotpotqa<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>hotpotqa<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5"></a><a href="#__codelineno-15-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span><span class="nv">agent_prompt</span><span class="o">=</span>hotpotqa_ircot<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6"></a><a href="#__codelineno-15-6"><span class="linenos" data-linenos="6 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span>hotpotqa_test_v2<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7"></a><a href="#__codelineno-15-7"><span class="linenos" data-linenos="7 "></span></a><span class="w">    </span>graph_retriever.model_path<span class="o">=</span>rmanluo/G-reasoner-34M<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8"></a><a href="#__codelineno-15-8"><span class="linenos" data-linenos="8 "></span></a><span class="w">    </span>test.max_steps<span class="o">=</span><span class="m">2</span><span class="w"> </span>test.max_test_samples<span class="o">=</span>-1
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1"></a><a href="#__codelineno-21-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa_ircot_inference<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2"></a><a href="#__codelineno-21-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3"></a><a href="#__codelineno-21-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span>--config-name<span class="w"> </span>stage3_qa_ircot_inference<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4"></a><a href="#__codelineno-21-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>hotpotqa<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>hotpotqa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5"></a><a href="#__codelineno-21-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span><span class="nv">agent_prompt</span><span class="o">=</span>hotpotqa_ircot<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6"></a><a href="#__codelineno-21-6"><span class="linenos" data-linenos="6 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span>hotpotqa_test_v2<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7"></a><a href="#__codelineno-21-7"><span class="linenos" data-linenos="7 "></span></a><span class="w">    </span>graph_retriever.model_path<span class="o">=</span>rmanluo/G-reasoner-34M<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8"></a><a href="#__codelineno-21-8"><span class="linenos" data-linenos="8 "></span></a><span class="w">    </span>test.max_steps<span class="o">=</span><span class="m">2</span><span class="w"> </span>test.max_test_samples<span class="o">=</span>-1
 </code></pre></div></p>
 <p><strong>MuSiQue</strong> (4 reasoning steps)
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1"></a><a href="#__codelineno-16-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa_ircot_inference<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2"></a><a href="#__codelineno-16-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3"></a><a href="#__codelineno-16-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span>--config-name<span class="w"> </span>stage3_qa_ircot_inference<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4"></a><a href="#__codelineno-16-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>musique<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>musique<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5"></a><a href="#__codelineno-16-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span><span class="nv">agent_prompt</span><span class="o">=</span>musique_ircot<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6"></a><a href="#__codelineno-16-6"><span class="linenos" data-linenos="6 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span>musique_test<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7"></a><a href="#__codelineno-16-7"><span class="linenos" data-linenos="7 "></span></a><span class="w">    </span>graph_retriever.model_path<span class="o">=</span>rmanluo/G-reasoner-34M<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8"></a><a href="#__codelineno-16-8"><span class="linenos" data-linenos="8 "></span></a><span class="w">    </span>test.max_steps<span class="o">=</span><span class="m">4</span><span class="w"> </span>test.max_test_samples<span class="o">=</span>-1
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1"></a><a href="#__codelineno-22-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa_ircot_inference<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2"></a><a href="#__codelineno-22-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3"></a><a href="#__codelineno-22-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span>--config-name<span class="w"> </span>stage3_qa_ircot_inference<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4"></a><a href="#__codelineno-22-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>musique<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>musique<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5"></a><a href="#__codelineno-22-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span><span class="nv">agent_prompt</span><span class="o">=</span>musique_ircot<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6"></a><a href="#__codelineno-22-6"><span class="linenos" data-linenos="6 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span>musique_test<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7"></a><a href="#__codelineno-22-7"><span class="linenos" data-linenos="7 "></span></a><span class="w">    </span>graph_retriever.model_path<span class="o">=</span>rmanluo/G-reasoner-34M<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8"></a><a href="#__codelineno-22-8"><span class="linenos" data-linenos="8 "></span></a><span class="w">    </span>test.max_steps<span class="o">=</span><span class="m">4</span><span class="w"> </span>test.max_test_samples<span class="o">=</span>-1
 </code></pre></div></p>
 <p><strong>2WikiMultihopQA</strong> (3 reasoning steps)
-<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1"></a><a href="#__codelineno-17-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa_ircot_inference<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2"></a><a href="#__codelineno-17-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3"></a><a href="#__codelineno-17-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span>--config-name<span class="w"> </span>stage3_qa_ircot_inference<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4"></a><a href="#__codelineno-17-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>2wikimultihopqa<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>2wikimultihopqa<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5"></a><a href="#__codelineno-17-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span><span class="nv">agent_prompt</span><span class="o">=</span>2wikimultihopqa_ircot<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6"></a><a href="#__codelineno-17-6"><span class="linenos" data-linenos="6 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span>2wikimultihopqa_test<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7"></a><a href="#__codelineno-17-7"><span class="linenos" data-linenos="7 "></span></a><span class="w">    </span>graph_retriever.model_path<span class="o">=</span>rmanluo/G-reasoner-34M<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8"></a><a href="#__codelineno-17-8"><span class="linenos" data-linenos="8 "></span></a><span class="w">    </span>test.max_steps<span class="o">=</span><span class="m">3</span><span class="w"> </span>test.max_test_samples<span class="o">=</span>-1
+<div class="language-bash highlight"><span class="filename">Bash</span><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1"></a><a href="#__codelineno-23-1"><span class="linenos" data-linenos="1 "></span></a>python<span class="w"> </span>-m<span class="w"> </span>gfmrag.workflow.qa_ircot_inference<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2"></a><a href="#__codelineno-23-2"><span class="linenos" data-linenos="2 "></span></a><span class="w">    </span>--config-path<span class="w"> </span>config/gfm_reasoner<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3"></a><a href="#__codelineno-23-3"><span class="linenos" data-linenos="3 "></span></a><span class="w">    </span>--config-name<span class="w"> </span>stage3_qa_ircot_inference<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4"></a><a href="#__codelineno-23-4"><span class="linenos" data-linenos="4 "></span></a><span class="w">    </span><span class="nv">qa_prompt</span><span class="o">=</span>2wikimultihopqa<span class="w"> </span><span class="nv">qa_evaluator</span><span class="o">=</span>2wikimultihopqa<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5"></a><a href="#__codelineno-23-5"><span class="linenos" data-linenos="5 "></span></a><span class="w">    </span><span class="nv">agent_prompt</span><span class="o">=</span>2wikimultihopqa_ircot<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6"></a><a href="#__codelineno-23-6"><span class="linenos" data-linenos="6 "></span></a><span class="w">    </span>dataset.data_name<span class="o">=</span>2wikimultihopqa_test<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7"></a><a href="#__codelineno-23-7"><span class="linenos" data-linenos="7 "></span></a><span class="w">    </span>graph_retriever.model_path<span class="o">=</span>rmanluo/G-reasoner-34M<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8"></a><a href="#__codelineno-23-8"><span class="linenos" data-linenos="8 "></span></a><span class="w">    </span>test.max_steps<span class="o">=</span><span class="m">3</span><span class="w"> </span>test.max_test_samples<span class="o">=</span>-1
 </code></pre></div></p>
 <p><strong>Output</strong>: <code>outputs/qa_agent_inference/&lt;data_name&gt;/&lt;date&gt;/&lt;time&gt;/prediction.jsonl</code></p>
 <hr />
