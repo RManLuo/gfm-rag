@@ -65,7 +65,7 @@ bash graphrag_benchmark/scripts/stage2_retrieval.sh
 
 ## 4) Run QA
 
-Use the provided scripts to load the retrieval outputs, build prompts, and call the LLM. Yon can check the prompts in `config/qa_prompt/`.
+Use the provided scripts to load the retrieval outputs, build prompts, and call the LLM. You can check the prompts in `config/qa_prompt/`.
 
 ### GraphRAG-Bench (CS)
 
@@ -89,12 +89,12 @@ We use the official evaluation scripts from corresponding repos with minimal mod
 
 ### GraphRAG-Bench (CS)
 
-1) Clone the [repo](https://github.com/icedpanda/GraphRAG-Bench) and download their [data](https://huggingface.co/datasets/Awesome-GraphRAG/GraphRAG-Bench).
+1) Clone the [repo](https://github.com/jeremycp3/GraphRAG-Bench) and download their [data](https://huggingface.co/datasets/Awesome-GraphRAG/GraphRAG-Bench).
 2) Copy the five JSON outputs from step 4 into `GraphRAG-Bench/Datasets/output/g-reasoner/`.
 3) Run the evaluator inside that repo, e.g. `python evaluator.py`.
 
 ### GraphRAG-Benchmark (Novel / Medical)
 
-1) Clone the [repo](https://github.com/icedpanda/GraphRAG-Benchmark) and download their [data](https://huggingface.co/datasets/GraphRAG-Bench/GraphRAG-Bench).
+1) Clone the [repo](https://github.com/GraphRAG-Bench/GraphRAG-Benchmark) and download their [data](https://huggingface.co/datasets/GraphRAG-Bench/GraphRAG-Bench).
 2) Copy `prediction.jsonl` from step 4 into `GraphRAG-Benchmark/Datasets/output/g-reasoner/<domain>/prediction.jsonl`.
-3) Run the evaluation entry point, e.g. `bash run_retreival_evaluation.sh` and `bash run_gen_evaluation.sh` for retrieval and generation evaluation respectively.
+3) Run the evaluation entry point, e.g. `bash run_retrieval_evaluation.sh` and `bash run_gen_evaluation.sh` for retrieval and generation evaluation respectively.
