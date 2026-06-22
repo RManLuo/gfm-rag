@@ -6,7 +6,7 @@ Evaluate on two GraphRAG benchmarks. Start with data, build the KG index, run re
 
 ## Benchmarks at a glance
 
-Two GraphRAG benchmarks uses similar name, we will use the following names to avoid confusion.
+Two GraphRAG benchmarks use similar names, so we use the following names to avoid confusion.
 
 - `graphrag_bench_cs` → GraphRAG-Bench: Challenging Domain-Specific Reasoning for Evaluating Graph Retrieval-Augmented Generation (aka **G-Bench CS**). [Repo](https://github.com/jeremycp3/GraphRAG-Bench)
 - `graphrag_benchmark_medical` / `graphrag_benchmark_novel` → When to use Graphs in RAG: A Comprehensive Analysis for Graph Retrieval-Augmented Generation (aka **G-Bench Medical / Novel**). [Repo](https://github.com/GraphRAG-Bench/GraphRAG-Benchmark)
@@ -35,7 +35,7 @@ data/
 
 You can run indexing yourself or use our prebuilt KG indices. Download our prebuilt KG indices from [here](https://drive.google.com/file/d/12kcmz62HMRxuXhKKMrstHUDgRu6AwNUD/view?usp=sharing).
 
-To build KG indices locally, create `nodes.csv`, `edges.csv`, `relations.csv`, and processed `test.json` for each dataset running the following script.
+To build KG indices locally, create `nodes.csv`, `edges.csv`, `relations.csv`, and processed `test.json` for each dataset by running the following script.
 
 ```bash
 bash graphrag_benchmark/scripts/stage1_data_index.sh
@@ -57,7 +57,7 @@ The QA scripts need retrieval results per dataset with top documents and entitie
 
 You can either run retrieval yourself or use our precomputed results. Download our precomputed retrieval results from [here](https://drive.google.com/file/d/12kcmz62HMRxuXhKKMrstHUDgRu6AwNUD/view?usp=sharing).
 
-To generate retrieval results locally using GFM-RAG running the following script:
+To generate retrieval results locally using GFM-RAG, run the following script:
 
 ```bash
 bash graphrag_benchmark/scripts/stage2_retrieval.sh
