@@ -15,7 +15,7 @@ Reproduce the paper results for [G-Reasoner](https://arxiv.org/abs/2509.24276) u
 
 ## Dataset Download
 
-Download the testing split and full training data from [OneDrive](https://1drv.ms/f/c/cb4bbdfe5951d1a1/IgDTnyNJiiAPTJKqY1KizEVMAQ1jX5wAf94YMlF-VyLvscI?e=bgp0Yv) and place them under the `data/` directory:
+Download the testing split and full training data from [OneDrive](https://1drv.ms/u/c/cb4bbdfe5951d1a1/IQBJXhHkEFY6TJVIX2OSVCPyAd-yP8q3VJn7IqbpdbrX2a8?e=bvgg4G) and place them under the `data/` directory:
 
 ```text
 data/
@@ -51,7 +51,7 @@ Two GraphRAG benchmarks uses similar name, we will use the following names to av
 
 ### 1) Prepare data
 
-Download our preprocessed data from [here](https://1drv.ms/f/c/cb4bbdfe5951d1a1/IgDTnyNJiiAPTJKqY1KizEVMAQ1jX5wAf94YMlF-VyLvscI?e=bgp0Yv) and place it under `data/`.
+Download our preprocessed data from [here](https://1drv.ms/u/c/cb4bbdfe5951d1a1/IQBJXhHkEFY6TJVIX2OSVCPyAd-yP8q3VJn7IqbpdbrX2a8?e=bvgg4G) and place it under `data/`.
 
 ```text
 data/
