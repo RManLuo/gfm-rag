@@ -91,7 +91,7 @@ class Query(torch.Tensor):
                     num_args = op.get_operand().item()
                     args = stack[-num_args:]
                     stack = stack[:-num_args]
-                    line = "{} <- union({}, {})".format(var, ", ".join(args))  # type: ignore
+                    line = "{} <- union({})".format(var, ", ".join(args))  # type: ignore
                 elif op.is_negation():
                     line = f"{var} <- negation({stack.pop()})"
                 elif op.is_stop():
